@@ -1,0 +1,494 @@
+---
+title: "Scoliosis Model"
+author: "Caio Vallio"
+abstract: |
+  **Contexto:** A escoliose idiopática do adolescente pode apresentar resposta clínica variável a intervenções conservadoras.  
+  **Objetivo:** Explorar associações entre características basais e melhora radiográfica em 6 meses.  
+  **Métodos:** Estudo observacional com análise exploratória e inferencial. O desfecho contínuo foi $\Delta$ (maior curva em 6 meses − baseline, em graus). O desfecho binário (MCID) foi melhora definida como $\Delta \le -5°$. Ajustamos um modelo linear para $\Delta$ e um modelo logístico para o MCID, reportando estimativas com IC95% e verificações de adequação dos modelos.  
+date: last-modified
+format: 
+  html:
+    self-contained: true
+    df-print: paged
+    toc: true 
+    toc-depth: 5
+    number-sections: true
+    number-depth: 5
+    code-fold: true
+execute: 
+  echo: true
+  warning: false
+  message: false
+  error: false
+  freeze: auto
+lang: pt-BR
+#bibliography: references.bib
+---
+
+## Como reproduzir
+
+- O arquivo de dados é lido de `data/modelagem final.xlsx` (aba `dados`).
+- As análises dependem de pacotes R listados no chunk de setup; caso algum pacote esteja ausente, o documento interrompe a execução com uma mensagem explícita.
+
+## Objetivo e delineamento
+
+Este é um relatório **exploratório e inferencial**: o objetivo é **estimar associações ajustadas** entre variáveis basais e a evolução radiográfica em 6 meses.
+
+## Definições de desfecho
+
+- **Desfecho contínuo:** $\Delta$ = (maior curva em 6 meses − maior curva baseline), em graus. Valores mais negativos indicam maior melhora.  
+- **Desfecho binário (MCID):** melhora clínica definida como $\Delta \le -5°$ (redução de pelo menos 5 graus).
+
+## Plano de análise estatística
+
+- **Descrição da amostra**: estatísticas descritivas das variáveis basais e do desfecho.
+- **Inferência (associações ajustadas)**:
+  - **Modelo linear** para $\Delta$ (efeitos como betas, IC95%).
+  - **Modelo logístico** para MCID (efeitos como odds ratios, IC95%).
+- **Adequação dos modelos**: diagnósticos de assunções (colinearidade, resíduos, heteroscedasticidade quando aplicável) e medidas de qualidade de ajuste (por exemplo, $R^2$).
+- **Forma funcional**: para preditores contínuos, assume-se relação aproximadamente linear.
+
+Por se tratar de análise **exploratória**, os resultados devem ser interpretados com cautela, com ênfase em **magnitude/direção** e incerteza (IC95%).
+
+
+```{r}
+## Setup (reprodutibilidade)
+pkgs <- c(
+    "tidyverse", "gtsummary",
+    "readxl", "janitor",
+    "performance", "qqplotr", "PupillometryR"
+)
+missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing_pkgs) > 0) {
+    stop("Pacotes ausentes: ", paste(missing_pkgs, collapse = ", "))
+}
+invisible(lapply(pkgs, library, character.only = TRUE))
+
+set.seed(123)
+theme_set(theme_minimal())
+
+
+# read data
+df_raw <- readxl::read_excel("data/modelagem final.xlsx", sheet = "dados")
+
+# clean names
+df <- df_raw |> janitor::clean_names()
+
+# clean escoliometro
+df <- df |>
+    mutate(
+        escoliometro = pmax(
+            escoliomertro_cervical,
+            escoliometro_torarica,
+            escoliometro_lombar,
+            na.rm = TRUE
+        )
+    ) |>
+    mutate(
+        regiao = case_when(
+            escoliometro == escoliomertro_cervical ~ "cervical",
+            escoliometro == escoliometro_torarica ~ "toracica",
+            escoliometro == escoliometro_lombar ~ "lombar",
+            TRUE ~ NA_character_
+        )
+    ) |>
+    select(
+        -escoliomertro_cervical,
+        -escoliometro_torarica,
+        -escoliometro_lombar
+    )
+
+# definicao do desfecho (ver secao acima)
+df <- df |>
+    mutate(delta = maior_curva_6_meses - maior_curva_baseline) |>
+    mutate(delta_cat = if_else(delta <= -5, 1, 0)) |>
+    mutate(
+        delta_cat_f = factor(
+            delta_cat,
+            levels = c(0, 1),
+            labels = c("Sem melhora (MCID)", "Melhora (MCID)")
+        )
+    )
+
+# casting de variaveis (garantir tipos adequados no ajuste)
+df <- df |>
+    mutate(
+        idade = as.double(idade),
+        lenke = as.factor(lenke),
+        risser = as.factor(risser),
+        sexo = as.factor(sexo),
+        regiao = as.factor(regiao),
+        cifose_categ = as.factor(cifose_categ)
+    )
+
+```
+
+## Dados faltantes e tamanho amostral
+
+```{r}
+missing_tbl <- df |>
+    summarise(across(everything(), ~ sum(is.na(.)))) |>
+    pivot_longer(everything(), names_to = "variavel", values_to = "n_missing") |>
+    mutate(pct_missing = n_missing / nrow(df)) |>
+    arrange(desc(pct_missing))
+
+missing_tbl |>
+    mutate(pct_missing = scales::percent(pct_missing, accuracy = 0.1)) |>
+    print(n = 50)
+```
+
+**Observação:** os modelos abaixo usam **análise por caso completo** (listwise deletion), que é o comportamento padrão do `glm()`/`lm()` quando há dados faltantes nas variáveis do modelo.
+
+## Codificação de variáveis categóricas (referências)
+
+As variáveis categóricas entram como fatores. A **categoria de referência** (baseline) é o **primeiro nível** do fator (conforme `levels()`), a menos que seja explicitamente reordenado.
+
+```{r}
+categoricas <- c("sexo", "regiao", "lenke", "risser", "cifose_categ")
+map_dfr(categoricas, function(v) {
+    tibble(
+        variavel = v,
+        niveis = paste(levels(df[[v]]), collapse = " | ")
+    )
+}) |>
+    print(n = Inf)
+```
+
+
+# Análise descritiva
+
+## Variáveis de entrada do modelo
+
+Variáveis coletadas na linha de base.
+
+```{r}
+df |>
+    gtsummary::tbl_summary(
+        include = c(
+            idade,
+            altura,
+            peso,
+            imc,
+            cifose_toracica,
+            lordose_lombar,
+            dif_colete,
+            correcao_colete,
+            escoliometro,
+            inclinacao,
+            cifose_categ,
+            sexo,
+            regiao,
+            lenke,
+            risser
+        ),
+        type = list(
+            idade ~ "continuous"
+        ),
+        statistic = list(
+            gtsummary::all_continuous() ~ "{mean} ({sd})",
+            gtsummary::all_categorical() ~ "{n} ({p}%)"
+        )
+    )
+
+```
+
+
+## Desfecho principal
+
+- Maior curva na linha de base e em 6 meses.    
+- Delta: maior curva 6 meses - maior curva baseline.    
+- Delta categórica: delta melhor em 5 graus ou mais (MCID).    
+
+
+```{r}
+df |>
+    gtsummary::tbl_summary(
+        include = c(
+            maior_curva_baseline,
+            maior_curva_6_meses,
+            delta,
+            delta_cat_f
+        ),
+        type = list(
+            delta_cat_f ~ "categorical"
+        ),
+        statistic = list(
+            gtsummary::all_continuous() ~ "{mean} ({sd})",
+            gtsummary::all_categorical() ~ "{n} ({p}%)"
+        )
+    )
+
+```
+
+
+## Distribuição do desfecho principal
+```{r}
+df |>
+    ggplot(aes(x = "", y = delta)) +
+    PupillometryR::geom_flat_violin(
+        position = position_nudge(x = .2),
+        # fill = "steelblue",
+        alpha = 0.7
+    ) +
+    labs(
+        title = "Distribuicao do desfecho (delta)",
+        x = "",
+        y = "delta (graus)"
+    ) +
+    geom_point(position = position_jitter(w = .15)) +
+    geom_boxplot(
+        width = .25,
+        alpha = 0.7,
+        outlier.shape = NA
+    ) +
+    coord_flip() +
+    theme(
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()
+    )
+```
+
+```{r}
+df |>
+    ggplot(aes(sample = delta)) +
+    qqplotr::stat_qq_band(alpha = 0.2) +
+    qqplotr::stat_qq_line() +
+    qqplotr::stat_qq_point() +
+    labs(
+        title = "QQ-plot do desfecho (delta)",
+        x = "Quantis teoricos",
+        y = "Quantis amostrais"
+    )
+```
+
+# Modelagem
+
+## Modelo de regressão logística
+
+Este modelo estima associações ajustadas com a **chance de melhora (MCID)**, definida como $\Delta \le -5°$.
+
+
+```{r}
+model_bin <- glm(
+    delta_cat ~
+        idade +
+        altura +
+        peso +
+        # imc +
+        cifose_toracica +
+        lordose_lombar +
+        dif_colete +
+        correcao_colete +
+        escoliometro +
+        inclinacao +
+        cifose_categ +
+        sexo +
+        regiao +
+        lenke +
+        risser,
+    data = df, family = "binomial"
+)
+```
+
+
+### Parâmetros do modelo
+
+Parâmetros do modelo de regressão logística. Resposta em _Odds Ratio_.
+
+```{r}
+model_bin |>
+    gtsummary::tbl_regression(exponentiate = TRUE, conf.level = 0.95) |>
+    # gtsummary::add_global_p() |>
+    gtsummary::bold_p() |>
+    gtsummary::bold_labels() |>
+    gtsummary::italicize_levels()
+```
+
+
+### Verificações de adequação do modelo
+
+#### Colinearidade
+
+Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
+Valores maiores que 10 indicam colinearidade entre as variáveis.
+
+```{r}
+performance::check_collinearity(model_bin) |>
+    arrange(desc(VIF)) |>
+    select(Term, VIF, VIF_CI_low, VIF_CI_high) |>
+    performance::print_html()
+
+performance::check_collinearity(model_bin) |> plot()
+```
+
+#### Resíduos binarizados
+
+```{r}
+performance::binned_residuals(model_bin) |> plot()
+```
+
+
+#### Outliers
+
+```{r}
+performance::check_outliers(model_bin)
+performance::check_outliers(model_bin) |> plot()
+```
+
+
+#### Valores ajustados (diagnóstico)
+
+```{r}
+performance::check_predictions(model_bin) |> plot()
+```
+
+
+#### Resíduos simulados
+
+```{r}
+performance::check_residuals(model_bin)
+performance::check_residuals(model_bin) |> plot()
+```
+
+
+### Qualidade do ajuste do modelo
+
+Teste de Hosmer-Lemeshow para avaliar a qualidade do ajuste de modelos binomiais. P-valor < 0.05 indica que o modelo não ajusta bem os dados.
+
+```{r}
+performance::performance_hosmer(model_bin)
+```
+
+
+
+#### Coeficiente de determinação (Tjur)
+
+Coeficiente de determinação de Tjur ($R^2_{Tjur}$). Teste específico para modelos binomiais.
+
+```{r}
+performance::r2(model_bin)
+```
+
+#### Tamanho amostral efetivo (casos completos)
+
+```{r}
+mf_bin <- model.frame(model_bin)
+bin_n <- nrow(mf_bin)
+bin_events <- sum(mf_bin[[1]] == 1, na.rm = TRUE)
+bin_nonevents <- sum(mf_bin[[1]] == 0, na.rm = TRUE)
+tibble(
+    n_modelo = bin_n,
+    eventos_mcid = bin_events,
+    nao_eventos = bin_nonevents
+)
+```
+
+
+
+## Modelo de regressão linear
+
+Este modelo estima associações ajustadas com o desfecho contínuo $\Delta$ (maior curva em 6 meses − baseline, em graus).
+
+
+```{r}
+model_lin <- lm(
+    delta ~
+        idade +
+        altura +
+        peso +
+        # imc +
+        cifose_toracica +
+        lordose_lombar +
+        dif_colete +
+        correcao_colete +
+        escoliometro +
+        inclinacao +
+        cifose_categ +
+        sexo +
+        regiao +
+        lenke +
+        risser,
+    data = df
+)
+```
+
+
+
+### Parâmetros do modelo
+
+```{r}
+model_lin |>
+    gtsummary::tbl_regression(conf.level = 0.95) |>
+    # gtsummary::add_global_p() |>
+    gtsummary::bold_p() |>
+    gtsummary::bold_labels() |>
+    gtsummary::italicize_levels()
+```
+
+### Verificações de adequação do modelo
+
+#### Colinearidade
+
+Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
+Valores maiores que 10 indicam colinearidade entre as variáveis.
+
+```{r}
+performance::check_collinearity(model_lin) |>
+    arrange(desc(VIF)) |>
+    select(Term, VIF, VIF_CI_low, VIF_CI_high) |>
+    performance::print_html()
+
+performance::check_collinearity(model_lin) |> plot()
+```
+
+
+
+#### Heteroscedasticidade
+
+Verificação de heteroscedasticidade entre as variáveis independentes.
+
+```{r}
+performance::check_heteroscedasticity(model_lin)
+performance::check_heteroscedasticity(model_lin) |> plot()
+```
+
+
+#### Outliers
+
+```{r}
+performance::check_outliers(model_lin)
+performance::check_outliers(model_lin) |> plot()
+```
+
+
+#### Valores ajustados (diagnóstico)
+
+```{r}
+performance::check_predictions(model_lin) |> plot()
+```
+
+
+#### Resíduos simulados
+
+```{r}
+performance::check_residuals(model_lin)
+performance::check_residuals(model_lin) |> plot()
+```
+
+
+### Qualidade do ajuste do modelo
+
+#### Coeficiente de determinação
+
+$R^2$.
+```{r}
+# Qualidade do ajuste
+performance::r2(model_lin)
+```
+
+#### Tamanho amostral efetivo (casos completos)
+
+```{r}
+tibble(n_modelo = nobs(model_lin))
+```

@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/1381434/b3be744158c54f7cb91d82333ec57b0a
+bundleId: https://api.rpubs.com/api/v1/document/1381434/b3be744158c54f7cb91d82333ec57b0a
+url: http://rpubs.com/caiosainvallio/1381434
+version: 1
