@@ -154,6 +154,9 @@ map_dfr(categoricas, function(v) {
     print(n = Inf)
 ```
 
+<br>
+<br>
+<br>
 
 # Análise descritiva
 
@@ -231,9 +234,9 @@ df |>
         alpha = 0.7
     ) +
     labs(
-        title = "Distribuicao do desfecho (delta)",
+        title = "Distribution of the outcome (delta)",
         x = "",
-        y = "delta (graus)"
+        y = "delta (degrees)"
     ) +
     geom_point(position = position_jitter(w = .15)) +
     geom_boxplot(
@@ -256,13 +259,129 @@ df |>
     qqplotr::stat_qq_line() +
     qqplotr::stat_qq_point() +
     labs(
-        title = "QQ-plot do desfecho (delta)",
-        x = "Quantis teoricos",
-        y = "Quantis amostrais"
+        title = "Outcome QQ-plot (delta)",
+        x = "Theoretical quantiles",
+        y = "Sample quantiles"
     )
 ```
 
+<br>
+<br>
+<br>
+
+
 # Modelagem
+
+## Modelo de regressão linear
+
+Este modelo estima associações ajustadas com o desfecho contínuo $\Delta$ (maior curva em 6 meses − baseline, em graus).
+
+
+```{r}
+model_lin <- lm(
+    delta ~
+        idade +
+        altura +
+        peso +
+        # imc +
+        cifose_toracica +
+        lordose_lombar +
+        dif_colete +
+        correcao_colete +
+        escoliometro +
+        inclinacao +
+        cifose_categ +
+        sexo +
+        regiao +
+        lenke +
+        risser,
+    data = df
+)
+```
+
+
+
+### Parâmetros do modelo
+
+```{r}
+model_lin |>
+    gtsummary::tbl_regression(conf.level = 0.95) |>
+    # gtsummary::add_global_p() |>
+    gtsummary::bold_p() |>
+    gtsummary::bold_labels() |>
+    gtsummary::italicize_levels()
+```
+
+### Verificações de adequação do modelo
+
+#### Colinearidade
+
+Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
+Valores maiores que 10 indicam colinearidade entre as variáveis.
+
+```{r}
+performance::check_collinearity(model_lin) |>
+    arrange(desc(VIF)) |>
+    select(Term, VIF, VIF_CI_low, VIF_CI_high) |>
+    performance::print_html()
+
+performance::check_collinearity(model_lin) |> plot()
+```
+
+
+
+#### Heteroscedasticidade
+
+Verificação de heteroscedasticidade entre as variáveis independentes.
+
+```{r}
+performance::check_heteroscedasticity(model_lin)
+performance::check_heteroscedasticity(model_lin) |> plot()
+```
+
+
+#### Outliers
+
+```{r}
+performance::check_outliers(model_lin)
+performance::check_outliers(model_lin) |> plot()
+```
+
+
+#### Valores ajustados (diagnóstico)
+
+```{r}
+performance::check_predictions(model_lin) |> plot()
+```
+
+
+#### Resíduos simulados
+
+```{r}
+performance::check_residuals(model_lin)
+performance::check_residuals(model_lin) |> plot()
+```
+
+
+### Qualidade do ajuste do modelo
+
+#### Coeficiente de determinação
+
+$R^2$.
+```{r}
+# Qualidade do ajuste
+performance::r2(model_lin)
+```
+
+#### Tamanho amostral efetivo (casos completos)
+
+```{r}
+tibble(n_modelo = nobs(model_lin))
+```
+
+<br>
+<br>
+<br>
 
 ## Modelo de regressão logística
 
@@ -384,21 +503,24 @@ tibble(
 )
 ```
 
+<br>
+<br>
+<br>
 
 
-## CART (arvore de decisao) para MCID (delta_cat)
+## CART (árvore de decisão) para MCID (delta_cat)
 
-### Racional teorico
+### Racional teórico
 
-Um modelo CART (Classification and Regression Tree) e util aqui porque:
+Um modelo CART (Classification and Regression Tree) é útil aqui porque:
 
-- **Nao linearidade**: identifica automaticamente limiares (pontos de corte) em preditores continuos.
-- **Interacoes**: a sequencia de divisoes (splits) representa interacoes condicionais sem precisar pre-especificar termos de interacao.
-- **Interpretabilidade**: gera regras do tipo "se... entao...", uteis para comunicacao clinica e geracao de hipoteses.
+- **Não linearidade**: identifica automaticamente limiares (pontos de corte) em preditores contínuos.
+- **Interações**: a sequência de divisões (splits) representa interações condicionais sem precisar pre-especificar termos de interação.
+- **Interpretabilidade**: gera regras do tipo "se... então...", úteis para comunicação clínica e geração de hipóteses.
 
-**Limitacoes importantes:** arvores isoladas tendem a ter alta variancia e podem superajustar. Por isso, esta secao usa **validacao cruzada (CV)** e **tuning/poda** para controlar complexidade e reporta desempenho **interno** (sem validacao externa).
+**Limitações importantes:** árvores isoladas tendem a ter alta variância e podem superajustar. Por isso, esta seção usa **validação cruzada (CV)** e **tuning/poda** para controlar complexidade e reporta desempenho **interno** (sem validação externa).
 
-### Setup e preparacao dos dados
+### Setup e preparação dos dados
 
 ```{r}
 #| label: cart-setup
@@ -433,11 +555,11 @@ levels(df_cart$delta_cat_cart)
 
 ### Recipe (pre-processamento)
 
-O pre-processamento e feito **dentro do resampling** (evita leakage):
+O pre-processamento é feito **dentro do resampling** (evita leakage):
 
-- `step_zv()`: remove variaveis com variancia zero
-- `step_unknown()` + `step_novel()`: robustez a niveis novos/raros durante CV
-- `step_impute_median()` + `step_impute_mode()`: imputacao de missings
+- `step_zv()`: remove variáveis com variância zero
+- `step_unknown()` + `step_novel()`: robustez a níveis novos/raros durante CV
+- `step_impute_median()` + `step_impute_mode()`: imputação de missings
 
 ```{r}
 #| label: cart-recipe
@@ -452,13 +574,13 @@ cart_rec <- recipe(delta_cat_cart ~ ., data = df_cart) |>
 cart_rec
 ```
 
-### Modelo e hiperparametros
+### Modelo e hiperparâmetros
 
-Hiperparametros a serem tunados:
+Hiperparâmetros a serem tunados:
 
-- **`cost_complexity` (cp)**: controla poda/complexidade; valores maiores = arvores menores.
-- **`tree_depth`**: limita profundidade (proxy do grau de interacoes).
-- **`min_n`**: minimo de observacoes em no terminal; evita regras baseadas em poucos pacientes.
+- **`cost_complexity` (cp)**: controla poda/complexidade; valores maiores = árvores menores.
+- **`tree_depth`**: limita profundidade (proxy do grau de interações).
+- **`min_n`**: mínimo de observações em no terminal; evita regras baseadas em poucos pacientes.
 
 ```{r}
 #| label: cart-model
@@ -478,9 +600,9 @@ cart_wf <- workflow() |>
 cart_wf
 ```
 
-### Validacao cruzada e tuning
+### Validação cruzada e tuning
 
-Usamos **CV estratificada repetida** (10-fold, 5 repeticoes) para estimar desempenho e selecionar hiperparametros.
+Usamos **CV estratificada repetida** (10-fold, 5 repetições) para estimar desempenho e selecionar hiperparâmetros.
 
 ```{r}
 #| label: cart-cv-tuning
@@ -511,7 +633,7 @@ cart_tuned <- tune_grid(
 )
 ```
 
-### Melhores hiperparametros
+### Melhores hiperparâmetros
 
 Selecionamos pelo **maior AUC ROC medio** na CV:
 
@@ -534,7 +656,7 @@ best_params
 
 ### Desempenho final (CV)
 
-Avaliamos o modelo finalizado com os melhores hiperparametros:
+Avaliamos o modelo finalizado com os melhores hiperparâmetros:
 
 ```{r}
 #| label: cart-final-metrics
@@ -561,9 +683,9 @@ cart_metrics <- cart_res |>
 cart_metrics
 ```
 
-### Metricas por fold (dispersao)
+### Métricas por fold (dispersão)
 
-Visualizacao da incerteza nas estimativas de desempenho:
+Visualização da incerteza nas estimativas de desempenho:
 
 ```{r}
 #| label: cart-metrics-boxplot
@@ -577,10 +699,10 @@ cart_res |>
     geom_jitter(width = 0.1, alpha = 0.3, size = 1) +
     scale_fill_brewer(palette = "Set2") +
     labs(
-        title = "Distribuicao das metricas por fold (CV repetida)",
-        subtitle = "10-fold CV x 5 repeticoes = 50 estimativas por metrica",
-        x = "Metrica",
-        y = "Valor"
+        title = "Distribution of metrics by fold (CV repeated)",
+        subtitle = "10-fold CV x 5 repetitions = 50 estimates per metric",
+        x = "Metric",
+        y = "Value"
     ) +
     theme_minimal(base_size = 12) +
     theme(
@@ -589,7 +711,7 @@ cart_res |>
     )
 ```
 
-### Matriz de confusao agregada (normalizada)
+### Matriz de confusão agregada (normalizada)
 
 ```{r}
 #| label: cart-confusion-matrix
@@ -619,17 +741,17 @@ ggplot(conf_mat_tbl, aes(x = Prediction, y = Truth, fill = prop)) +
     geom_tile(color = "white", linewidth = 1) +
     geom_text(aes(label = label), size = 5, fontface = "bold") +
     scale_fill_gradient(
-        low = "white", 
+        low = "white",
         high = "steelblue",
         labels = scales::percent,
         name = "Proporcao"
     ) +
     scale_y_discrete(limits = rev) +
     labs(
-        title = "Matriz de confusao normalizada (CV)",
-        subtitle = "Proporcao por classe verdadeira (linhas somam 100%)",
-        x = "Predicao",
-        y = "Verdadeiro"
+        title = "Confucion Matrix",
+        subtitle = "Proportion by true class (rows sum to 100%)",
+        x = "Prediction",
+        y = "True"
     ) +
     theme_minimal(base_size = 12) +
     theme(
@@ -638,9 +760,9 @@ ggplot(conf_mat_tbl, aes(x = Prediction, y = Truth, fill = prop)) +
     )
 ```
 
-### Arvore final
+### Árvore final
 
-Ajustamos o modelo final no dataset completo para visualizacao e interpretacao:
+Ajustamos o modelo final no dataset completo para visualização e interpretação:
 
 ```{r}
 #| label: cart-final-tree
@@ -660,11 +782,11 @@ rpart.plot(
     roundint = FALSE,
     box.palette = "BuGn",
     shadow.col = "gray",
-    main = "Arvore de decisao para MCID (delta <= -5 graus)"
+    main = "Decision Tree for MCID (delta <= -5 degrees)"
 )
 ```
 
-### Importancia de variaveis
+### Importância de variáveis
 
 ```{r}
 #| label: cart-vip
@@ -680,10 +802,10 @@ cart_fit_full |>
         aesthetics = list(fill = "steelblue", alpha = 0.8)
     ) +
     labs(
-        title = "Importancia das variaveis (CART)",
-        subtitle = "Baseado na reducao de impureza (Gini)",
-        x = "Importancia",
-        y = "Variavel"
+        title = "Variable Importance (CART)",
+        subtitle = "Based on impurity reduction (Gini)",
+        x = "Importance",
+        y = "Variable"
     ) +
     theme_minimal(base_size = 12) +
     theme(plot.title = element_text(face = "bold"))
@@ -691,7 +813,7 @@ cart_fit_full |>
 
 ### Tabela de folhas (grupos de predicao)
 
-Esta tabela mostra os **nos terminais** (folhas) da arvore, com as regras que definem cada grupo, o tamanho do grupo e a proporcao de melhora:
+Esta tabela mostra os **nós terminais** (folhas) da árvore, com as regras que definem cada grupo, o tamanho do grupo e a proporção de melhora:
 
 ```{r}
 #| label: cart-leaves-table
@@ -703,8 +825,10 @@ leaves_idx <- which(frame$var == "<leaf>")
 # Funcao para extrair regras de cada no
 get_path_rules <- function(tree, node_id) {
     path <- rpart::path.rpart(tree, nodes = node_id, print.it = FALSE)
-    rules <- path[[1]][-1]  # remover "root"
-    if (length(rules) == 0) return("(raiz)")
+    rules <- path[[1]][-1] # remover "root"
+    if (length(rules) == 0) {
+        return("(raiz)")
+    }
     paste(rules, collapse = " E ")
 }
 
@@ -759,144 +883,39 @@ ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity)) +
     geom_abline(linetype = "dashed", color = "gray50") +
     geom_ribbon(aes(ymin = 0, ymax = sensitivity), alpha = 0.1, fill = "steelblue") +
     annotate(
-        "text", x = 0.6, y = 0.3,
+        "text",
+        x = 0.6, y = 0.3,
         label = paste0("AUC = ", round(auc_val, 3)),
         size = 5, fontface = "bold"
     ) +
     labs(
-        title = "Curva ROC (CV)",
-        subtitle = "Baseada em predicoes agregadas de todos os folds",
-        x = "1 - Especificidade (Taxa de Falsos Positivos)",
-        y = "Sensibilidade (Taxa de Verdadeiros Positivos)"
+        title = "ROC Curve (CV)",
+        subtitle = "Based on aggregated predictions from all folds",
+        x = "1 - Specificity (False Positive Rate)",
+        y = "Sensitivity (True Positive Rate)"
     ) +
     coord_equal() +
     theme_minimal(base_size = 12) +
     theme(plot.title = element_text(face = "bold"))
 ```
 
-### Interpretacao
+### Interpretação
 
-**Como ler a arvore:**
+**Como ler a árvore:**
 
-- Cada **no interno** representa uma condicao (split) sobre uma variavel.
-- Cada **caminho** da raiz ate um no terminal representa uma **regra** de classificacao.
-- A **sequencia de splits** indica **interacoes condicionais**: um split so importa dentro da regiao definida por splits anteriores.
-- Os **limiares** (pontos de corte) sugerem **nao-linearidades** nos efeitos.
+- Cada **nó interno** representa uma condição (split) sobre uma variável.
+- Cada **caminho** da raiz ate um nó terminal representa uma **regra** de classificação.
+- A **sequencia de splits** indica **interações condicionais**: um split so importa dentro da região definida por splits anteriores.
+- Os **limiares** (pontos de corte) sugerem **não-linearidades** nos efeitos.
 
-**Como ler a importancia:**
+**Como ler a importância:**
 
-- Variaveis com maior importancia contribuem mais para a reducao de impureza (Gini) nos splits.
-- Isso **nao implica causalidade**, apenas relevancia preditiva no contexto do modelo.
+- Variáveis com maior importância contribuem mais para a redução de impureza (Gini) nos splits.
+- Isso **não implica causalidade**, apenas relevância preditiva no contexto do modelo.
 
-**Limitacoes:**
+**Limitações:**
 
-- Desempenho reportado e **interno** (CV), sem validacao externa.
-- Arvores sao **instaveis**: pequenas mudanças nos dados podem alterar a estrutura.
-- Usar como **ferramenta exploratoria** complementar aos modelos inferenciais (linear/logistico).
+- Desempenho reportado e **interno** (CV), sem validação externa.
+- Árvores são **instáveis**: pequenas mudanças nos dados podem alterar a estrutura.
+- Usar como **ferramenta exploratória** complementar aos modelos inferenciais (linear/logístico).
 
-## Modelo de regressão linear
-
-Este modelo estima associações ajustadas com o desfecho contínuo $\Delta$ (maior curva em 6 meses − baseline, em graus).
-
-
-```{r}
-model_lin <- lm(
-    delta ~
-        idade +
-        altura +
-        peso +
-        # imc +
-        cifose_toracica +
-        lordose_lombar +
-        dif_colete +
-        correcao_colete +
-        escoliometro +
-        inclinacao +
-        cifose_categ +
-        sexo +
-        regiao +
-        lenke +
-        risser,
-    data = df
-)
-```
-
-
-
-### Parâmetros do modelo
-
-```{r}
-model_lin |>
-    gtsummary::tbl_regression(conf.level = 0.95) |>
-    # gtsummary::add_global_p() |>
-    gtsummary::bold_p() |>
-    gtsummary::bold_labels() |>
-    gtsummary::italicize_levels()
-```
-
-### Verificações de adequação do modelo
-
-#### Colinearidade
-
-Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
-Valores maiores que 10 indicam colinearidade entre as variáveis.
-
-```{r}
-performance::check_collinearity(model_lin) |>
-    arrange(desc(VIF)) |>
-    select(Term, VIF, VIF_CI_low, VIF_CI_high) |>
-    performance::print_html()
-
-performance::check_collinearity(model_lin) |> plot()
-```
-
-
-
-#### Heteroscedasticidade
-
-Verificação de heteroscedasticidade entre as variáveis independentes.
-
-```{r}
-performance::check_heteroscedasticity(model_lin)
-performance::check_heteroscedasticity(model_lin) |> plot()
-```
-
-
-#### Outliers
-
-```{r}
-performance::check_outliers(model_lin)
-performance::check_outliers(model_lin) |> plot()
-```
-
-
-#### Valores ajustados (diagnóstico)
-
-```{r}
-performance::check_predictions(model_lin) |> plot()
-```
-
-
-#### Resíduos simulados
-
-```{r}
-performance::check_residuals(model_lin)
-performance::check_residuals(model_lin) |> plot()
-```
-
-
-### Qualidade do ajuste do modelo
-
-#### Coeficiente de determinação
-
-$R^2$.
-```{r}
-# Qualidade do ajuste
-performance::r2(model_lin)
-```
-
-#### Tamanho amostral efetivo (casos completos)
-
-```{r}
-tibble(n_modelo = nobs(model_lin))
-```
