@@ -386,6 +386,414 @@ tibble(
 
 
 
+## CART (arvore de decisao) para MCID (delta_cat)
+
+### Racional teorico
+
+Um modelo CART (Classification and Regression Tree) e util aqui porque:
+
+- **Nao linearidade**: identifica automaticamente limiares (pontos de corte) em preditores continuos.
+- **Interacoes**: a sequencia de divisoes (splits) representa interacoes condicionais sem precisar pre-especificar termos de interacao.
+- **Interpretabilidade**: gera regras do tipo "se... entao...", uteis para comunicacao clinica e geracao de hipoteses.
+
+**Limitacoes importantes:** arvores isoladas tendem a ter alta variancia e podem superajustar. Por isso, esta secao usa **validacao cruzada (CV)** e **tuning/poda** para controlar complexidade e reporta desempenho **interno** (sem validacao externa).
+
+### Setup e preparacao dos dados
+
+```{r}
+#| label: cart-setup
+
+library(tidymodels)
+library(rpart.plot)
+library(vip)
+
+set.seed(123)
+
+# Desfecho como fator: "melhora" (evento) vs "nao_melhora"
+df_cart <- df |>
+    mutate(
+        delta_cat_cart = factor(
+            delta_cat,
+            levels = c(0, 1),
+            labels = c("nao_melhora", "melhora")
+        )
+    ) |>
+    select(
+        delta_cat_cart,
+        idade, altura, peso,
+        cifose_toracica, lordose_lombar,
+        dif_colete, correcao_colete,
+        escoliometro, inclinacao,
+        cifose_categ, sexo, regiao, lenke, risser
+    )
+
+# Verificar niveis (evento = "melhora", segundo nivel)
+levels(df_cart$delta_cat_cart)
+```
+
+### Recipe (pre-processamento)
+
+O pre-processamento e feito **dentro do resampling** (evita leakage):
+
+- `step_zv()`: remove variaveis com variancia zero
+- `step_unknown()` + `step_novel()`: robustez a niveis novos/raros durante CV
+- `step_impute_median()` + `step_impute_mode()`: imputacao de missings
+
+```{r}
+#| label: cart-recipe
+
+cart_rec <- recipe(delta_cat_cart ~ ., data = df_cart) |>
+    step_zv(all_predictors()) |>
+    step_unknown(all_nominal_predictors()) |>
+    step_novel(all_nominal_predictors()) |>
+    step_impute_median(all_numeric_predictors()) |>
+    step_impute_mode(all_nominal_predictors())
+
+cart_rec
+```
+
+### Modelo e hiperparametros
+
+Hiperparametros a serem tunados:
+
+- **`cost_complexity` (cp)**: controla poda/complexidade; valores maiores = arvores menores.
+- **`tree_depth`**: limita profundidade (proxy do grau de interacoes).
+- **`min_n`**: minimo de observacoes em no terminal; evita regras baseadas em poucos pacientes.
+
+```{r}
+#| label: cart-model
+
+cart_spec <- decision_tree(
+    cost_complexity = tune(),
+    tree_depth = tune(),
+    min_n = tune()
+) |>
+    set_engine("rpart") |>
+    set_mode("classification")
+
+cart_wf <- workflow() |>
+    add_recipe(cart_rec) |>
+    add_model(cart_spec)
+
+cart_wf
+```
+
+### Validacao cruzada e tuning
+
+Usamos **CV estratificada repetida** (10-fold, 5 repeticoes) para estimar desempenho e selecionar hiperparametros.
+
+```{r}
+#| label: cart-cv-tuning
+
+set.seed(123)
+folds <- vfold_cv(df_cart, v = 10, repeats = 5, strata = delta_cat_cart)
+
+# Metricas de interesse
+metricas <- metric_set(roc_auc, accuracy, sens, spec)
+
+# Grid de hiperparametros
+set.seed(123)
+cart_grid <- grid_latin_hypercube(
+    cost_complexity(range = c(-4, -1)),
+    tree_depth(range = c(1L, 6L)),
+    min_n(range = c(5L, 30L)),
+    size = 30
+)
+
+# Tuning
+set.seed(123)
+cart_tuned <- tune_grid(
+    cart_wf,
+    resamples = folds,
+    grid = cart_grid,
+    metrics = metricas,
+    control = control_grid(save_pred = TRUE)
+)
+```
+
+### Melhores hiperparametros
+
+Selecionamos pelo **maior AUC ROC medio** na CV:
+
+```{r}
+#| label: cart-best-params
+
+# Top 10 combinacoes por AUC
+cart_tuned |>
+    collect_metrics() |>
+    filter(.metric == "roc_auc") |>
+    arrange(desc(mean)) |>
+    slice_head(n = 10)
+
+# Melhor combinacao
+best_params <- cart_tuned |>
+    select_best(metric = "roc_auc")
+
+best_params
+```
+
+### Desempenho final (CV)
+
+Avaliamos o modelo finalizado com os melhores hiperparametros:
+
+```{r}
+#| label: cart-final-metrics
+
+cart_final_wf <- finalize_workflow(cart_wf, best_params)
+
+set.seed(123)
+cart_res <- fit_resamples(
+    cart_final_wf,
+    resamples = folds,
+    metrics = metricas,
+    control = control_resamples(save_pred = TRUE)
+)
+
+# Metricas agregadas (media e SD)
+cart_metrics <- cart_res |>
+    collect_metrics() |>
+    select(.metric, mean, std_err, n) |>
+    mutate(
+        ci_lower = mean - 1.96 * std_err,
+        ci_upper = mean + 1.96 * std_err
+    )
+
+cart_metrics
+```
+
+### Metricas por fold (dispersao)
+
+Visualizacao da incerteza nas estimativas de desempenho:
+
+```{r}
+#| label: cart-metrics-boxplot
+#| fig-width: 8
+#| fig-height: 5
+
+cart_res |>
+    collect_metrics(summarize = FALSE) |>
+    ggplot(aes(x = .metric, y = .estimate, fill = .metric)) +
+    geom_boxplot(alpha = 0.7, show.legend = FALSE) +
+    geom_jitter(width = 0.1, alpha = 0.3, size = 1) +
+    scale_fill_brewer(palette = "Set2") +
+    labs(
+        title = "Distribuicao das metricas por fold (CV repetida)",
+        subtitle = "10-fold CV x 5 repeticoes = 50 estimativas por metrica",
+        x = "Metrica",
+        y = "Valor"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+        plot.title = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 0)
+    )
+```
+
+### Matriz de confusao agregada (normalizada)
+
+```{r}
+#| label: cart-confusion-matrix
+#| fig-width: 6
+#| fig-height: 5
+
+# Predicoes agregadas de todos os folds
+preds_all <- cart_res |>
+    collect_predictions()
+
+# Matriz de confusao
+conf_mat_data <- preds_all |>
+    conf_mat(truth = delta_cat_cart, estimate = .pred_class)
+
+# Normalizar por linha (proporcao por classe verdadeira)
+conf_mat_tbl <- conf_mat_data$table |>
+    as.data.frame() |>
+    group_by(Truth) |>
+    mutate(
+        prop = Freq / sum(Freq),
+        label = scales::percent(prop, accuracy = 0.1)
+    ) |>
+    ungroup()
+
+# Visualizacao heatmap normalizado
+ggplot(conf_mat_tbl, aes(x = Prediction, y = Truth, fill = prop)) +
+    geom_tile(color = "white", linewidth = 1) +
+    geom_text(aes(label = label), size = 5, fontface = "bold") +
+    scale_fill_gradient(
+        low = "white", 
+        high = "steelblue",
+        labels = scales::percent,
+        name = "Proporcao"
+    ) +
+    scale_y_discrete(limits = rev) +
+    labs(
+        title = "Matriz de confusao normalizada (CV)",
+        subtitle = "Proporcao por classe verdadeira (linhas somam 100%)",
+        x = "Predicao",
+        y = "Verdadeiro"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+        plot.title = element_text(face = "bold"),
+        panel.grid = element_blank()
+    )
+```
+
+### Arvore final
+
+Ajustamos o modelo final no dataset completo para visualizacao e interpretacao:
+
+```{r}
+#| label: cart-final-tree
+#| fig-width: 10
+#| fig-height: 8
+
+cart_fit_full <- fit(cart_final_wf, data = df_cart)
+cart_rpart <- extract_fit_engine(cart_fit_full)
+
+# Plot da arvore com rpart.plot
+rpart.plot(
+    cart_rpart,
+    type = 4,
+    extra = 104,
+    under = TRUE,
+    fallen.leaves = TRUE,
+    roundint = FALSE,
+    box.palette = "BuGn",
+    shadow.col = "gray",
+    main = "Arvore de decisao para MCID (delta <= -5 graus)"
+)
+```
+
+### Importancia de variaveis
+
+```{r}
+#| label: cart-vip
+#| fig-width: 8
+#| fig-height: 6
+
+# Grafico de importancia com vip
+cart_fit_full |>
+    extract_fit_parsnip() |>
+    vip(
+        num_features = 15,
+        geom = "col",
+        aesthetics = list(fill = "steelblue", alpha = 0.8)
+    ) +
+    labs(
+        title = "Importancia das variaveis (CART)",
+        subtitle = "Baseado na reducao de impureza (Gini)",
+        x = "Importancia",
+        y = "Variavel"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(plot.title = element_text(face = "bold"))
+```
+
+### Tabela de folhas (grupos de predicao)
+
+Esta tabela mostra os **nos terminais** (folhas) da arvore, com as regras que definem cada grupo, o tamanho do grupo e a proporcao de melhora:
+
+```{r}
+#| label: cart-leaves-table
+
+# Extrair informacoes dos nos terminais
+frame <- cart_rpart$frame
+leaves_idx <- which(frame$var == "<leaf>")
+
+# Funcao para extrair regras de cada no
+get_path_rules <- function(tree, node_id) {
+    path <- rpart::path.rpart(tree, nodes = node_id, print.it = FALSE)
+    rules <- path[[1]][-1]  # remover "root"
+    if (length(rules) == 0) return("(raiz)")
+    paste(rules, collapse = " E ")
+}
+
+# Construir tabela de folhas
+leaves_tbl <- tibble(
+    no = as.integer(rownames(frame)[leaves_idx]),
+    n = frame$n[leaves_idx],
+    n_melhora = frame$n[leaves_idx] * frame$yval2[leaves_idx, 5],
+    n_nao_melhora = frame$n[leaves_idx] * frame$yval2[leaves_idx, 4],
+    prop_melhora = frame$yval2[leaves_idx, 5],
+    predicao = ifelse(frame$yval[leaves_idx] == 2, "melhora", "nao_melhora")
+) |>
+    rowwise() |>
+    mutate(regras = get_path_rules(cart_rpart, no)) |>
+    ungroup() |>
+    mutate(
+        prop_melhora_pct = scales::percent(prop_melhora, accuracy = 0.1),
+        grupo = paste0("Grupo ", row_number())
+    ) |>
+    select(grupo, predicao, n, prop_melhora_pct, regras) |>
+    arrange(desc(predicao), desc(n))
+
+leaves_tbl |>
+    rename(
+        Grupo = grupo,
+        Predicao = predicao,
+        N = n,
+        `% Melhora` = prop_melhora_pct,
+        Regras = regras
+    ) |>
+    knitr::kable(align = c("l", "l", "r", "r", "l"))
+```
+
+### Curva ROC
+
+```{r}
+#| label: cart-roc-curve
+#| fig-width: 7
+#| fig-height: 6
+
+# Curva ROC a partir das predicoes CV
+roc_data <- preds_all |>
+    roc_curve(truth = delta_cat_cart, .pred_melhora, event_level = "second")
+
+# AUC para o titulo
+auc_val <- preds_all |>
+    roc_auc(truth = delta_cat_cart, .pred_melhora, event_level = "second") |>
+    pull(.estimate)
+
+ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity)) +
+    geom_path(linewidth = 1.2, color = "steelblue") +
+    geom_abline(linetype = "dashed", color = "gray50") +
+    geom_ribbon(aes(ymin = 0, ymax = sensitivity), alpha = 0.1, fill = "steelblue") +
+    annotate(
+        "text", x = 0.6, y = 0.3,
+        label = paste0("AUC = ", round(auc_val, 3)),
+        size = 5, fontface = "bold"
+    ) +
+    labs(
+        title = "Curva ROC (CV)",
+        subtitle = "Baseada em predicoes agregadas de todos os folds",
+        x = "1 - Especificidade (Taxa de Falsos Positivos)",
+        y = "Sensibilidade (Taxa de Verdadeiros Positivos)"
+    ) +
+    coord_equal() +
+    theme_minimal(base_size = 12) +
+    theme(plot.title = element_text(face = "bold"))
+```
+
+### Interpretacao
+
+**Como ler a arvore:**
+
+- Cada **no interno** representa uma condicao (split) sobre uma variavel.
+- Cada **caminho** da raiz ate um no terminal representa uma **regra** de classificacao.
+- A **sequencia de splits** indica **interacoes condicionais**: um split so importa dentro da regiao definida por splits anteriores.
+- Os **limiares** (pontos de corte) sugerem **nao-linearidades** nos efeitos.
+
+**Como ler a importancia:**
+
+- Variaveis com maior importancia contribuem mais para a reducao de impureza (Gini) nos splits.
+- Isso **nao implica causalidade**, apenas relevancia preditiva no contexto do modelo.
+
+**Limitacoes:**
+
+- Desempenho reportado e **interno** (CV), sem validacao externa.
+- Arvores sao **instaveis**: pequenas mudanças nos dados podem alterar a estrutura.
+- Usar como **ferramenta exploratoria** complementar aos modelos inferenciais (linear/logistico).
+
 ## Modelo de regressão linear
 
 Este modelo estima associações ajustadas com o desfecho contínuo $\Delta$ (maior curva em 6 meses − baseline, em graus).
