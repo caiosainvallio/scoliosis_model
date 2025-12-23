@@ -69,38 +69,91 @@ theme_set(theme_minimal())
 
 
 # read data
-df_raw <- readxl::read_excel("data/modelagem final.xlsx", sheet = "dados")
+df_raw <- readxl::read_excel("data/dataset_escoliose_00.xlsx", sheet = "dados", na = "")
 
 # clean names
 df <- df_raw |> janitor::clean_names()
 
-# clean escoliometro
+# escoliometro - classificacao do local onde a escoliose esta mais severa
 df <- df |>
     mutate(
-        escoliometro = pmax(
-            escoliomertro_cervical,
-            escoliometro_torarica,
-            escoliometro_lombar,
+        escoliometro_maior_10_graus = case_when(
+            (escoliometro_cervical > 10) & (escoliometro_torarica > 10) & (escoliometro_lombar > 10) ~ "cervical_toracica_lombar",
+            (escoliometro_cervical > 10) & (escoliometro_torarica > 10) ~ "cervical_toracica",
+            (escoliometro_cervical > 10) & (escoliometro_lombar > 10) ~ "cervical_lombar",
+            (escoliometro_torarica > 10) & (escoliometro_lombar > 10) ~ "toracica_lombar",
+            (escoliometro_cervical > 10) ~ "cervical",
+            (escoliometro_torarica > 10) ~ "toracica",
+            (escoliometro_lombar > 10) ~ "lombar",
+            TRUE ~ "nenhum"
+        )
+    )
+
+# lenke - classificacao da curvatura da escoliose
+df <- df |>
+    mutate(
+        lenke_curvatura = case_when(
+            lenke %in% c(1, 2, 5) ~ "curva em c",
+            lenke %in% c(3, 4, 6) ~ "curva em s",
+            TRUE ~ NA_character_
+        )
+    )
+
+# risser - classificacao do inicio e final do crescimento
+df <- df |>
+    mutate(
+        risser_agrupado = case_when(
+            risser %in% c(0, 1, 2) ~ "inicio do crescimento",
+            risser %in% c(3, 4) ~ "final do crescimento",
+            TRUE ~ NA_character_
+        )
+    )
+
+# cifose - classificacao da cifose
+df <- df |>
+    mutate(
+        cifose_categ = case_when(
+            cifose_toracica < 10 ~ "hipocifose",
+            cifose_toracica >= 10 & cifose_toracica < 40 ~ "normalidade",
+            cifose_toracica >= 40 ~ "hipercifose",
+            TRUE ~ NA_character_
+        )
+    )
+
+# lordose - classificacao da lordose
+df <- df |>
+    mutate(
+        lordose_categ = case_when(
+            lordose_lombar < 45 ~ "hipolordose",
+            lordose_lombar >= 45 & lordose_lombar < 50 ~ "normalidade",
+            lordose_lombar >= 50 ~ "hiperlordose",
+            TRUE ~ NA_character_
+        )
+    )
+
+# definicao do desfecho - alvo
+# cobb inicial - alvo
+df <- df |>
+    mutate(
+        cobb_inicial_maior = pmax(
+            cobb_toracico_proximal,
+            cobb_toracica,
+            cobb_lombar,
             na.rm = TRUE
         )
     ) |>
     mutate(
-        regiao = case_when(
-            escoliometro == escoliomertro_cervical ~ "cervical",
-            escoliometro == escoliometro_torarica ~ "toracica",
-            escoliometro == escoliometro_lombar ~ "lombar",
+        regiao_cobb_inicial = case_when(
+            cobb_inicial_maior == cobb_toracico_proximal ~ "toracico_proximal",
+            cobb_inicial_maior == cobb_toracica ~ "toracica",
+            cobb_inicial_maior == cobb_lombar ~ "lombar",
             TRUE ~ NA_character_
         )
-    ) |>
-    select(
-        -escoliomertro_cervical,
-        -escoliometro_torarica,
-        -escoliometro_lombar
     )
 
-# definicao do desfecho (ver secao acima)
+# categorizacao do desfecho - alvo
 df <- df |>
-    mutate(delta = maior_curva_6_meses - maior_curva_baseline) |>
+    mutate(delta = maior_curva_6_meses - cobb_inicial_maior) |>
     mutate(delta_cat = if_else(delta <= -5, 1, 0)) |>
     mutate(
         delta_cat_f = factor(
@@ -117,8 +170,13 @@ df <- df |>
         lenke = as.factor(lenke),
         risser = as.factor(risser),
         sexo = as.factor(sexo),
-        regiao = as.factor(regiao),
-        cifose_categ = as.factor(cifose_categ)
+        flexibilidade = as.factor(flexibilidade),
+        regiao_cobb_inicial = as.factor(regiao_cobb_inicial),
+        escoliometro_maior_10_graus = as.factor(escoliometro_maior_10_graus),
+        lenke_curvatura = as.factor(lenke_curvatura),
+        risser_agrupado = as.factor(risser_agrupado),
+        cifose_categ = as.factor(cifose_categ),
+        lordose_categ = as.factor(lordose_categ)
     )
 
 ```
@@ -135,6 +193,10 @@ missing_tbl <- df |>
 missing_tbl |>
     mutate(pct_missing = scales::percent(pct_missing, accuracy = 0.1)) |>
     print(n = 50)
+
+
+# drop na in flexibilidade
+df <- df |> drop_na(flexibilidade)
 ```
 
 **Observação:** os modelos abaixo usam **análise por caso completo** (listwise deletion), que é o comportamento padrão do `glm()`/`lm()` quando há dados faltantes nas variáveis do modelo.
@@ -144,7 +206,18 @@ missing_tbl |>
 As variáveis categóricas entram como fatores. A **categoria de referência** (baseline) é o **primeiro nível** do fator (conforme `levels()`), a menos que seja explicitamente reordenado.
 
 ```{r}
-categoricas <- c("sexo", "regiao", "lenke", "risser", "cifose_categ")
+categoricas <- c(
+    "sexo",
+    "lenke",
+    "risser",
+    "flexibilidade",
+    "regiao_cobb_inicial",
+    "escoliometro_maior_10_graus",
+    "lenke_curvatura",
+    "risser_agrupado",
+    "cifose_categ",
+    "lordose_categ"
+)
 map_dfr(categoricas, function(v) {
     tibble(
         variavel = v,
@@ -168,21 +241,26 @@ Variáveis coletadas na linha de base.
 df |>
     gtsummary::tbl_summary(
         include = c(
+            # numericas
             idade,
             altura,
             peso,
-            imc,
             cifose_toracica,
             lordose_lombar,
             dif_colete,
             correcao_colete,
-            escoliometro,
-            inclinacao,
-            cifose_categ,
+
+            # categoricas
             sexo,
-            regiao,
             lenke,
-            risser
+            risser,
+            flexibilidade,
+            regiao_cobb_inicial,
+            escoliometro_maior_10_graus,
+            lenke_curvatura,
+            risser_agrupado,
+            cifose_categ,
+            lordose_categ,
         ),
         type = list(
             idade ~ "continuous"
@@ -207,7 +285,7 @@ df |>
 df |>
     gtsummary::tbl_summary(
         include = c(
-            maior_curva_baseline,
+            cobb_inicial_maior,
             maior_curva_6_meses,
             delta,
             delta_cat_f
@@ -280,21 +358,26 @@ Este modelo estima associações ajustadas com o desfecho contínuo $\Delta$ (ma
 ```{r}
 model_lin <- lm(
     delta ~
+        # numericas
         idade +
         altura +
         peso +
-        # imc +
         cifose_toracica +
         lordose_lombar +
         dif_colete +
         correcao_colete +
-        escoliometro +
-        inclinacao +
-        cifose_categ +
+
+        # categoricas
         sexo +
-        regiao +
         lenke +
-        risser,
+        risser +
+        flexibilidade +
+        regiao_cobb_inicial +
+        escoliometro_maior_10_graus +
+        lenke_curvatura +
+        risser_agrupado +
+        cifose_categ +
+        lordose_categ,
     data = df
 )
 ```
@@ -391,21 +474,26 @@ Este modelo estima associações ajustadas com a **chance de melhora (MCID)**, d
 ```{r}
 model_bin <- glm(
     delta_cat ~
+        # numericas
         idade +
         altura +
         peso +
-        # imc +
         cifose_toracica +
         lordose_lombar +
         dif_colete +
         correcao_colete +
-        escoliometro +
-        inclinacao +
-        cifose_categ +
+
+        # categoricas
         sexo +
-        regiao +
         lenke +
-        risser,
+        risser +
+        flexibilidade +
+        regiao_cobb_inicial +
+        escoliometro_maior_10_graus +
+        lenke_curvatura +
+        risser_agrupado +
+        cifose_categ +
+        lordose_categ,
     data = df, family = "binomial"
 )
 ```
@@ -542,11 +630,26 @@ df_cart <- df |>
     ) |>
     select(
         delta_cat_cart,
-        idade, altura, peso,
-        cifose_toracica, lordose_lombar,
-        dif_colete, correcao_colete,
-        escoliometro, inclinacao,
-        cifose_categ, sexo, regiao, lenke, risser
+        # numericas
+        idade,
+        altura,
+        peso,
+        cifose_toracica,
+        lordose_lombar,
+        dif_colete,
+        correcao_colete,
+
+        # categoricas
+        sexo,
+        lenke,
+        risser,
+        flexibilidade,
+        regiao_cobb_inicial,
+        escoliometro_maior_10_graus,
+        lenke_curvatura,
+        risser_agrupado,
+        cifose_categ,
+        lordose_categ,
     )
 
 # Verificar niveis (evento = "melhora", segundo nivel)
@@ -617,7 +720,7 @@ metricas <- metric_set(roc_auc, accuracy, sens, spec)
 set.seed(123)
 cart_grid <- grid_latin_hypercube(
     cost_complexity(range = c(-4, -1)),
-    tree_depth(range = c(1L, 6L)),
+    tree_depth(range = c(3L, 6L)),
     min_n(range = c(5L, 30L)),
     size = 30
 )
