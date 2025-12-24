@@ -54,11 +54,17 @@ Por se tratar de análise **exploratória**, os resultados devem ser interpretad
 ```{r}
 ## Setup (reprodutibilidade)
 pkgs <- c(
-    "tidyverse", "gtsummary",
-    "readxl", "janitor",
-    "performance", "qqplotr", "PupillometryR"
+    "tidyverse",
+    "gtsummary",
+    "readxl",
+    "janitor",
+    "performance",
+    "qqplotr",
+    "PupillometryR"
 )
-missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+missing_pkgs <- pkgs[
+    !vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)
+]
 if (length(missing_pkgs) > 0) {
     stop("Pacotes ausentes: ", paste(missing_pkgs, collapse = ", "))
 }
@@ -69,7 +75,11 @@ theme_set(theme_minimal())
 
 
 # read data
-df_raw <- readxl::read_excel("data/dataset_escoliose_00.xlsx", sheet = "dados", na = "")
+df_raw <- readxl::read_excel(
+    "data/dataset_escoliose_00.xlsx",
+    sheet = "dados",
+    na = ""
+)
 
 # clean names
 df <- df_raw |> janitor::clean_names()
@@ -78,10 +88,15 @@ df <- df_raw |> janitor::clean_names()
 df <- df |>
     mutate(
         escoliometro_maior_10_graus = case_when(
-            (escoliometro_cervical > 10) & (escoliometro_torarica > 10) & (escoliometro_lombar > 10) ~ "cervical_toracica_lombar",
-            (escoliometro_cervical > 10) & (escoliometro_torarica > 10) ~ "cervical_toracica",
-            (escoliometro_cervical > 10) & (escoliometro_lombar > 10) ~ "cervical_lombar",
-            (escoliometro_torarica > 10) & (escoliometro_lombar > 10) ~ "toracica_lombar",
+            (escoliometro_cervical > 10) &
+                (escoliometro_torarica > 10) &
+                (escoliometro_lombar > 10) ~ "cervical_toracica_lombar",
+            (escoliometro_cervical > 10) &
+                (escoliometro_torarica > 10) ~ "cervical_toracica",
+            (escoliometro_cervical > 10) &
+                (escoliometro_lombar > 10) ~ "cervical_lombar",
+            (escoliometro_torarica > 10) &
+                (escoliometro_lombar > 10) ~ "toracica_lombar",
             (escoliometro_cervical > 10) ~ "cervical",
             (escoliometro_torarica > 10) ~ "toracica",
             (escoliometro_lombar > 10) ~ "lombar",
@@ -129,6 +144,12 @@ df <- df |>
             lordose_lombar >= 50 ~ "hiperlordose",
             TRUE ~ NA_character_
         )
+    )
+
+# imc - calculo do imc
+df <- df |>
+    mutate(
+        imc = peso / (altura)^2
     )
 
 # definicao do desfecho - alvo
@@ -186,7 +207,11 @@ df <- df |>
 ```{r}
 missing_tbl <- df |>
     summarise(across(everything(), ~ sum(is.na(.)))) |>
-    pivot_longer(everything(), names_to = "variavel", values_to = "n_missing") |>
+    pivot_longer(
+        everything(),
+        names_to = "variavel",
+        values_to = "n_missing"
+    ) |>
     mutate(pct_missing = n_missing / nrow(df)) |>
     arrange(desc(pct_missing))
 
@@ -245,6 +270,7 @@ df |>
             idade,
             altura,
             peso,
+            imc,
             cifose_toracica,
             lordose_lombar,
             dif_colete,
@@ -350,7 +376,25 @@ df |>
 
 # Modelagem
 
-## Modelo de regressão linear
+## Combinação de variáveis
+
+### Variáveis originais
+
+Incluindo:
+
+- idade 
+- imc   
+- cifose_toracica    
+- lordose_lombar    
+- dif_colete       
+- sexo   
+- lenke    
+- risser    
+- flexibilidade    
+- escoliometro_maior_10_graus    
+
+
+#### Modelo de regressão linear
 
 Este modelo estima associações ajustadas com o desfecho contínuo $\Delta$ (maior curva em 6 meses − baseline, em graus).
 
@@ -360,31 +404,33 @@ model_lin <- lm(
     delta ~
         # numericas
         idade +
-        altura +
-        peso +
+        # altura +
+        # peso +
+        imc +
         cifose_toracica +
         lordose_lombar +
         dif_colete +
-        correcao_colete +
+        # correcao_colete +
 
         # categoricas
         sexo +
         lenke +
         risser +
         flexibilidade +
-        regiao_cobb_inicial +
-        escoliometro_maior_10_graus +
-        lenke_curvatura +
-        risser_agrupado +
-        cifose_categ +
-        lordose_categ,
+        # regiao_cobb_inicial +
+        escoliometro_maior_10_graus
+    # lenke_curvatura +
+    # risser_agrupado +
+    # cifose_categ +
+    # lordose_categ,
+    ,
     data = df
 )
 ```
 
 
 
-### Parâmetros do modelo
+##### Parâmetros do modelo
 
 ```{r}
 model_lin |>
@@ -395,9 +441,7 @@ model_lin |>
     gtsummary::italicize_levels()
 ```
 
-### Verificações de adequação do modelo
-
-#### Colinearidade
+##### Colinearidade
 
 Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
 Valores maiores que 10 indicam colinearidade entre as variáveis.
@@ -413,7 +457,7 @@ performance::check_collinearity(model_lin) |> plot()
 
 
 
-#### Heteroscedasticidade
+##### Heteroscedasticidade
 
 Verificação de heteroscedasticidade entre as variáveis independentes.
 
@@ -423,7 +467,7 @@ performance::check_heteroscedasticity(model_lin) |> plot()
 ```
 
 
-#### Outliers
+##### Outliers
 
 ```{r}
 performance::check_outliers(model_lin)
@@ -431,14 +475,14 @@ performance::check_outliers(model_lin) |> plot()
 ```
 
 
-#### Valores ajustados (diagnóstico)
+##### Valores ajustados (diagnóstico)
 
 ```{r}
 performance::check_predictions(model_lin) |> plot()
 ```
 
 
-#### Resíduos simulados
+##### Resíduos simulados
 
 ```{r}
 performance::check_residuals(model_lin)
@@ -446,9 +490,7 @@ performance::check_residuals(model_lin) |> plot()
 ```
 
 
-### Qualidade do ajuste do modelo
-
-#### Coeficiente de determinação
+##### Coeficiente de determinação
 
 $R^2$.
 ```{r}
@@ -456,7 +498,7 @@ $R^2$.
 performance::r2(model_lin)
 ```
 
-#### Tamanho amostral efetivo (casos completos)
+##### Tamanho amostral efetivo (casos completos)
 
 ```{r}
 tibble(n_modelo = nobs(model_lin))
@@ -466,7 +508,7 @@ tibble(n_modelo = nobs(model_lin))
 <br>
 <br>
 
-## Modelo de regressão logística
+#### Modelo de regressão logística
 
 Este modelo estima associações ajustadas com a **chance de melhora (MCID)**, definida como $\Delta \le -5°$.
 
@@ -476,30 +518,33 @@ model_bin <- glm(
     delta_cat ~
         # numericas
         idade +
-        altura +
-        peso +
+        # altura +
+        # peso +
+        imc +
         cifose_toracica +
         lordose_lombar +
         dif_colete +
-        correcao_colete +
+        # correcao_colete +
 
         # categoricas
         sexo +
         lenke +
         risser +
         flexibilidade +
-        regiao_cobb_inicial +
-        escoliometro_maior_10_graus +
-        lenke_curvatura +
-        risser_agrupado +
-        cifose_categ +
-        lordose_categ,
-    data = df, family = "binomial"
+        # regiao_cobb_inicial +
+        escoliometro_maior_10_graus
+    # lenke_curvatura +
+    # risser_agrupado +
+    # cifose_categ +
+    # lordose_categ,
+    ,
+    data = df,
+    family = "binomial"
 )
 ```
 
 
-### Parâmetros do modelo
+##### Parâmetros do modelo
 
 Parâmetros do modelo de regressão logística. Resposta em _Odds Ratio_.
 
@@ -513,9 +558,7 @@ model_bin |>
 ```
 
 
-### Verificações de adequação do modelo
-
-#### Colinearidade
+##### Colinearidade
 
 Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
 Valores maiores que 10 indicam colinearidade entre as variáveis.
@@ -529,14 +572,14 @@ performance::check_collinearity(model_bin) |>
 performance::check_collinearity(model_bin) |> plot()
 ```
 
-#### Resíduos binarizados
+##### Resíduos binarizados
 
 ```{r}
 performance::binned_residuals(model_bin) |> plot()
 ```
 
 
-#### Outliers
+##### Outliers
 
 ```{r}
 performance::check_outliers(model_bin)
@@ -544,14 +587,14 @@ performance::check_outliers(model_bin) |> plot()
 ```
 
 
-#### Valores ajustados (diagnóstico)
+##### Valores ajustados (diagnóstico)
 
 ```{r}
 performance::check_predictions(model_bin) |> plot()
 ```
 
 
-#### Resíduos simulados
+##### Resíduos simulados
 
 ```{r}
 performance::check_residuals(model_bin)
@@ -559,7 +602,7 @@ performance::check_residuals(model_bin) |> plot()
 ```
 
 
-### Qualidade do ajuste do modelo
+##### Qualidade do ajuste do modelo
 
 Teste de Hosmer-Lemeshow para avaliar a qualidade do ajuste de modelos binomiais. P-valor < 0.05 indica que o modelo não ajusta bem os dados.
 
@@ -569,7 +612,7 @@ performance::performance_hosmer(model_bin)
 
 
 
-#### Coeficiente de determinação (Tjur)
+##### Coeficiente de determinação (Tjur)
 
 Coeficiente de determinação de Tjur ($R^2_{Tjur}$). Teste específico para modelos binomiais.
 
@@ -577,7 +620,7 @@ Coeficiente de determinação de Tjur ($R^2_{Tjur}$). Teste específico para mod
 performance::r2(model_bin)
 ```
 
-#### Tamanho amostral efetivo (casos completos)
+##### Tamanho amostral efetivo (casos completos)
 
 ```{r}
 mf_bin <- model.frame(model_bin)
@@ -596,9 +639,9 @@ tibble(
 <br>
 
 
-## CART (árvore de decisão) para MCID (delta_cat)
+#### CART (árvore de decisão) para MCID (delta_cat)
 
-### Racional teórico
+##### Racional teórico
 
 Um modelo CART (Classification and Regression Tree) é útil aqui porque:
 
@@ -608,10 +651,10 @@ Um modelo CART (Classification and Regression Tree) é útil aqui porque:
 
 **Limitações importantes:** árvores isoladas tendem a ter alta variância e podem superajustar. Por isso, esta seção usa **validação cruzada (CV)** e **tuning/poda** para controlar complexidade e reporta desempenho **interno** (sem validação externa).
 
-### Setup e preparação dos dados
+##### Setup e preparação dos dados
 
 ```{r}
-#| label: cart-setup
+#| label: cart-setup_a
 
 library(tidymodels)
 library(rpart.plot)
@@ -632,31 +675,32 @@ df_cart <- df |>
         delta_cat_cart,
         # numericas
         idade,
-        altura,
-        peso,
+        # altura,
+        # peso,
+        imc,
         cifose_toracica,
         lordose_lombar,
         dif_colete,
-        correcao_colete,
+        # correcao_colete,
 
         # categoricas
         sexo,
         lenke,
         risser,
         flexibilidade,
-        regiao_cobb_inicial,
+        # regiao_cobb_inicial,
         escoliometro_maior_10_graus,
-        lenke_curvatura,
-        risser_agrupado,
-        cifose_categ,
-        lordose_categ,
+        # lenke_curvatura,
+        # risser_agrupado,
+        # cifose_categ,
+        # lordose_categ,
     )
 
 # Verificar niveis (evento = "melhora", segundo nivel)
 levels(df_cart$delta_cat_cart)
 ```
 
-### Recipe (pre-processamento)
+##### Recipe (pre-processamento)
 
 O pre-processamento é feito **dentro do resampling** (evita leakage):
 
@@ -665,7 +709,7 @@ O pre-processamento é feito **dentro do resampling** (evita leakage):
 - `step_impute_median()` + `step_impute_mode()`: imputação de missings
 
 ```{r}
-#| label: cart-recipe
+#| label: cart-recipe_a
 
 cart_rec <- recipe(delta_cat_cart ~ ., data = df_cart) |>
     step_zv(all_predictors()) |>
@@ -677,7 +721,7 @@ cart_rec <- recipe(delta_cat_cart ~ ., data = df_cart) |>
 cart_rec
 ```
 
-### Modelo e hiperparâmetros
+##### Modelo e hiperparâmetros
 
 Hiperparâmetros a serem tunados:
 
@@ -686,7 +730,7 @@ Hiperparâmetros a serem tunados:
 - **`min_n`**: mínimo de observações em no terminal; evita regras baseadas em poucos pacientes.
 
 ```{r}
-#| label: cart-model
+#| label: cart-model_a
 
 cart_spec <- decision_tree(
     cost_complexity = tune(),
@@ -703,12 +747,12 @@ cart_wf <- workflow() |>
 cart_wf
 ```
 
-### Validação cruzada e tuning
+##### Validação cruzada e tuning
 
 Usamos **CV estratificada repetida** (10-fold, 5 repetições) para estimar desempenho e selecionar hiperparâmetros.
 
 ```{r}
-#| label: cart-cv-tuning
+#| label: cart-cv-tuning_a
 
 set.seed(123)
 folds <- vfold_cv(df_cart, v = 10, repeats = 5, strata = delta_cat_cart)
@@ -719,9 +763,9 @@ metricas <- metric_set(roc_auc, accuracy, sens, spec)
 # Grid de hiperparametros
 set.seed(123)
 cart_grid <- grid_latin_hypercube(
-    cost_complexity(range = c(-4, -1)),
-    tree_depth(range = c(3L, 6L)),
-    min_n(range = c(5L, 30L)),
+    cost_complexity(range = c(-5, -2)),
+    tree_depth(range = c(4L, 10L)),
+    min_n(range = c(5L, 20L)),
     size = 30
 )
 
@@ -736,12 +780,12 @@ cart_tuned <- tune_grid(
 )
 ```
 
-### Melhores hiperparâmetros
+##### Melhores hiperparâmetros
 
 Selecionamos pelo **maior AUC ROC medio** na CV:
 
 ```{r}
-#| label: cart-best-params
+#| label: cart-best-params_a
 
 # Top 10 combinacoes por AUC
 cart_tuned |>
@@ -757,12 +801,12 @@ best_params <- cart_tuned |>
 best_params
 ```
 
-### Desempenho final (CV)
+##### Desempenho final (CV)
 
 Avaliamos o modelo finalizado com os melhores hiperparâmetros:
 
 ```{r}
-#| label: cart-final-metrics
+#| label: cart-final-metrics_a
 
 cart_final_wf <- finalize_workflow(cart_wf, best_params)
 
@@ -786,12 +830,12 @@ cart_metrics <- cart_res |>
 cart_metrics
 ```
 
-### Métricas por fold (dispersão)
+##### Métricas por fold (dispersão)
 
 Visualização da incerteza nas estimativas de desempenho:
 
 ```{r}
-#| label: cart-metrics-boxplot
+#| label: cart-metrics-boxplot_a
 #| fig-width: 8
 #| fig-height: 5
 
@@ -814,10 +858,10 @@ cart_res |>
     )
 ```
 
-### Matriz de confusão agregada (normalizada)
+##### Matriz de confusão agregada (normalizada)
 
 ```{r}
-#| label: cart-confusion-matrix
+#| label: cart-confusion-matrix_a
 #| fig-width: 6
 #| fig-height: 5
 
@@ -863,12 +907,12 @@ ggplot(conf_mat_tbl, aes(x = Prediction, y = Truth, fill = prop)) +
     )
 ```
 
-### Árvore final
+##### Árvore final
 
 Ajustamos o modelo final no dataset completo para visualização e interpretação:
 
 ```{r}
-#| label: cart-final-tree
+#| label: cart-final-tree_a
 #| fig-width: 10
 #| fig-height: 8
 
@@ -889,10 +933,10 @@ rpart.plot(
 )
 ```
 
-### Importância de variáveis
+##### Importância de variáveis
 
 ```{r}
-#| label: cart-vip
+#| label: cart-vip_a
 #| fig-width: 8
 #| fig-height: 6
 
@@ -914,12 +958,12 @@ cart_fit_full |>
     theme(plot.title = element_text(face = "bold"))
 ```
 
-### Tabela de folhas (grupos de predicao)
+##### Tabela de folhas (grupos de predicao)
 
 Esta tabela mostra os **nós terminais** (folhas) da árvore, com as regras que definem cada grupo, o tamanho do grupo e a proporção de melhora:
 
 ```{r}
-#| label: cart-leaves-table
+#| label: cart-leaves-table_a
 
 # Extrair informacoes dos nos terminais
 frame <- cart_rpart$frame
@@ -965,10 +1009,10 @@ leaves_tbl |>
     knitr::kable(align = c("l", "l", "r", "r", "l"))
 ```
 
-### Curva ROC
+##### Curva ROC
 
 ```{r}
-#| label: cart-roc-curve
+#| label: cart-roc-curve_a
 #| fig-width: 7
 #| fig-height: 6
 
@@ -984,12 +1028,18 @@ auc_val <- preds_all |>
 ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity)) +
     geom_path(linewidth = 1.2, color = "steelblue") +
     geom_abline(linetype = "dashed", color = "gray50") +
-    geom_ribbon(aes(ymin = 0, ymax = sensitivity), alpha = 0.1, fill = "steelblue") +
+    geom_ribbon(
+        aes(ymin = 0, ymax = sensitivity),
+        alpha = 0.1,
+        fill = "steelblue"
+    ) +
     annotate(
         "text",
-        x = 0.6, y = 0.3,
+        x = 0.6,
+        y = 0.3,
         label = paste0("AUC = ", round(auc_val, 3)),
-        size = 5, fontface = "bold"
+        size = 5,
+        fontface = "bold"
     ) +
     labs(
         title = "ROC Curve (CV)",
@@ -1002,7 +1052,706 @@ ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity)) +
     theme(plot.title = element_text(face = "bold"))
 ```
 
-### Interpretação
+##### Interpretação
+
+**Como ler a árvore:**
+
+- Cada **nó interno** representa uma condição (split) sobre uma variável.
+- Cada **caminho** da raiz ate um nó terminal representa uma **regra** de classificação.
+- A **sequencia de splits** indica **interações condicionais**: um split so importa dentro da região definida por splits anteriores.
+- Os **limiares** (pontos de corte) sugerem **não-linearidades** nos efeitos.
+
+**Como ler a importância:**
+
+- Variáveis com maior importância contribuem mais para a redução de impureza (Gini) nos splits.
+- Isso **não implica causalidade**, apenas relevância preditiva no contexto do modelo.
+
+**Limitações:**
+
+- Desempenho reportado e **interno** (CV), sem validação externa.
+- Árvores são **instáveis**: pequenas mudanças nos dados podem alterar a estrutura.
+- Usar como **ferramenta exploratória** complementar aos modelos inferenciais (linear/logístico).
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+### Variáveis discretizadas
+
+Incluindo:
+
+- idade 
+- imc   
+- cifose_toracica_categ    
+- lordose_lombar_categ    
+- dif_colete       
+- sexo   
+- lenke_curvatura    
+- risser_agrupado    
+- flexibilidade    
+- escoliometro_maior_10_graus    
+
+
+#### Modelo de regressão linear
+
+Este modelo estima associações ajustadas com o desfecho contínuo $\Delta$ (maior curva em 6 meses − baseline, em graus).
+
+
+```{r}
+model_lin <- lm(
+    delta ~
+        # numericas
+        idade +
+        # altura +
+        # peso +
+        imc +
+        # cifose_toracica +
+        # lordose_lombar +
+        dif_colete +
+        # correcao_colete +
+
+        # categoricas
+        sexo +
+        # lenke +
+        # risser +
+        flexibilidade +
+        # regiao_cobb_inicial +
+        escoliometro_maior_10_graus +
+        lenke_curvatura +
+        risser_agrupado +
+        cifose_categ +
+        lordose_categ,
+    data = df
+)
+```
+
+
+
+##### Parâmetros do modelo
+
+```{r}
+model_lin |>
+    gtsummary::tbl_regression(conf.level = 0.95) |>
+    # gtsummary::add_global_p() |>
+    gtsummary::bold_p() |>
+    gtsummary::bold_labels() |>
+    gtsummary::italicize_levels()
+```
+
+##### Colinearidade
+
+Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
+Valores maiores que 10 indicam colinearidade entre as variáveis.
+
+```{r}
+performance::check_collinearity(model_lin) |>
+    arrange(desc(VIF)) |>
+    select(Term, VIF, VIF_CI_low, VIF_CI_high) |>
+    performance::print_html()
+
+performance::check_collinearity(model_lin) |> plot()
+```
+
+
+
+##### Heteroscedasticidade
+
+Verificação de heteroscedasticidade entre as variáveis independentes.
+
+```{r}
+performance::check_heteroscedasticity(model_lin)
+performance::check_heteroscedasticity(model_lin) |> plot()
+```
+
+
+##### Outliers
+
+```{r}
+performance::check_outliers(model_lin)
+performance::check_outliers(model_lin) |> plot()
+```
+
+
+##### Valores ajustados (diagnóstico)
+
+```{r}
+performance::check_predictions(model_lin) |> plot()
+```
+
+
+##### Resíduos simulados
+
+```{r}
+performance::check_residuals(model_lin)
+performance::check_residuals(model_lin) |> plot()
+```
+
+
+##### Coeficiente de determinação
+
+$R^2$.
+```{r}
+# Qualidade do ajuste
+performance::r2(model_lin)
+```
+
+##### Tamanho amostral efetivo (casos completos)
+
+```{r}
+tibble(n_modelo = nobs(model_lin))
+```
+
+<br>
+<br>
+<br>
+
+#### Modelo de regressão logística
+
+Este modelo estima associações ajustadas com a **chance de melhora (MCID)**, definida como $\Delta \le -5°$.
+
+
+```{r}
+model_bin <- glm(
+    delta_cat ~
+        # numericas
+        idade +
+        # altura +
+        # peso +
+        imc +
+        # cifose_toracica +
+        # lordose_lombar +
+        dif_colete +
+        # correcao_colete +
+
+        # categoricas
+        sexo +
+        # lenke +
+        # risser +
+        flexibilidade +
+        # regiao_cobb_inicial +
+        escoliometro_maior_10_graus +
+        lenke_curvatura +
+        risser_agrupado +
+        cifose_categ +
+        lordose_categ,
+    data = df,
+    family = "binomial"
+)
+```
+
+
+##### Parâmetros do modelo
+
+Parâmetros do modelo de regressão logística. Resposta em _Odds Ratio_.
+
+```{r}
+model_bin |>
+    gtsummary::tbl_regression(exponentiate = TRUE, conf.level = 0.95) |>
+    # gtsummary::add_global_p() |>
+    gtsummary::bold_p() |>
+    gtsummary::bold_labels() |>
+    gtsummary::italicize_levels()
+```
+
+
+##### Colinearidade
+
+Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
+Valores maiores que 10 indicam colinearidade entre as variáveis.
+
+```{r}
+performance::check_collinearity(model_bin) |>
+    arrange(desc(VIF)) |>
+    select(Term, VIF, VIF_CI_low, VIF_CI_high) |>
+    performance::print_html()
+
+performance::check_collinearity(model_bin) |> plot()
+```
+
+##### Resíduos binarizados
+
+```{r}
+performance::binned_residuals(model_bin) |> plot()
+```
+
+
+##### Outliers
+
+```{r}
+performance::check_outliers(model_bin)
+performance::check_outliers(model_bin) |> plot()
+```
+
+
+##### Valores ajustados (diagnóstico)
+
+```{r}
+performance::check_predictions(model_bin) |> plot()
+```
+
+
+##### Resíduos simulados
+
+```{r}
+performance::check_residuals(model_bin)
+performance::check_residuals(model_bin) |> plot()
+```
+
+
+##### Qualidade do ajuste do modelo
+
+Teste de Hosmer-Lemeshow para avaliar a qualidade do ajuste de modelos binomiais. P-valor < 0.05 indica que o modelo não ajusta bem os dados.
+
+```{r}
+performance::performance_hosmer(model_bin)
+```
+
+
+
+##### Coeficiente de determinação (Tjur)
+
+Coeficiente de determinação de Tjur ($R^2_{Tjur}$). Teste específico para modelos binomiais.
+
+```{r}
+performance::r2(model_bin)
+```
+
+##### Tamanho amostral efetivo (casos completos)
+
+```{r}
+mf_bin <- model.frame(model_bin)
+bin_n <- nrow(mf_bin)
+bin_events <- sum(mf_bin[[1]] == 1, na.rm = TRUE)
+bin_nonevents <- sum(mf_bin[[1]] == 0, na.rm = TRUE)
+tibble(
+    n_modelo = bin_n,
+    eventos_mcid = bin_events,
+    nao_eventos = bin_nonevents
+)
+```
+
+<br>
+<br>
+<br>
+
+
+#### CART (árvore de decisão) para MCID (delta_cat)
+
+##### Racional teórico
+
+Um modelo CART (Classification and Regression Tree) é útil aqui porque:
+
+- **Não linearidade**: identifica automaticamente limiares (pontos de corte) em preditores contínuos.
+- **Interações**: a sequência de divisões (splits) representa interações condicionais sem precisar pre-especificar termos de interação.
+- **Interpretabilidade**: gera regras do tipo "se... então...", úteis para comunicação clínica e geração de hipóteses.
+
+**Limitações importantes:** árvores isoladas tendem a ter alta variância e podem superajustar. Por isso, esta seção usa **validação cruzada (CV)** e **tuning/poda** para controlar complexidade e reporta desempenho **interno** (sem validação externa).
+
+##### Setup e preparação dos dados
+
+```{r}
+#| label: cart-setup_b
+
+library(tidymodels)
+library(rpart.plot)
+library(vip)
+
+set.seed(123)
+
+# Desfecho como fator: "melhora" (evento) vs "nao_melhora"
+df_cart <- df |>
+    mutate(
+        delta_cat_cart = factor(
+            delta_cat,
+            levels = c(0, 1),
+            labels = c("nao_melhora", "melhora")
+        )
+    ) |>
+    select(
+        delta_cat_cart,
+        # numericas
+        idade,
+        # altura,
+        # peso,
+        imc,
+        # cifose_toracica,
+        # lordose_lombar,
+        dif_colete,
+        # correcao_colete,
+
+        # categoricas
+        sexo,
+        # lenke,
+        # risser,
+        flexibilidade,
+        # regiao_cobb_inicial,
+        escoliometro_maior_10_graus,
+        lenke_curvatura,
+        risser_agrupado,
+        cifose_categ,
+        lordose_categ,
+    )
+
+# Verificar niveis (evento = "melhora", segundo nivel)
+levels(df_cart$delta_cat_cart)
+```
+
+##### Recipe (pre-processamento)
+
+O pre-processamento é feito **dentro do resampling** (evita leakage):
+
+- `step_zv()`: remove variáveis com variância zero
+- `step_unknown()` + `step_novel()`: robustez a níveis novos/raros durante CV
+- `step_impute_median()` + `step_impute_mode()`: imputação de missings
+
+```{r}
+#| label: cart-recipe_b
+
+cart_rec <- recipe(delta_cat_cart ~ ., data = df_cart) |>
+    step_zv(all_predictors()) |>
+    step_unknown(all_nominal_predictors()) |>
+    step_novel(all_nominal_predictors()) |>
+    step_impute_median(all_numeric_predictors()) |>
+    step_impute_mode(all_nominal_predictors())
+
+cart_rec
+```
+
+##### Modelo e hiperparâmetros
+
+Hiperparâmetros a serem tunados:
+
+- **`cost_complexity` (cp)**: controla poda/complexidade; valores maiores = árvores menores.
+- **`tree_depth`**: limita profundidade (proxy do grau de interações).
+- **`min_n`**: mínimo de observações em no terminal; evita regras baseadas em poucos pacientes.
+
+```{r}
+#| label: cart-model_b
+
+cart_spec <- decision_tree(
+    cost_complexity = tune(),
+    tree_depth = tune(),
+    min_n = tune()
+) |>
+    set_engine("rpart") |>
+    set_mode("classification")
+
+cart_wf <- workflow() |>
+    add_recipe(cart_rec) |>
+    add_model(cart_spec)
+
+cart_wf
+```
+
+##### Validação cruzada e tuning
+
+Usamos **CV estratificada repetida** (10-fold, 5 repetições) para estimar desempenho e selecionar hiperparâmetros.
+
+```{r}
+#| label: cart-cv-tuning_b
+
+set.seed(123)
+folds <- vfold_cv(df_cart, v = 10, repeats = 5, strata = delta_cat_cart)
+
+# Metricas de interesse
+metricas <- metric_set(roc_auc, accuracy, sens, spec)
+
+# Grid de hiperparametros
+set.seed(123)
+cart_grid <- grid_latin_hypercube(
+    cost_complexity(range = c(-5, -2)),
+    tree_depth(range = c(4L, 10L)),
+    min_n(range = c(5L, 20L)),
+    size = 30
+)
+
+# Tuning
+set.seed(123)
+cart_tuned <- tune_grid(
+    cart_wf,
+    resamples = folds,
+    grid = cart_grid,
+    metrics = metricas,
+    control = control_grid(save_pred = TRUE)
+)
+```
+
+##### Melhores hiperparâmetros
+
+Selecionamos pelo **maior AUC ROC medio** na CV:
+
+```{r}
+#| label: cart-best-params_b
+
+# Top 10 combinacoes por AUC
+cart_tuned |>
+    collect_metrics() |>
+    filter(.metric == "roc_auc") |>
+    arrange(desc(mean)) |>
+    slice_head(n = 10)
+
+# Melhor combinacao
+best_params <- cart_tuned |>
+    select_best(metric = "roc_auc")
+
+best_params
+```
+
+##### Desempenho final (CV)
+
+Avaliamos o modelo finalizado com os melhores hiperparâmetros:
+
+```{r}
+#| label: cart-final-metrics_b
+
+cart_final_wf <- finalize_workflow(cart_wf, best_params)
+
+set.seed(123)
+cart_res <- fit_resamples(
+    cart_final_wf,
+    resamples = folds,
+    metrics = metricas,
+    control = control_resamples(save_pred = TRUE)
+)
+
+# Metricas agregadas (media e SD)
+cart_metrics <- cart_res |>
+    collect_metrics() |>
+    select(.metric, mean, std_err, n) |>
+    mutate(
+        ci_lower = mean - 1.96 * std_err,
+        ci_upper = mean + 1.96 * std_err
+    )
+
+cart_metrics
+```
+
+##### Métricas por fold (dispersão)
+
+Visualização da incerteza nas estimativas de desempenho:
+
+```{r}
+#| label: cart-metrics-boxplot_b
+#| fig-width: 8
+#| fig-height: 5
+
+cart_res |>
+    collect_metrics(summarize = FALSE) |>
+    ggplot(aes(x = .metric, y = .estimate, fill = .metric)) +
+    geom_boxplot(alpha = 0.7, show.legend = FALSE) +
+    geom_jitter(width = 0.1, alpha = 0.3, size = 1) +
+    scale_fill_brewer(palette = "Set2") +
+    labs(
+        title = "Distribution of metrics by fold (CV repeated)",
+        subtitle = "10-fold CV x 5 repetitions = 50 estimates per metric",
+        x = "Metric",
+        y = "Value"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+        plot.title = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 0)
+    )
+```
+
+##### Matriz de confusão agregada (normalizada)
+
+```{r}
+#| label: cart-confusion-matrix_b
+#| fig-width: 6
+#| fig-height: 5
+
+# Predicoes agregadas de todos os folds
+preds_all <- cart_res |>
+    collect_predictions()
+
+# Matriz de confusao
+conf_mat_data <- preds_all |>
+    conf_mat(truth = delta_cat_cart, estimate = .pred_class)
+
+# Normalizar por linha (proporcao por classe verdadeira)
+conf_mat_tbl <- conf_mat_data$table |>
+    as.data.frame() |>
+    group_by(Truth) |>
+    mutate(
+        prop = Freq / sum(Freq),
+        label = scales::percent(prop, accuracy = 0.1)
+    ) |>
+    ungroup()
+
+# Visualizacao heatmap normalizado
+ggplot(conf_mat_tbl, aes(x = Prediction, y = Truth, fill = prop)) +
+    geom_tile(color = "white", linewidth = 1) +
+    geom_text(aes(label = label), size = 5, fontface = "bold") +
+    scale_fill_gradient(
+        low = "white",
+        high = "steelblue",
+        labels = scales::percent,
+        name = "Proporcao"
+    ) +
+    scale_y_discrete(limits = rev) +
+    labs(
+        title = "Confucion Matrix",
+        subtitle = "Proportion by true class (rows sum to 100%)",
+        x = "Prediction",
+        y = "True"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+        plot.title = element_text(face = "bold"),
+        panel.grid = element_blank()
+    )
+```
+
+##### Árvore final
+
+Ajustamos o modelo final no dataset completo para visualização e interpretação:
+
+```{r}
+#| label: cart-final-tree_b
+#| fig-width: 10
+#| fig-height: 8
+
+cart_fit_full <- fit(cart_final_wf, data = df_cart)
+cart_rpart <- extract_fit_engine(cart_fit_full)
+
+# Plot da arvore com rpart.plot
+rpart.plot(
+    cart_rpart,
+    type = 4,
+    extra = 104,
+    under = TRUE,
+    fallen.leaves = TRUE,
+    roundint = FALSE,
+    box.palette = "BuGn",
+    shadow.col = "gray",
+    main = "Decision Tree for MCID (delta <= -5 degrees)"
+)
+```
+
+##### Importância de variáveis
+
+```{r}
+#| label: cart-vip_b
+#| fig-width: 8
+#| fig-height: 6
+
+# Grafico de importancia com vip
+cart_fit_full |>
+    extract_fit_parsnip() |>
+    vip(
+        num_features = 15,
+        geom = "col",
+        aesthetics = list(fill = "steelblue", alpha = 0.8)
+    ) +
+    labs(
+        title = "Variable Importance (CART)",
+        subtitle = "Based on impurity reduction (Gini)",
+        x = "Importance",
+        y = "Variable"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(plot.title = element_text(face = "bold"))
+```
+
+##### Tabela de folhas (grupos de predicao)
+
+Esta tabela mostra os **nós terminais** (folhas) da árvore, com as regras que definem cada grupo, o tamanho do grupo e a proporção de melhora:
+
+```{r}
+#| label: cart-leaves-table_b
+
+# Extrair informacoes dos nos terminais
+frame <- cart_rpart$frame
+leaves_idx <- which(frame$var == "<leaf>")
+
+# Funcao para extrair regras de cada no
+get_path_rules <- function(tree, node_id) {
+    path <- rpart::path.rpart(tree, nodes = node_id, print.it = FALSE)
+    rules <- path[[1]][-1] # remover "root"
+    if (length(rules) == 0) {
+        return("(raiz)")
+    }
+    paste(rules, collapse = " E ")
+}
+
+# Construir tabela de folhas
+leaves_tbl <- tibble(
+    no = as.integer(rownames(frame)[leaves_idx]),
+    n = frame$n[leaves_idx],
+    n_melhora = frame$n[leaves_idx] * frame$yval2[leaves_idx, 5],
+    n_nao_melhora = frame$n[leaves_idx] * frame$yval2[leaves_idx, 4],
+    prop_melhora = frame$yval2[leaves_idx, 5],
+    predicao = ifelse(frame$yval[leaves_idx] == 2, "melhora", "nao_melhora")
+) |>
+    rowwise() |>
+    mutate(regras = get_path_rules(cart_rpart, no)) |>
+    ungroup() |>
+    mutate(
+        prop_melhora_pct = scales::percent(prop_melhora, accuracy = 0.1),
+        grupo = paste0("Grupo ", row_number())
+    ) |>
+    select(grupo, predicao, n, prop_melhora_pct, regras) |>
+    arrange(desc(predicao), desc(n))
+
+leaves_tbl |>
+    rename(
+        Grupo = grupo,
+        Predicao = predicao,
+        N = n,
+        `% Melhora` = prop_melhora_pct,
+        Regras = regras
+    ) |>
+    knitr::kable(align = c("l", "l", "r", "r", "l"))
+```
+
+##### Curva ROC
+
+```{r}
+#| label: cart-roc-curve_b
+#| fig-width: 7
+#| fig-height: 6
+
+# Curva ROC a partir das predicoes CV
+roc_data <- preds_all |>
+    roc_curve(truth = delta_cat_cart, .pred_melhora, event_level = "second")
+
+# AUC para o titulo
+auc_val <- preds_all |>
+    roc_auc(truth = delta_cat_cart, .pred_melhora, event_level = "second") |>
+    pull(.estimate)
+
+ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity)) +
+    geom_path(linewidth = 1.2, color = "steelblue") +
+    geom_abline(linetype = "dashed", color = "gray50") +
+    geom_ribbon(
+        aes(ymin = 0, ymax = sensitivity),
+        alpha = 0.1,
+        fill = "steelblue"
+    ) +
+    annotate(
+        "text",
+        x = 0.6,
+        y = 0.3,
+        label = paste0("AUC = ", round(auc_val, 3)),
+        size = 5,
+        fontface = "bold"
+    ) +
+    labs(
+        title = "ROC Curve (CV)",
+        subtitle = "Based on aggregated predictions from all folds",
+        x = "1 - Specificity (False Positive Rate)",
+        y = "Sensitivity (True Positive Rate)"
+    ) +
+    coord_equal() +
+    theme_minimal(base_size = 12) +
+    theme(plot.title = element_text(face = "bold"))
+```
+
+##### Interpretação
 
 **Como ler a árvore:**
 
