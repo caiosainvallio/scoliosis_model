@@ -441,6 +441,43 @@ model_lin |>
     gtsummary::italicize_levels()
 ```
 
+
+
+##### Heteroscedasticidade
+
+Verificação de heteroscedasticidade entre as variáveis independentes (Breusch-Pagan test).
+
+```{r}
+performance::check_heteroscedasticity(model_lin)
+performance::check_heteroscedasticity(model_lin) |> plot()
+```
+
+
+
+##### Normalidade dos resíduos
+
+```{r}
+performance::check_residuals(model_lin)
+performance::check_residuals(model_lin) |> plot()
+```
+
+##### Autocorrelação dos resíduos
+
+Independência dos resíduos (Durbin-Watson test).
+
+```{r}
+performance::check_autocorrelation(model_lin)
+```
+
+##### Verificações preditivas posteriores
+
+Simulação de dados replicados sob o modelo ajustado e posterior comparação com os dados observados.
+
+```{r}
+performance::check_predictions(model_lin) |> plot()
+```
+
+
 ##### Colinearidade
 
 Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
@@ -455,18 +492,6 @@ performance::check_collinearity(model_lin) |>
 performance::check_collinearity(model_lin) |> plot()
 ```
 
-
-
-##### Heteroscedasticidade
-
-Verificação de heteroscedasticidade entre as variáveis independentes.
-
-```{r}
-performance::check_heteroscedasticity(model_lin)
-performance::check_heteroscedasticity(model_lin) |> plot()
-```
-
-
 ##### Outliers
 
 ```{r}
@@ -474,20 +499,6 @@ performance::check_outliers(model_lin)
 performance::check_outliers(model_lin) |> plot()
 ```
 
-
-##### Valores ajustados (diagnóstico)
-
-```{r}
-performance::check_predictions(model_lin) |> plot()
-```
-
-
-##### Resíduos simulados
-
-```{r}
-performance::check_residuals(model_lin)
-performance::check_residuals(model_lin) |> plot()
-```
 
 
 ##### Coeficiente de determinação
@@ -558,6 +569,39 @@ model_bin |>
 ```
 
 
+##### Resíduos binarizados
+
+```{r}
+performance::binned_residuals(model_bin) |> plot()
+```
+
+##### Autocorrelação dos resíduos
+
+Independência dos resíduos (Durbin-Watson test).
+
+```{r}
+performance::check_autocorrelation(model_bin)
+```
+
+
+##### Verificações preditivas posteriores
+
+Simulação de dados replicados sob o modelo ajustado e posterior comparação com os dados observados.
+
+```{r}
+performance::check_predictions(model_bin) |> plot()
+```
+
+
+##### Qualidade do ajuste do modelo
+
+Teste de Hosmer-Lemeshow para avaliar a qualidade do ajuste de modelos binomiais. P-valor < 0.05 indica que o modelo não ajusta bem os dados.
+
+```{r}
+performance::performance_hosmer(model_bin)
+```
+
+
 ##### Colinearidade
 
 Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
@@ -572,44 +616,12 @@ performance::check_collinearity(model_bin) |>
 performance::check_collinearity(model_bin) |> plot()
 ```
 
-##### Resíduos binarizados
-
-```{r}
-performance::binned_residuals(model_bin) |> plot()
-```
-
-
 ##### Outliers
 
 ```{r}
 performance::check_outliers(model_bin)
 performance::check_outliers(model_bin) |> plot()
 ```
-
-
-##### Valores ajustados (diagnóstico)
-
-```{r}
-performance::check_predictions(model_bin) |> plot()
-```
-
-
-##### Resíduos simulados
-
-```{r}
-performance::check_residuals(model_bin)
-performance::check_residuals(model_bin) |> plot()
-```
-
-
-##### Qualidade do ajuste do modelo
-
-Teste de Hosmer-Lemeshow para avaliar a qualidade do ajuste de modelos binomiais. P-valor < 0.05 indica que o modelo não ajusta bem os dados.
-
-```{r}
-performance::performance_hosmer(model_bin)
-```
-
 
 
 ##### Coeficiente de determinação (Tjur)
@@ -1141,6 +1153,45 @@ model_lin |>
     gtsummary::italicize_levels()
 ```
 
+
+
+##### Heteroscedasticidade
+
+Verificação de heteroscedasticidade entre as variáveis independentes (Breusch-Pagan test).
+
+```{r}
+performance::check_heteroscedasticity(model_lin)
+performance::check_heteroscedasticity(model_lin) |> plot()
+```
+
+
+
+
+##### Normalidade dos resíduos
+
+```{r}
+performance::check_residuals(model_lin)
+performance::check_residuals(model_lin) |> plot()
+```
+
+##### Autocorrelação dos resíduos
+
+Independência dos resíduos (Durbin-Watson test).
+
+```{r}
+performance::check_autocorrelation(model_lin)
+```
+
+
+##### Verificações preditivas posteriores
+
+Simulação de dados replicados sob o modelo ajustado e posterior comparação com os dados observados.
+
+```{r}
+performance::check_predictions(model_lin) |> plot()
+```
+
+
 ##### Colinearidade
 
 Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
@@ -1156,37 +1207,11 @@ performance::check_collinearity(model_lin) |> plot()
 ```
 
 
-
-##### Heteroscedasticidade
-
-Verificação de heteroscedasticidade entre as variáveis independentes.
-
-```{r}
-performance::check_heteroscedasticity(model_lin)
-performance::check_heteroscedasticity(model_lin) |> plot()
-```
-
-
 ##### Outliers
 
 ```{r}
 performance::check_outliers(model_lin)
 performance::check_outliers(model_lin) |> plot()
-```
-
-
-##### Valores ajustados (diagnóstico)
-
-```{r}
-performance::check_predictions(model_lin) |> plot()
-```
-
-
-##### Resíduos simulados
-
-```{r}
-performance::check_residuals(model_lin)
-performance::check_residuals(model_lin) |> plot()
 ```
 
 
@@ -1257,6 +1282,38 @@ model_bin |>
 ```
 
 
+##### Resíduos binarizados
+
+```{r}
+performance::binned_residuals(model_bin) |> plot()
+```
+
+##### Autocorrelação dos resíduos
+
+Independência dos resíduos (Durbin-Watson test).
+
+```{r}
+performance::check_autocorrelation(model_bin)
+```
+
+##### Verificações preditivas posteriores
+
+Simulação de dados replicados sob o modelo ajustado e posterior comparação com os dados observados.
+
+```{r}
+performance::check_predictions(model_bin) |> plot()
+```
+
+
+##### Qualidade do ajuste do modelo
+
+Teste de Hosmer-Lemeshow para avaliar a qualidade do ajuste de modelos binomiais. P-valor < 0.05 indica que o modelo não ajusta bem os dados.
+
+```{r}
+performance::performance_hosmer(model_bin)
+```
+
+
 ##### Colinearidade
 
 Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
@@ -1271,12 +1328,6 @@ performance::check_collinearity(model_bin) |>
 performance::check_collinearity(model_bin) |> plot()
 ```
 
-##### Resíduos binarizados
-
-```{r}
-performance::binned_residuals(model_bin) |> plot()
-```
-
 
 ##### Outliers
 
@@ -1284,31 +1335,6 @@ performance::binned_residuals(model_bin) |> plot()
 performance::check_outliers(model_bin)
 performance::check_outliers(model_bin) |> plot()
 ```
-
-
-##### Valores ajustados (diagnóstico)
-
-```{r}
-performance::check_predictions(model_bin) |> plot()
-```
-
-
-##### Resíduos simulados
-
-```{r}
-performance::check_residuals(model_bin)
-performance::check_residuals(model_bin) |> plot()
-```
-
-
-##### Qualidade do ajuste do modelo
-
-Teste de Hosmer-Lemeshow para avaliar a qualidade do ajuste de modelos binomiais. P-valor < 0.05 indica que o modelo não ajusta bem os dados.
-
-```{r}
-performance::performance_hosmer(model_bin)
-```
-
 
 
 ##### Coeficiente de determinação (Tjur)
