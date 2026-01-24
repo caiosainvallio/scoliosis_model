@@ -6083,7 +6083,9 @@ height: 0px !important;
 <h1 data-number="2"><span class="header-section-number">2</span> Modelagem</h1>
 <section id="modelo-linear---desfecho-contínuo-delta" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="modelo-linear---desfecho-contínuo-delta"><span class="header-section-number">2.1</span> Modelo Linear - Desfecho Contínuo (Delta)</h2>
-<p>O modelo linear analisa diretamente a mudança na maior curva (<span class="math inline">\(\Delta\)</span>), fornecendo interpretação intuitiva dos coeficientes: - <strong>Coeficientes negativos:</strong> associação com melhora clínica - <strong>Coeficientes positivos:</strong> associação com progressão clínica<br>
+<p>O modelo linear analisa diretamente a mudança na maior curva (<span class="math inline">\(\Delta\)</span>), fornecendo interpretação intuitiva dos coeficientes:<br>
+- <strong>Coeficientes negativos:</strong> associação com melhora clínica<br>
+- <strong>Coeficientes positivos:</strong> associação com progressão clínica<br>
 - <strong>Magnitude:</strong> quantifica o efeito em graus de mudança na curva</p>
 <div class="cell">
 <details class="code-fold">
@@ -10052,14 +10054,14 @@ height: 0px !important;
 <span id="cb71-5"><a href="#cb71-5" aria-hidden="true" tabindex="-1"></a>    },</span>
 <span id="cb71-6"><a href="#cb71-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
 <span id="cb71-7"><a href="#cb71-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">cat</span>(<span class="st">&quot;Aviso: Teste de Hosmer-Lemeshow não pode ser executado.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>        <span class="fu">cat</span>(<span class="st">&quot;Possível causa: poucos eventos de progressão ou falta de variação nas predi&lt;U+00E7&gt;&lt;U+00F5&gt;es.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb71-8"><a href="#cb71-8" aria-hidden="true" tabindex="-1"></a>        <span class="fu">cat</span>(<span class="st">&quot;Possível causa: poucos eventos de progressão ou falta de variação nas predições.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
 <span id="cb71-9"><a href="#cb71-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">cat</span>(<span class="st">&quot;Erro:&quot;</span>, e<span class="sc">$</span>message, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
 <span id="cb71-10"><a href="#cb71-10" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb71-11"><a href="#cb71-11" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Aviso: Teste de Hosmer-Lemeshow não pode ser executado.
-Possível causa: poucos eventos de progressão ou falta de variação nas predi&lt;U+00E7&gt;&lt;U+00F5&gt;es.
+Possível causa: poucos eventos de progressão ou falta de variação nas predições.
 Erro: &#39;breaks&#39; are not unique </code></pre>
 </div>
 </div>
@@ -11014,32 +11016,30 @@ Computational engine: rpart </code></pre>
 <span id="cb93-25"><a href="#cb93-25" aria-hidden="true" tabindex="-1"></a>        } <span class="cf">else</span> {</span>
 <span id="cb93-26"><a href="#cb93-26" aria-hidden="true" tabindex="-1"></a>            <span class="fu">cat</span>(<span class="st">&quot;Aviso: Árvore de progressão não possui splits suficientes para análise de importância.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
 <span id="cb93-27"><a href="#cb93-27" aria-hidden="true" tabindex="-1"></a>            <span class="fu">cat</span>(<span class="st">&quot;Possível causa: poucos eventos de progressão ou parâmetros muito restritivos.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb93-28"><a href="#cb93-28" aria-hidden="true" tabindex="-1"></a>            <span class="fu">cat</span>(<span class="st">&quot;Considere ajustar os hiperparâmetros ou aumentar o tamanho da amostra.</span><span class="sc">\n\n</span><span class="st">&quot;</span>)</span>
-<span id="cb93-29"><a href="#cb93-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb93-30"><a href="#cb93-30" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Plot informativo</span></span>
-<span id="cb93-31"><a href="#cb93-31" aria-hidden="true" tabindex="-1"></a>            <span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb93-32"><a href="#cb93-32" aria-hidden="true" tabindex="-1"></a>                <span class="fu">annotate</span>(<span class="st">&quot;text&quot;</span>,</span>
-<span id="cb93-33"><a href="#cb93-33" aria-hidden="true" tabindex="-1"></a>                    <span class="at">x =</span> <span class="fl">0.5</span>, <span class="at">y =</span> <span class="fl">0.5</span>,</span>
-<span id="cb93-34"><a href="#cb93-34" aria-hidden="true" tabindex="-1"></a>                    <span class="at">label =</span> <span class="st">&quot;Árvore sem splits suficientes</span><span class="sc">\n</span><span class="st">para análise de importância&quot;</span>,</span>
-<span id="cb93-35"><a href="#cb93-35" aria-hidden="true" tabindex="-1"></a>                    <span class="at">size =</span> <span class="dv">6</span>, <span class="at">hjust =</span> <span class="fl">0.5</span></span>
-<span id="cb93-36"><a href="#cb93-36" aria-hidden="true" tabindex="-1"></a>                ) <span class="sc">+</span></span>
-<span id="cb93-37"><a href="#cb93-37" aria-hidden="true" tabindex="-1"></a>                <span class="fu">labs</span>(</span>
-<span id="cb93-38"><a href="#cb93-38" aria-hidden="true" tabindex="-1"></a>                    <span class="at">title =</span> <span class="st">&quot;Variable Importance (CART - Progressão)&quot;</span>,</span>
-<span id="cb93-39"><a href="#cb93-39" aria-hidden="true" tabindex="-1"></a>                    <span class="at">subtitle =</span> <span class="st">&quot;Modelo muito simples para análise de importância&quot;</span></span>
-<span id="cb93-40"><a href="#cb93-40" aria-hidden="true" tabindex="-1"></a>                ) <span class="sc">+</span></span>
-<span id="cb93-41"><a href="#cb93-41" aria-hidden="true" tabindex="-1"></a>                <span class="fu">theme_void</span>()</span>
-<span id="cb93-42"><a href="#cb93-42" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb93-43"><a href="#cb93-43" aria-hidden="true" tabindex="-1"></a>    },</span>
-<span id="cb93-44"><a href="#cb93-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
-<span id="cb93-45"><a href="#cb93-45" aria-hidden="true" tabindex="-1"></a>        <span class="fu">cat</span>(<span class="st">&quot;Erro na análise de importância:&quot;</span>, e<span class="sc">$</span>message, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb93-46"><a href="#cb93-46" aria-hidden="true" tabindex="-1"></a>        <span class="fu">cat</span>(<span class="st">&quot;Possível causa: modelo CART muito simples ou dados insuficientes.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb93-47"><a href="#cb93-47" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb93-48"><a href="#cb93-48" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb93-28"><a href="#cb93-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb93-29"><a href="#cb93-29" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Plot informativo</span></span>
+<span id="cb93-30"><a href="#cb93-30" aria-hidden="true" tabindex="-1"></a>            <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb93-31"><a href="#cb93-31" aria-hidden="true" tabindex="-1"></a>                <span class="fu">annotate</span>(<span class="st">&quot;text&quot;</span>,</span>
+<span id="cb93-32"><a href="#cb93-32" aria-hidden="true" tabindex="-1"></a>                    <span class="at">x =</span> <span class="fl">0.5</span>, <span class="at">y =</span> <span class="fl">0.5</span>,</span>
+<span id="cb93-33"><a href="#cb93-33" aria-hidden="true" tabindex="-1"></a>                    <span class="at">label =</span> <span class="st">&quot;Árvore sem splits suficientes</span><span class="sc">\n</span><span class="st">para análise de importância&quot;</span>,</span>
+<span id="cb93-34"><a href="#cb93-34" aria-hidden="true" tabindex="-1"></a>                    <span class="at">size =</span> <span class="dv">6</span>, <span class="at">hjust =</span> <span class="fl">0.5</span></span>
+<span id="cb93-35"><a href="#cb93-35" aria-hidden="true" tabindex="-1"></a>                ) <span class="sc">+</span></span>
+<span id="cb93-36"><a href="#cb93-36" aria-hidden="true" tabindex="-1"></a>                <span class="fu">labs</span>(</span>
+<span id="cb93-37"><a href="#cb93-37" aria-hidden="true" tabindex="-1"></a>                    <span class="at">title =</span> <span class="st">&quot;Variable Importance (CART - Progressão)&quot;</span>,</span>
+<span id="cb93-38"><a href="#cb93-38" aria-hidden="true" tabindex="-1"></a>                    <span class="at">subtitle =</span> <span class="st">&quot;Modelo muito simples para análise de importância&quot;</span></span>
+<span id="cb93-39"><a href="#cb93-39" aria-hidden="true" tabindex="-1"></a>                ) <span class="sc">+</span></span>
+<span id="cb93-40"><a href="#cb93-40" aria-hidden="true" tabindex="-1"></a>                <span class="fu">theme_void</span>()</span>
+<span id="cb93-41"><a href="#cb93-41" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb93-42"><a href="#cb93-42" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb93-43"><a href="#cb93-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) {</span>
+<span id="cb93-44"><a href="#cb93-44" aria-hidden="true" tabindex="-1"></a>        <span class="fu">cat</span>(<span class="st">&quot;Erro na análise de importância:&quot;</span>, e<span class="sc">$</span>message, <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb93-45"><a href="#cb93-45" aria-hidden="true" tabindex="-1"></a>        <span class="fu">cat</span>(<span class="st">&quot;Possível causa: modelo CART muito simples ou dados insuficientes.</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb93-46"><a href="#cb93-46" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb93-47"><a href="#cb93-47" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Aviso: Árvore de progressão não possui splits suficientes para análise de importância.
-Possível causa: poucos eventos de progressão ou parâmetros muito restritivos.
-Considere ajustar os hiperparâmetros ou aumentar o tamanho da amostra.</code></pre>
+Possível causa: poucos eventos de progressão ou parâmetros muito restritivos.</code></pre>
 </div>
 <div class="cell-output-display">
 <div>

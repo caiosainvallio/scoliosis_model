@@ -390,10 +390,10 @@ df |>
 
 ## Modelo Linear - Desfecho Contínuo (Delta)
 
-O modelo linear analisa diretamente a mudança na maior curva ($\Delta$), fornecendo interpretação intuitiva dos coeficientes:
-- **Coeficientes negativos:** associação com melhora clínica
-- **Coeficientes positivos:** associação com progressão clínica  
-- **Magnitude:** quantifica o efeito em graus de mudança na curva
+O modelo linear analisa diretamente a mudança na maior curva ($\Delta$), fornecendo interpretação intuitiva dos coeficientes:       
+- **Coeficientes negativos:** associação com melhora clínica      
+- **Coeficientes positivos:** associação com progressão clínica       
+- **Magnitude:** quantifica o efeito em graus de mudança na curva     
 
 ```{r}
 # =============================================================================
@@ -1220,7 +1220,7 @@ tryCatch(
     },
     error = function(e) {
         cat("Aviso: Teste de Hosmer-Lemeshow não pode ser executado.\n")
-        cat("Possível causa: poucos eventos de progressão ou falta de variação nas predi<U+00E7><U+00F5>es.\n")
+        cat("Possível causa: poucos eventos de progressão ou falta de variação nas predições.\n")
         cat("Erro:", e$message, "\n")
     }
 )
@@ -1588,7 +1588,6 @@ tryCatch(
         } else {
             cat("Aviso: Árvore de progressão não possui splits suficientes para análise de importância.\n")
             cat("Possível causa: poucos eventos de progressão ou parâmetros muito restritivos.\n")
-            cat("Considere ajustar os hiperparâmetros ou aumentar o tamanho da amostra.\n\n")
 
             # Plot informativo
             ggplot() +
