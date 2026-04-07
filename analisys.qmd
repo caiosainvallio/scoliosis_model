@@ -27,7 +27,7 @@ lang: pt-BR
 
 ## Como reproduzir
 
-- O arquivo de dados é lido de `data/dataset_escoliose_00.xlsx` (aba `dados`).
+- O arquivo de dados é lido de `data/dataset_escoliose_01.xlsx` (aba `dados`).
 - As análises dependem de pacotes R listados no chunk de setup; caso algum pacote esteja ausente, o documento interrompe a execução com uma mensagem explícita.
 
 ## Objetivo e delineamento
@@ -99,7 +99,7 @@ theme_set(theme_minimal())
 
 ## Leitura dos dados
 df_raw <- readxl::read_excel(
-    "data/dataset_escoliose_00.xlsx",
+    "data/dataset_escoliose_01.xlsx",
     sheet = "dados",
     na = "" # tratar células vazias como NA
 )
@@ -390,10 +390,15 @@ df |>
 
 ## Modelo Linear - Desfecho Contínuo (Delta)
 
-O modelo linear analisa diretamente a mudança na maior curva ($\Delta$), fornecendo interpretação intuitiva dos coeficientes:       
-- **Coeficientes negativos:** associação com melhora clínica      
-- **Coeficientes positivos:** associação com progressão clínica       
-- **Magnitude:** quantifica o efeito em graus de mudança na curva     
+### Interpretação dos coeficientes
+
+Os coeficientes do modelo linear representam a mudança esperada no $\Delta$ (em graus) para cada unidade de aumento na variável preditora:
+
+- **Coeficientes negativos:** indicam associação com **melhora clínica** (redução na curvatura)
+- **Coeficientes positivos:** indicam associação com **progressão clínica** (aumento na curvatura)
+- **Magnitude:** quantifica o efeito em graus de mudança na maior curva
+- **Intervalos de confiança:** estimam a precisão e significância estatística dos efeitos
+
 
 ```{r}
 # =============================================================================
@@ -512,14 +517,6 @@ performance::r2(model_delta)
 tibble(n_modelo = nobs(model_delta))
 ```
 
-### Interpretação dos coeficientes
-
-Os coeficientes do modelo linear representam a mudança esperada no $\Delta$ (em graus) para cada unidade de aumento na variável preditora:
-
-- **Coeficientes negativos:** indicam associação com **melhora clínica** (redução na curvatura)
-- **Coeficientes positivos:** indicam associação com **progressão clínica** (aumento na curvatura)
-- **Magnitude:** quantifica o efeito em graus de mudança na maior curva
-- **Intervalos de confiança:** estimam a precisão e significância estatística dos efeitos
 
 <br>
 <br>
@@ -750,7 +747,7 @@ cart_rec
 Hiperparâmetros do modelo CART:
 
 - **`cost_complexity` (cp)**: controla poda/complexidade do modelo.
-- **`tree_depth`**: limita profundidade (3-7 níveis).
+- **`tree_depth`**: limita profundidade (3-5 níveis).
 - **`min_n`**: mínimo de observações por nó terminal (15-40).
 
 ```{r}
@@ -788,7 +785,7 @@ metricas <- metric_set(roc_auc, accuracy, sens, spec)
 set.seed(123)
 cart_grid <- grid_latin_hypercube(
     cost_complexity(range = c(-4, -2)), # menos poda extrema
-    tree_depth(range = c(3L, 7L)), # árvores menos profundas
+    tree_depth(range = c(3L, 5L)), # árvores menos profundas
     min_n(range = c(15L, 40L)), # mínimo mais alto por nó
     size = 30
 )
@@ -1350,7 +1347,7 @@ cart_rec_progressao
 Hiperparâmetros do modelo CART:
 
 - **`cost_complexity` (cp)**: controla poda/complexidade do modelo.
-- **`tree_depth`**: limita profundidade (3-7 níveis).
+- **`tree_depth`**: limita profundidade (3-5 níveis).
 - **`min_n`**: mínimo de observações por nó terminal (15-40).
 
 ```{r}
@@ -1388,7 +1385,7 @@ metricas <- metric_set(roc_auc, accuracy, sens, spec)
 set.seed(123)
 cart_grid_progressao <- grid_latin_hypercube(
     cost_complexity(range = c(-4, -2)), # menos poda extrema
-    tree_depth(range = c(3L, 7L)), # árvores menos profundas
+    tree_depth(range = c(3L, 5L)), # árvores menos profundas
     min_n(range = c(15L, 40L)), # mínimo mais alto por nó
     size = 30
 )
