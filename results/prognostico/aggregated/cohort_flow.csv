@@ -1,0 +1,4 @@
+"etapa","n_antes","n_excluidos","n_restante","motivo"
+"Leitura bruta",621,0,621,"registros lidos"
+"Após deduplicação explícita",621,3,618,"duplicatas confirmadas por pares pré-especificados"
+"Coorte analítica por caso completo",618,3,615,"Lenke ausente"

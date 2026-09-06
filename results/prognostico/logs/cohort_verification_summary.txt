@@ -1,0 +1,18 @@
+Auditoria executável da coorte prognóstica
+arquivo: /Users/caiosainvallio/consultoria/scoliosis_model/data/dataset_escoliose_01.xlsx
+aba: dados
+registros_brutos: 621
+ids_unicos_pos_deduplicacao: 618
+casos_completos_finais: 615
+eventos_melhora: 317
+nao_eventos: 298
+pares_identicos_confirmados: 3
+ids_duplicata_excluidos: 46, 162, 248
+ids_lenke_ausente_excluidos: 390, 535, 628
+linhas_modelo_linear: 615
+linhas_modelo_logistico: 615
+mesmas_linhas_nos_modelos: TRUE
+parametros_preditivos: 19
+posto_matriz_com_intercepto: 20
+derivacoes_independentes_aprovadas: TRUE
+sha256: f601adb42c299c2b0572f3e50ff26550b63a2f24dd7173f244a442b498965b71

@@ -47,6 +47,7 @@ source("R/06_report_helpers.R")
 record_environment(dependency_status)
 data_raw <- import_prognostic_data()
 data_prepared <- prepare_prognostic_data(data_raw)
+cohort_outputs <- write_cohort_audit_outputs(data_prepared, raw_data = data_raw)
 ```
 
 Dependências presentes e ausentes são registradas em
@@ -61,6 +62,44 @@ cat(source_description(), "\n")
 cat("Dimensões:", nrow(data_prepared), "linhas x", ncol(data_prepared), "colunas\n")
 cat("Semente global:", GLOBAL_SEED, "\n")
 cat("Sementes específicas das rotinas paralelas:", paste(PARALLEL_SEEDS, collapse = ", "), "\n")
+```
+
+## Formação da coorte analítica
+
+A coorte foi formada por deduplicação explícita dos pares previamente
+confirmados e por análise de caso completo. Esta seção apresenta somente
+contagens agregadas; a lista de exclusões com identificadores é mantida em
+trilha interna de auditoria.
+
+```{r cohort-flow}
+knitr::kable(
+  cohort_outputs$flow[, c("etapa", "n_excluidos", "n_restante", "motivo")],
+  caption = "Fluxo agregado de participantes"
+)
+knitr::include_graphics(file.path(RESULTS_DIRS[["figures"]], "cohort_flow.png"))
+```
+
+```{r cohort-summary}
+knitr::kable(
+  cohort_outputs$summary,
+  caption = "Resumo agregado da coorte analítica"
+)
+```
+
+### Dados ausentes e fatores
+
+```{r cohort-missing}
+knitr::kable(
+  subset(cohort_outputs$missing, n_ausentes > 0),
+  caption = "Dados ausentes por etapa da preparação"
+)
+```
+
+```{r cohort-factors}
+knitr::kable(
+  cohort_outputs$factors,
+  caption = "Níveis dos fatores e referências finais"
+)
 ```
 
 ## Módulos planejados

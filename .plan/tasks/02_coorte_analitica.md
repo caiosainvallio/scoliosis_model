@@ -66,3 +66,9 @@ Produzir, a partir da planilha bruta, uma única coorte analítica auditável pa
 
 Qualquer divergência em IDs, contagens, colunas ou identidade dos pares interrompe a execução. Não corrigir silenciosamente nem adaptar as expectativas ao dado encontrado.
 
+## Status de execução
+
+- **Concluída em 2026-09-06.** A preparação determinística e a auditoria foram
+  implementadas em `R/02_import_prepare.R` e executadas por
+  `scripts/run_cohort_audit.R`, com asserções para todas as contagens e
+  identidades previstas. A planilha bruta permaneceu inalterada.
