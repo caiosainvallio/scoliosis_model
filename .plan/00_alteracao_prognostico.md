@@ -534,18 +534,24 @@ O trabalho estará concluído quando:
 
 ## 19. Sequência de implementação
 
-1. Criar funções de importação, auditoria, derivação e exclusão documentada.
-2. Gerar a coorte final e executar todas as asserções de contagem e identidade.
-3. Refazer descrição, diagnósticos e tamanho amostral.
-4. Ajustar os modelos linear e logístico congelados.
-5. Implementar e testar as funções de métricas e bootstrap.
-6. Executar as 2.000 reamostragens e avaliar estabilidade.
-7. Calcular shrinkage, recalibrar interceptos e montar as equações finais.
-8. Implementar a CART com validação cruzada aninhada.
-9. Implementar os modelos penalizados exploratórios e sua avaliação aninhada.
-10. Executar análises de sensibilidade.
-11. Montar o novo QMD, as tabelas, figuras e sugestões para o manuscrito.
-12. Renderizar em sessão limpa, revisar resultados e executar os critérios de aceitação.
+O trabalho foi decomposto em tarefas numeradas. Cada arquivo define objetivo, atividades, entregáveis, evidências e critérios de conclusão.
+
+| Ordem | Tarefa | Dependências |
+|---:|---|---|
+| 01 | [Preparar a estrutura reprodutível](01_preparacao_reprodutivel.md) | nenhuma |
+| 02 | [Construir e auditar a coorte](02_coorte_analitica.md) | 01 |
+| 03 | [Reajustar os modelos congelados e diagnósticos](03_modelos_congelados.md) | 02 |
+| 04 | [Atualizar a avaliação do tamanho amostral](04_tamanho_amostral.md) | 03 |
+| 05 | [Implementar e testar métricas e bootstrap](05_metricas_bootstrap.md) | 02–03 |
+| 06 | [Executar a avaliação interna](06_avaliacao_interna.md) | 05 |
+| 07 | [Produzir shrinkage, equações e estabilidade](07_shrinkage_equacoes.md) | 06 |
+| 08 | [Corrigir a avaliação da CART](08_cart_aninhada.md) | 02, 05 |
+| 09 | [Executar a modelagem flexível exploratória](09_modelagem_flexivel.md) | 02, 05 |
+| 10 | [Executar análises de sensibilidade](10_analises_sensibilidade.md) | 03, 06–09 |
+| 11 | [Montar o relatório e textos para o manuscrito](11_relatorio_manuscrito.md) | 02–10 |
+| 12 | [Executar verificação final e empacotar evidências](12_verificacao_final.md) | 11 |
+
+As tarefas devem ser executadas na ordem acima. Uma tarefa só pode ser encerrada quando suas evidências estiverem registradas e seus critérios de conclusão tiverem sido satisfeitos.
 
 ## 20. Premissas e limitações já reconhecidas
 
@@ -566,4 +572,3 @@ O trabalho estará concluído quando:
 - Riley RD et al. Evaluation of clinical prediction models (part 1): from development to external validation. *BMJ*. 2024;384:e074819. <https://www.bmj.com/content/384/bmj-2023-074819>
 - Moons KGM et al. PROBAST: a tool to assess risk of bias and applicability of prediction model studies. *Ann Intern Med*. 2019;170:51–58. <https://www.probast.org/>
 - Varma S, Simon R. Bias in error estimation when using cross-validation for model selection. *BMC Bioinformatics*. 2006;7:91. <https://pubmed.ncbi.nlm.nih.gov/16504092/>
-
