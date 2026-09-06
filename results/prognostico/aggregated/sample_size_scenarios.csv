@@ -1,0 +1,14 @@
+"scenario_id","modelo","classe","cenario","medida_desempenho","valor_desempenho","parametros","prevalencia","shrinkage","semente_auc","n_minimo","participantes_disponiveis","margem_n","suficiente","pmsampsize_spp","pmsampsize_epp","eventos_estimados_no_n_minimo","eventos_por_parametro_descritivo"
+"linear_r2_adjusted","linear","referencia_principal","R² ajustado recalculado","R² esperado",0.382840188611358,19,,0.9,,312,615,303,TRUE,16.42,,,
+"linear_r2_035","linear","conservador","R² esperado 0,35","R² esperado",0.35,19,,0.9,,350,615,265,TRUE,18.42,,,
+"linear_r2_030","linear","conservador","R² esperado 0,30","R² esperado",0.3,19,,0.9,,422,615,193,TRUE,22.21,,,
+"linear_r2_025","linear","conservador","R² esperado 0,25","R² esperado",0.25,19,,0.9,,524,615,91,TRUE,27.58,,,
+"linear_r2_020","linear","conservador","R² esperado 0,20","R² esperado",0.2,19,,0.9,,676,615,-61,FALSE,35.58,,,
+"logistic_cs_100","logistic","referencia_otimista","Cox–Snell aparente (100%)","Cox–Snell esperado",0.378556171891982,19,0.515447154471545,0.9,,392,615,223,TRUE,,10.63,202.055284552846,10.6344886606761
+"logistic_cs_080","logistic","conservador","80% do Cox–Snell aparente","Cox–Snell esperado",0.302844937513586,19,0.515447154471545,0.9,,464,615,151,TRUE,,12.59,239.167479674797,12.5877620881472
+"logistic_cs_070","logistic","conservador","70% do Cox–Snell aparente","Cox–Snell esperado",0.264989320324388,19,0.515447154471545,0.9,,545,615,70,TRUE,,14.79,280.918699186992,14.7851946940522
+"logistic_cs_060","logistic","conservador","60% do Cox–Snell aparente","Cox–Snell esperado",0.227133703135189,19,0.515447154471545,0.9,,654,615,-39,FALSE,,17.74,337.10243902439,17.7422336328626
+"logistic_cs_050","logistic","conservador","50% do Cox–Snell aparente","Cox–Snell esperado",0.189278085945991,19,0.515447154471545,0.9,,805,615,-190,FALSE,,21.84,414.934959349594,21.8386820710312
+"logistic_auc_apparent","logistic","sensibilidade_auc","AUC aparente atual","AUC / C-statistic",0.86741790697182,19,0.515447154471545,0.9,20260906,392,615,223,TRUE,,10.63,202.055284552846,10.6344886606761
+"logistic_auc_082","logistic","sensibilidade_auc","AUC 0,82","AUC / C-statistic",0.82,19,0.515447154471545,0.9,20260906,481,615,134,TRUE,,13.05,247.930081300813,13.0489516474112
+"logistic_auc_078","logistic","sensibilidade_auc","AUC 0,78","AUC / C-statistic",0.78,19,0.515447154471545,0.9,20260906,647,615,-32,FALSE,,17.55,333.494308943089,17.5523320496363

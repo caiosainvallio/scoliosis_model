@@ -2,3 +2,4 @@
 *.Rproj
 .Rhistory
 .positai
+r_libs/

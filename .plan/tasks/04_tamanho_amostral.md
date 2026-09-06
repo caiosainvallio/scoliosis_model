@@ -49,3 +49,20 @@ Atualizar a justificativa quantitativa da amostra para os modelos congelados usa
 - Eventos por parâmetro aparecem apenas como descrição complementar.
 - O cálculo não é usado para justificar a complexidade da modelagem flexível exploratória.
 
+## Status de execução
+
+- **Concluída em 2026-09-06.** A avaliação foi recalculada diretamente da coorte
+  aprovada da Tarefa 03 (`n = 615`, 317 eventos, 298 não eventos), com 19
+  parâmetros candidatos em cada modelo e `pmsampsize` 1.1.3.
+- Média de `delta` = −4,655°; DP = 5,353°; R² linear ajustado = 0,383;
+  Cox–Snell aparente = 0,379; máximo = 0,750; Nagelkerke aparente = 0,505.
+- Os cenários principais/conservadores foram executados com n mínimo linear de
+  312, 350, 422, 524 e 676; e n mínimo logístico de 392, 464, 545, 654 e
+  805. Cada um foi comparado diretamente com 615, sem seleção retrospectiva.
+- Cenários AUC foram mantidos apenas como sensibilidades, com semente comum
+  `20260906` (RNG `Mersenne-Twister`) e n mínimo 392, 481 e 647 para AUC
+  aparente atual, 0,82 e 0,78.
+- Saídas: `scripts/run_sample_size_assessment.R`,
+  `results/prognostico/aggregated/sample_size_inputs.csv`,
+  `sample_size_scenarios.csv`, `sample_size_pmsampsize_outputs.txt`,
+  `sample_size_assessment.md` e logs correspondentes.

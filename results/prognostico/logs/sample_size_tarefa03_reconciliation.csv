@@ -1,0 +1,12 @@
+"item","tarefa03","recalculado_tarefa04","diferenca_absoluta"
+"cohort_summary.n_final",615,615,0
+"cohort_summary.eventos_melhora",317,317,0
+"cohort_summary.nao_eventos",298,298,0
+"frozen_metrics_linear.n",615,615,0
+"frozen_metrics_linear.r2_adjusted",0.382840188611358,0.382840188611358,0.000000000000000166533453693773
+"frozen_metrics_logistic.n",615,615,0
+"frozen_metrics_logistic.events",317,317,0
+"frozen_metrics_logistic.nonevents",298,298,0
+"frozen_metrics_logistic.prevalence",0.515447154471545,0.515447154471545,0.000000000000000222044604925031
+"frozen_specification_audit.parameters_predictors.linear",19,19,0
+"frozen_specification_audit.parameters_predictors.logistic",19,19,0
