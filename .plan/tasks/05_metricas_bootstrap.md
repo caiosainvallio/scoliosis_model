@@ -60,3 +60,9 @@ Construir funções estatísticas independentes e testadas para métricas, calib
 - A saída contém informação suficiente para auditoria e estabilidade individual sem expor IDs no relatório público.
 - As funções aceitam explicitamente dados, fórmula, família e semente.
 
+## Status de execução
+
+- **Concluída em 2026-09-06.** Métricas, calibração, bootstrap reprodutível,
+  falhas estruturadas e consolidação foram implementados com testes unitários e
+  de integração aprovados em sessão limpa, incluindo uma réplica da coorte de
+  615 participantes.
