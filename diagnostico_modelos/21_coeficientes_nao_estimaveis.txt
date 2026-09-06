@@ -1,0 +1,6 @@
+$linear
+character(0)
+
+$logistico
+character(0)
+

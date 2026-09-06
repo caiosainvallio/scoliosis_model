@@ -1,0 +1,38 @@
+── Data Summary ────────────────────────
+                           Values                      
+Name                       dplyr::select(df, dplyr::...
+Number of rows             621                         
+Number of columns          15                          
+_______________________                                
+Column type frequency:                                 
+  factor                   5                           
+  numeric                  10                          
+________________________                               
+Group variables            None                        
+
+── Variable type: factor ──────────────────────────────────────────────────────────────────────────────────
+  skim_variable               n_missing complete_rate ordered n_unique
+1 sexo                                0         1     FALSE          2
+2 lenke                               3         0.995 FALSE          6
+3 risser                              0         1     FALSE          5
+4 flexibilidade                       0         1     FALSE          2
+5 escoliometro_maior_10_graus         0         1     FALSE          4
+  top_counts                           
+1 fem: 556, mas: 65                    
+2 6: 288, 3: 137, 4: 60, 5: 55         
+3 4: 143, 0: 132, 3: 127, 2: 124       
+4 fle: 393, rig: 228                   
+5 tor: 224, lom: 204, nor: 147, tor: 46
+
+── Variable type: numeric ─────────────────────────────────────────────────────────────────────────────────
+   skim_variable       n_missing complete_rate    mean     sd     p0  p25  p50  p75  p100 hist 
+ 1 cobb_inicial_maior          0             1 36.6     5.61   25    32   38   42    45   ▅▅▅▇▇
+ 2 maior_curva_6_meses         0             1 32.0     7.66   10    26   32   38    50   ▁▅▇▇▂
+ 3 delta                       0             1 -4.65    5.35  -23    -8   -5   -1    13   ▁▃▇▅▁
+ 4 delta_cat                   0             1  0.515   0.500   0     0    1    1     1   ▇▁▁▁▇
+ 5 delta_progression           0             1  0.0403  0.197   0     0    0    0     1   ▇▁▁▁▁
+ 6 idade                       0             1 13.2     1.70   10    12   13   14    18   ▃▇▃▃▁
+ 7 imc                         0             1 19.2     2.92   13.3  17.1 18.9 20.8  34.1 ▅▇▂▁▁
+ 8 cifose_toracica             0             1 22.9    11.5     0    14   22   30    68   ▃▇▅▁▁
+ 9 lordose_lombar              0             1 54.5    11.6    17    47   55   63    82   ▁▃▇▆▂
+10 correcao_colete             0             1 47.0    19.6     3.70 32.4 45.2 57.1 142.  ▃▇▂▁▁

@@ -1,0 +1,4 @@
+conjunto,n,percentual_base,perda_n,perda_percentual
+Base total,621,100,0,0
+Modelo linear,618,99.51690821256038,3,0.4830917874396135
+Modelo logístico,618,99.51690821256038,3,0.4830917874396135

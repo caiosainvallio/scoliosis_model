@@ -1,0 +1,1742 @@
+---
+title: "Scoliosis Model"
+author: "Caio Vallio"
+abstract: |
+  **Contexto:** A escoliose idiopática do adolescente pode apresentar resposta clínica variável a intervenções conservadoras.  
+  **Objetivo:** Explorar associações entre características basais e evolução radiográfica em 6 meses, utilizando abordagem estatística otimizada.  
+  **Métodos:** Estudo observacional com análise exploratória e inferencial. Implementamos três tipos de modelos: (1) modelo linear único para o desfecho contínuo $\Delta$ (mudança na maior curva), (2) modelos logísticos para desfechos binários de melhora clínica ($\Delta \le -5°$) e progressão clínica ($\Delta \ge +5°$), e (3) modelos CART para identificação de perfis de risco. Realizamos diagnósticos completos de adequação para todos os modelos, reportando coeficientes/odds ratios com IC95%.  
+date: last-modified
+format: 
+  html:
+    self-contained: true
+    df-print: paged
+    toc: true 
+    toc-depth: 5
+    number-sections: true
+    number-depth: 5
+    code-fold: true
+execute: 
+  echo: true
+  warning: false
+  message: false
+  error: false
+  freeze: auto
+lang: pt-BR
+#bibliography: references.bib
+---
+
+## Como reproduzir
+
+- O arquivo de dados é lido de `data/dataset_escoliose_01.xlsx` (aba `dados`).
+- As análises dependem de pacotes R listados no chunk de setup; caso algum pacote esteja ausente, o documento interrompe a execução com uma mensagem explícita.
+
+## Objetivo e delineamento
+
+Este é um relatório **exploratório e inferencial**: o objetivo é **estimar associações ajustadas** entre variáveis basais e a evolução radiográfica em 6 meses.
+
+## Estrutura dos Modelos
+
+A análise utiliza uma abordagem estatística otimizada com três tipos de modelos complementares:
+
+### Modelo Linear (Desfecho Contínuo)
+- **Objetivo:** Modelar diretamente o $\Delta$ (mudança na maior curva em graus)
+- **Interpretação:** Coeficientes negativos indicam associação com melhora, positivos com piora
+- **Vantagem:** Aproveita toda a informação contínua do desfecho, sem perda por dicotomização
+
+### Modelos para Desfechos Binários
+- **Melhora Clínica** ($\Delta \le -5°$): Modelos logístico e CART
+- **Progressão Clínica** ($\Delta \ge +5°$): Modelos logístico e CART  
+- **Objetivo:** Identificar fatores associados aos desfechos clinicamente relevantes e perfis de risco
+
+## Definições de desfecho
+
+- **Desfecho contínuo:** $\Delta$ = (maior curva em 6 meses − maior curva baseline), em graus. Valores negativos indicam melhora, positivos indicam piora.  
+- **Melhora clínica:** $\Delta \le -5°$ (redução de pelo menos 5 graus na maior curva).
+- **Progressão clínica:** $\Delta \ge +5°$ (aumento de pelo menos 5 graus na maior curva).
+
+## Plano de análise estatística
+
+- **Descrição da amostra**: estatísticas descritivas das variáveis preditoras e desfechos.
+- **Inferência (associações ajustadas)**:
+  - **Modelo linear único** para $\Delta$ (coeficientes com IC95%, interpretação direcionada).
+  - **Modelos logísticos específicos** para melhora e progressão (odds ratios com IC95%).
+  - **Modelos CART** para ambos os desfechos binários (regras interpretáveis e perfis de risco).
+- **Adequação dos modelos**: diagnósticos completos de pressupostos para todos os modelos (normalidade, heteroscedasticidade, colinearidade, outliers, adequação do ajuste).
+- **Forma funcional**: relações aproximadamente lineares entre preditores contínuos e desfechos.
+
+Por se tratar de análise **exploratória**, os resultados devem ser interpretados com cautela, com ênfase em **magnitude/direção** e incerteza (IC95%).
+
+
+```{r}
+# =============================================================================
+# SETUP E PREPARAÇÃO DOS DADOS
+# =============================================================================
+
+## Carregamento e verificação de pacotes necessários
+pkgs <- c(
+    "tidyverse", # manipulação de dados e visualização
+    "gtsummary", # tabelas estatísticas
+    "readxl", # leitura de arquivos Excel
+    "janitor", # limpeza de nomes de variáveis
+    "performance", # diagnósticos de modelos
+    "qqplotr", # gráficos Q-Q
+    "PupillometryR" # gráficos violin plot
+)
+
+# Verificar se todos os pacotes estão instalados
+missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing_pkgs) > 0) {
+    stop("Pacotes ausentes: ", paste(missing_pkgs, collapse = ", "))
+}
+
+# Carregar pacotes
+invisible(lapply(pkgs, library, character.only = TRUE))
+
+# Configura<U+00E7><U+00F5>es de reprodutibilidade e tema
+set.seed(123)
+theme_set(theme_minimal())
+
+
+## Leitura dos dados
+df_raw <- readxl::read_excel(
+    "data/dataset_escoliose_01.xlsx",
+    sheet = "dados",
+    na = "" # tratar células vazias como NA
+)
+
+## Limpeza dos nomes das variáveis (snake_case)
+df <- df_raw |> janitor::clean_names()
+
+# =============================================================================
+# CRIAÇÃO DE VARIÁVEIS DERIVADAS
+# =============================================================================
+
+## Classificação do escoliômetro: identificar regi<U+00F5>es com deformidade > 10°
+# Esta variável indica onde a gibosidade é mais pronunciada
+df <- df |>
+    mutate(
+        escoliometro_maior_10_graus = case_when(
+            # Múltiplas regi<U+00F5>es afetadas
+            (escoliometro_cervical > 10) & (escoliometro_torarica > 10) & (escoliometro_lombar > 10) ~
+                "cervical_toracica_lombar",
+            (escoliometro_cervical > 10) & (escoliometro_torarica > 10) ~
+                "cervical_toracica",
+            (escoliometro_cervical > 10) & (escoliometro_lombar > 10) ~
+                "cervical_lombar",
+            (escoliometro_torarica > 10) & (escoliometro_lombar > 10) ~
+                "toracica_lombar",
+
+            # Região única afetada
+            (escoliometro_cervical > 10) ~ "cervical",
+            (escoliometro_torarica > 10) ~ "toracica",
+            (escoliometro_lombar > 10) ~ "lombar",
+
+            # Nenhuma região > 10° (referência)
+            TRUE ~ "normal"
+        )
+    )
+
+# Variáveis categóricas não são mais utilizadas nos modelos finais
+# (mantendo apenas as variáveis numéricas conforme plano de análise)
+
+## Cálculo do Índice de Massa Corporal (IMC)
+df <- df |>
+    mutate(imc = peso / (altura)^2) # altura deve estar em metros
+
+# =============================================================================
+# DEFINIÇÃO DOS DESFECHOS PRIMÁRIOS
+# =============================================================================
+
+## Identificação da maior curva no baseline
+# Compara as três regi<U+00F5>es e identifica o maior ângulo de Cobb inicial
+df <- df |>
+    mutate(
+        # Maior curva entre todas as regi<U+00F5>es medidas
+        cobb_inicial_maior = pmax(
+            cobb_toracico_proximal,
+            cobb_toracica,
+            cobb_lombar,
+            na.rm = TRUE
+        ),
+
+        # Identificar qual região apresenta a maior curva (para referência)
+        regiao_cobb_inicial = case_when(
+            cobb_inicial_maior == cobb_toracico_proximal ~ "toracico_proximal",
+            cobb_inicial_maior == cobb_toracica ~ "toracica",
+            cobb_inicial_maior == cobb_lombar ~ "lombar",
+            TRUE ~ NA_character_
+        )
+    )
+
+
+# =============================================================================
+# CRIAÇÃO DAS VARIÁVEIS DE DESFECHO
+# =============================================================================
+
+## Variáveis de desfecho para os dois modelos principais
+df <- df |>
+    # DESFECHO CONTÍNUO: Mudan<U+00E7>a na maior curva (em graus)
+    # Valores negativos = melhora, valores positivos = piora
+    mutate(delta = maior_curva_6_meses - cobb_inicial_maior) |>
+    # MODELO 1: MELHORA CLÍNICA (delta ≤ -5°)
+    mutate(
+        delta_cat = if_else(delta <= -5, 1, 0),
+        delta_cat_f = factor(
+            delta_cat,
+            levels = c(0, 1),
+            labels = c("Sem melhora (MCID)", "Melhora (MCID)")
+        )
+    ) |>
+    # MODELO 2: PROGRESS<U+00C3>O CLÍNICA (delta ≥ +5°)
+    mutate(
+        delta_progression = if_else(delta >= 5, 1, 0),
+        delta_progression_f = factor(
+            delta_progression,
+            levels = c(0, 1),
+            labels = c("Não progrediu", "Progrediu")
+        )
+    )
+
+# Conversão de variáveis para tipos adequados nos modelos
+df <- df |>
+    mutate(
+        # Variáveis numéricas
+        idade = as.double(idade),
+
+        # Variáveis categóricas (fatores com níveis específicos)
+        lenke = as.factor(lenke),
+        risser = as.factor(risser),
+        sexo = as.factor(sexo),
+        flexibilidade = as.factor(flexibilidade),
+
+        # Escoliômetro: definir "normal" como categoria de referência
+        escoliometro_maior_10_graus = forcats::fct_relevel(
+            as.factor(escoliometro_maior_10_graus),
+            "normal"
+        )
+    )
+
+```
+
+## Dados faltantes e tamanho amostral
+
+```{r}
+# =============================================================================
+# ANÁLISE DE DADOS FALTANTES
+# =============================================================================
+
+# Calcular quantidade e percentual de dados faltantes por variável
+missing_tbl <- df |>
+    summarise(across(everything(), ~ sum(is.na(.)))) |>
+    pivot_longer(
+        everything(),
+        names_to = "variavel",
+        values_to = "n_missing"
+    ) |>
+    mutate(pct_missing = n_missing / nrow(df)) |>
+    arrange(desc(pct_missing)) # ordenar por maior percentual faltante
+
+# Exibir tabela de dados faltantes (formato percentual)
+missing_tbl |>
+    mutate(pct_missing = scales::percent(pct_missing, accuracy = 0.1)) |>
+    print(n = 50)
+
+# Tratamento de dados faltantes
+# Remover observa<U+00E7><U+00F5>es com flexibilidade faltante (variável key do modelo)
+df <- df |> drop_na(flexibilidade)
+```
+
+**Observação:** os modelos abaixo usam **análise por caso completo** (listwise deletion), que é o comportamento padrão do `glm()`/`lm()` quando há dados faltantes nas variáveis do modelo.
+
+## Codificação de variáveis categóricas (referências)
+
+As variáveis categóricas entram como fatores. A **categoria de referência** (baseline) é o **primeiro nível** do fator (conforme `levels()`), a menos que seja explicitamente reordenado.
+
+```{r}
+# Lista de variáveis categóricas utilizadas nos modelos finais
+categoricas <- c(
+    "sexo",
+    "lenke",
+    "risser",
+    "flexibilidade",
+    "escoliometro_maior_10_graus"
+)
+map_dfr(categoricas, function(v) {
+    tibble(
+        variavel = v,
+        niveis = paste(levels(df[[v]]), collapse = " | ")
+    )
+}) |>
+    print(n = Inf)
+```
+
+<br>
+<br>
+<br>
+
+# Análise descritiva
+
+## Variáveis preditoras dos modelos
+
+Variáveis coletadas na linha de base e utilizadas nos modelos finais.
+
+```{r}
+df |>
+    gtsummary::tbl_summary(
+        include = c(
+            # Variáveis numéricas
+            idade,
+            imc,
+            cifose_toracica,
+            lordose_lombar,
+            correcao_colete,
+
+            # Variáveis categóricas
+            sexo,
+            lenke,
+            risser,
+            flexibilidade,
+            escoliometro_maior_10_graus,
+        ),
+        type = list(
+            idade ~ "continuous"
+        ),
+        statistic = list(
+            gtsummary::all_continuous() ~ "{mean} ({sd})",
+            gtsummary::all_categorical() ~ "{n} ({p}%)"
+        )
+    )
+
+```
+
+
+## Desfechos principais
+
+- Maior curva na linha de base e em 6 meses.    
+- Delta: maior curva 6 meses - maior curva baseline.    
+- **Melhora clínica:** delta ≤ -5 graus (redução de pelo menos 5 graus).
+- **Progressão clínica:** delta ≥ +5 graus (aumento de pelo menos 5 graus).
+
+
+```{r}
+df |>
+    gtsummary::tbl_summary(
+        include = c(
+            cobb_inicial_maior,
+            maior_curva_6_meses,
+            delta,
+            delta_cat_f,
+            delta_progression_f
+        ),
+        type = list(
+            delta_cat_f ~ "categorical",
+            delta_progression_f ~ "categorical"
+        ),
+        statistic = list(
+            gtsummary::all_continuous() ~ "{mean} ({sd})",
+            gtsummary::all_categorical() ~ "{n} ({p}%)"
+        )
+    )
+
+```
+
+
+## Distribuição do desfecho principal
+```{r}
+df |>
+    ggplot(aes(x = "", y = delta)) +
+    PupillometryR::geom_flat_violin(
+        position = position_nudge(x = .2),
+        alpha = 0.7
+    ) +
+    labs(
+        title = "Distribution of the outcome (delta)",
+        x = "",
+        y = "delta (degrees)"
+    ) +
+    geom_point(position = position_jitter(w = .15)) +
+    geom_boxplot(
+        width = .25,
+        alpha = 0.7,
+        outlier.shape = NA
+    ) +
+    coord_flip() +
+    theme(
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()
+    )
+```
+
+```{r}
+df |>
+    ggplot(aes(sample = delta)) +
+    qqplotr::stat_qq_band(alpha = 0.2) +
+    qqplotr::stat_qq_line() +
+    qqplotr::stat_qq_point() +
+    labs(
+        title = "Outcome QQ-plot (delta)",
+        x = "Theoretical quantiles",
+        y = "Sample quantiles"
+    )
+```
+
+<br>
+<br>
+<br>
+
+
+# Modelagem
+
+## Modelo Linear - Desfecho Contínuo (Delta)
+
+### Interpretação dos coeficientes
+
+Os coeficientes do modelo linear representam a mudança esperada no $\Delta$ (em graus) para cada unidade de aumento na variável preditora:
+
+- **Coeficientes negativos:** indicam associação com **melhora clínica** (redução na curvatura)
+- **Coeficientes positivos:** indicam associação com **progressão clínica** (aumento na curvatura)
+- **Magnitude:** quantifica o efeito em graus de mudança na maior curva
+- **Intervalos de confiança:** estimam a precisão e significância estatística dos efeitos
+
+
+```{r}
+# =============================================================================
+# MODELO LINEAR - DESFECHO CONTÍNUO (DELTA)
+# =============================================================================
+
+# Modelo único para o desfecho contínuo (delta em graus)
+# Interpretação direta: coeficientes negativos = melhora, positivos = piora
+# Utiliza toda a informação contínua sem perda por dicotomização
+
+model_delta <- lm(
+    delta ~
+        # Variáveis numéricas
+        idade + # idade do paciente
+        imc + # índice de massa corporal
+        cifose_toracica + # ângulo da cifose torácica
+        lordose_lombar + # ângulo da lordose lombar
+        correcao_colete + # percentual de correção com colete
+
+        # Variáveis categóricas
+        sexo + # sexo do paciente
+        lenke + # classificação de Lenke (numérica como factor)
+        risser + # sinal de Risser (numérica como factor)
+        flexibilidade + # flexibilidade da curva
+        escoliometro_maior_10_graus, # região com gibosidade > 10°
+    data = df
+)
+```
+
+
+
+### Parâmetros do modelo
+
+```{r}
+model_delta |>
+    gtsummary::tbl_regression(conf.level = 0.95) |>
+    # gtsummary::add_global_p() |>
+    gtsummary::bold_p() |>
+    gtsummary::bold_labels() |>
+    gtsummary::italicize_levels()
+```
+
+
+
+### Análises de pressupostos
+
+#### Heteroscedasticidade
+
+Verificação de heteroscedasticidade dos resíduos (teste de Breusch-Pagan).
+
+```{r}
+performance::check_heteroscedasticity(model_delta)
+performance::check_heteroscedasticity(model_delta) |> plot()
+```
+
+
+
+#### Normalidade dos resíduos
+
+```{r}
+performance::check_residuals(model_delta)
+performance::check_residuals(model_delta) |> plot()
+```
+
+#### Autocorrelação dos resíduos
+
+Independência dos resíduos (Durbin-Watson test).
+
+```{r}
+performance::check_autocorrelation(model_delta)
+```
+
+#### Verificações preditivas posteriores
+
+Simulação de dados replicados sob o modelo ajustado e posterior comparação com os dados observados.
+
+```{r}
+performance::check_predictions(model_delta) |> plot()
+```
+
+
+#### Colinearidade
+
+Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
+Valores maiores que 10 indicam colinearidade entre as variáveis.
+
+```{r}
+performance::check_collinearity(model_delta) |>
+    arrange(desc(VIF)) |>
+    select(Term, VIF, VIF_CI_low, VIF_CI_high) |>
+    performance::print_html()
+
+performance::check_collinearity(model_delta) |> plot()
+```
+
+#### Outliers
+
+```{r}
+performance::check_outliers(model_delta)
+performance::check_outliers(model_delta) |> plot()
+```
+
+
+
+#### Coeficiente de determinação
+
+$R^2$ - proporção da variância explicada pelo modelo.
+
+```{r}
+performance::r2(model_delta)
+```
+
+#### Tamanho amostral efetivo (casos completos)
+
+```{r}
+tibble(n_modelo = nobs(model_delta))
+```
+
+
+<br>
+<br>
+<br>
+
+## Desfecho Binário: Melhora Clínica
+
+Análise da **melhora clínica**, definida como redução ≥ 5 graus na maior curva ($\Delta \le -5°$).
+
+### Modelo Logístico
+
+Estima associações ajustadas com a **chance de melhora clínica**, definida como $\Delta \le -5°$.
+
+
+```{r}
+# =============================================================================
+# MODELO LOGÍSTICO - MELHORA CLÍNICA
+# =============================================================================
+
+# Modelo para chance de melhora clínica (delta ≤ -5°)
+# Utiliza as mesmas variáveis do modelo linear
+
+model_melhora <- glm(
+    delta_cat ~
+        # Variáveis numéricas
+        idade + # idade do paciente
+        imc + # índice de massa corporal
+        cifose_toracica + # ângulo da cifose torácica
+        lordose_lombar + # ângulo da lordose lombar
+        correcao_colete + # percentual de correção com colete
+
+        # Variáveis categóricas
+        sexo + # sexo do paciente
+        lenke + # classificação de Lenke
+        risser + # sinal de Risser
+        flexibilidade + # flexibilidade da curva
+        escoliometro_maior_10_graus, # região com gibosidade > 10°
+    data = df,
+    family = "binomial" # distribuição binomial para regressão logística
+)
+```
+
+
+#### Parâmetros do modelo
+
+Parâmetros do modelo de regressão logística. Resposta em _Odds Ratio_.
+
+```{r}
+model_melhora |>
+    gtsummary::tbl_regression(exponentiate = TRUE, conf.level = 0.95) |>
+    # gtsummary::add_global_p() |>
+    gtsummary::bold_p() |>
+    gtsummary::bold_labels() |>
+    gtsummary::italicize_levels()
+```
+
+
+#### Resíduos binarizados
+
+```{r}
+performance::binned_residuals(model_melhora) |> plot()
+```
+
+#### Autocorrelação dos resíduos
+
+Independência dos resíduos (Durbin-Watson test).
+
+```{r}
+performance::check_autocorrelation(model_melhora)
+```
+
+
+#### Verificações preditivas posteriores
+
+Simulação de dados replicados sob o modelo ajustado e posterior comparação com os dados observados.
+
+```{r}
+performance::check_predictions(model_melhora) |> plot()
+```
+
+
+#### Qualidade do ajuste do modelo
+
+Teste de Hosmer-Lemeshow para avaliar a qualidade do ajuste de modelos binomiais. P-valor < 0.05 indica que o modelo não ajusta bem os dados.
+
+```{r}
+# Teste de Hosmer-Lemeshow pode falhar com poucos eventos de melhora
+tryCatch(
+    {
+        performance::performance_hosmer(model_melhora)
+    },
+    error = function(e) {
+        cat("Aviso: Teste de Hosmer-Lemeshow não pode ser executado.\n")
+        cat("Possível causa: poucos eventos de melhora ou falta de variação nas predi<U+00E7><U+00F5>es.\n")
+        cat("Erro:", e$message, "\n")
+    }
+)
+```
+
+
+#### Colinearidade
+
+Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
+Valores maiores que 10 indicam colinearidade entre as variáveis.
+
+```{r}
+performance::check_collinearity(model_melhora) |>
+    arrange(desc(VIF)) |>
+    select(Term, VIF, VIF_CI_low, VIF_CI_high) |>
+    performance::print_html()
+
+performance::check_collinearity(model_melhora) |> plot()
+```
+
+#### Outliers
+
+```{r}
+performance::check_outliers(model_melhora)
+performance::check_outliers(model_melhora) |> plot()
+```
+
+
+#### Coeficiente de determinação (Tjur)
+
+Coeficiente de determinação de Tjur ($R^2_{Tjur}$). Teste específico para modelos binomiais.
+
+```{r}
+performance::r2(model_melhora)
+```
+
+#### Tamanho amostral efetivo (casos completos)
+
+```{r}
+mf_melhora <- model.frame(model_melhora)
+n_melhora <- nrow(mf_melhora)
+eventos_melhora <- sum(mf_melhora[[1]] == 1, na.rm = TRUE)
+sem_melhora <- sum(mf_melhora[[1]] == 0, na.rm = TRUE)
+tibble(
+    n_modelo = n_melhora,
+    eventos_melhora = eventos_melhora,
+    sem_melhora = sem_melhora
+)
+```
+
+<br>
+<br>
+<br>
+
+
+### Modelo CART (Árvore de Decisão)
+
+**Objetivo:** Identificar perfis de pacientes com maior probabilidade de melhora clínica através de árvores de decisão.
+
+**Disclaimer:** Resultados de modelos CART requerem validação externa. Análise baseada em validação cruzada.
+
+#### Setup e preparação dos dados
+
+```{r}
+#| label: cart-setup_a
+
+# =============================================================================
+# MODELO 1: CART - PREPARAÇÃO DOS DADOS
+# =============================================================================
+
+# Carregamento de bibliotecas específicas para machine learning
+library(tidymodels) # framework tidyverse para ML
+library(rpart.plot) # visualização de árvores
+library(vip) # importância de variáveis
+
+set.seed(123) # reprodutibilidade
+
+# Preparação do dataset para CART
+# Recodificação do desfecho para labels descritivos
+df_cart <- df |>
+    mutate(
+        delta_cat_cart = factor(
+            delta_cat,
+            levels = c(0, 1),
+            labels = c("nao_melhora", "melhora")
+        )
+    ) |>
+    # Seleção das mesmas variáveis dos modelos parametricos
+    select(
+        delta_cat_cart, # desfecho recodificado
+
+        # Variáveis preditoras numéricas
+        idade,
+        imc,
+        cifose_toracica,
+        lordose_lombar,
+        correcao_colete,
+
+        # Variáveis preditoras categóricas
+        sexo,
+        lenke,
+        risser,
+        flexibilidade,
+        escoliometro_maior_10_graus
+    )
+
+# Verificação: evento de interesse = "melhora" (segundo nível)
+levels(df_cart$delta_cat_cart)
+```
+
+#### Recipe (pre-processamento)
+
+O pre-processamento é feito **dentro do resampling** (evita leakage):
+
+- `step_zv()`: remove variáveis com variância zero
+- `step_unknown()` + `step_novel()`: robustez a níveis novos/raros durante CV
+- `step_impute_median()` + `step_impute_mode()`: imputação de missings
+
+```{r}
+#| label: cart-recipe_a
+
+cart_rec <- recipe(delta_cat_cart ~ ., data = df_cart) |>
+    step_zv(all_predictors()) |>
+    step_unknown(all_nominal_predictors()) |>
+    step_novel(all_nominal_predictors()) |>
+    step_impute_median(all_numeric_predictors()) |>
+    step_impute_mode(all_nominal_predictors())
+
+cart_rec
+```
+
+#### Modelo e hiperparâmetros
+
+Hiperparâmetros do modelo CART:
+
+- **`cost_complexity` (cp)**: controla poda/complexidade do modelo.
+- **`tree_depth`**: limita profundidade (3-5 níveis).
+- **`min_n`**: mínimo de observações por nó terminal (15-40).
+
+```{r}
+#| label: cart-model_a
+
+cart_spec <- decision_tree(
+    cost_complexity = tune(),
+    tree_depth = tune(),
+    min_n = tune()
+) |>
+    set_engine("rpart") |>
+    set_mode("classification")
+
+cart_wf <- workflow() |>
+    add_recipe(cart_rec) |>
+    add_model(cart_spec)
+
+cart_wf
+```
+
+#### Validação cruzada e tuning
+
+Usamos **CV estratificada repetida** (10-fold, 5 repetições) para estimar desempenho e selecionar hiperparâmetros.
+
+```{r}
+#| label: cart-cv-tuning_a
+
+set.seed(123)
+folds <- vfold_cv(df_cart, v = 10, repeats = 5, strata = delta_cat_cart)
+
+# Metricas de interesse
+metricas <- metric_set(roc_auc, accuracy, sens, spec)
+
+# Grid de hiperparametros
+set.seed(123)
+cart_grid <- grid_latin_hypercube(
+    cost_complexity(range = c(-4, -2)), # menos poda extrema
+    tree_depth(range = c(3L, 5L)), # árvores menos profundas
+    min_n(range = c(15L, 40L)), # mínimo mais alto por nó
+    size = 30
+)
+
+# Tuning
+set.seed(123)
+cart_tuned <- tune_grid(
+    cart_wf,
+    resamples = folds,
+    grid = cart_grid,
+    metrics = metricas,
+    control = control_grid(save_pred = TRUE)
+)
+```
+
+#### Melhores hiperparâmetros
+
+Selecionamos pelo **maior AUC ROC medio** na CV:
+
+```{r}
+#| label: cart-best-params_a
+
+# Top 10 combinacoes por AUC
+cart_tuned |>
+    collect_metrics() |>
+    filter(.metric == "roc_auc") |>
+    arrange(desc(mean)) |>
+    slice_head(n = 10)
+
+# Melhor combinacao
+best_params <- cart_tuned |>
+    select_best(metric = "roc_auc")
+
+best_params
+```
+
+#### Desempenho final (CV)
+
+Avaliamos o modelo finalizado com os melhores hiperparâmetros:
+
+```{r}
+#| label: cart-final-metrics_a
+
+cart_final_wf <- finalize_workflow(cart_wf, best_params)
+
+set.seed(123)
+cart_res <- fit_resamples(
+    cart_final_wf,
+    resamples = folds,
+    metrics = metricas,
+    control = control_resamples(save_pred = TRUE)
+)
+
+# Metricas agregadas (media e SD)
+cart_metrics <- cart_res |>
+    collect_metrics() |>
+    select(.metric, mean, std_err, n) |>
+    mutate(
+        ci_lower = mean - 1.96 * std_err,
+        ci_upper = mean + 1.96 * std_err
+    )
+
+cart_metrics
+```
+
+#### Métricas por fold (dispersão)
+
+Visualização da incerteza nas estimativas de desempenho:
+
+```{r}
+#| label: cart-metrics-boxplot_a
+#| fig-width: 8
+#| fig-height: 5
+
+cart_res |>
+    collect_metrics(summarize = FALSE) |>
+    ggplot(aes(x = .metric, y = .estimate, fill = .metric)) +
+    geom_boxplot(alpha = 0.7, show.legend = FALSE) +
+    geom_jitter(width = 0.1, alpha = 0.3, size = 1) +
+    scale_fill_brewer(palette = "Set2") +
+    labs(
+        title = "Distribution of metrics by fold (CV repeated)",
+        subtitle = "10-fold CV x 5 repetitions = 50 estimates per metric",
+        x = "Metric",
+        y = "Value"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+        plot.title = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 0)
+    )
+```
+
+#### Matriz de confusão agregada (normalizada)
+
+```{r}
+#| label: cart-confusion-matrix_a
+#| fig-width: 6
+#| fig-height: 5
+
+# Predicoes agregadas de todos os folds
+preds_all <- cart_res |>
+    collect_predictions()
+
+# Matriz de confusao
+conf_mat_data <- preds_all |>
+    conf_mat(truth = delta_cat_cart, estimate = .pred_class)
+
+# Normalizar por linha (proporcao por classe verdadeira)
+conf_mat_tbl <- conf_mat_data$table |>
+    as.data.frame() |>
+    group_by(Truth) |>
+    mutate(
+        prop = Freq / sum(Freq),
+        label = scales::percent(prop, accuracy = 0.1)
+    ) |>
+    ungroup()
+
+# Visualizacao heatmap normalizado
+ggplot(conf_mat_tbl, aes(x = Prediction, y = Truth, fill = prop)) +
+    geom_tile(color = "white", linewidth = 1) +
+    geom_text(aes(label = label), size = 5, fontface = "bold") +
+    scale_fill_gradient(
+        low = "white",
+        high = "steelblue",
+        labels = scales::percent,
+        name = "Proporcao"
+    ) +
+    scale_y_discrete(limits = rev) +
+    labs(
+        title = "Confucion Matrix",
+        subtitle = "Proportion by true class (rows sum to 100%)",
+        x = "Prediction",
+        y = "True"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+        plot.title = element_text(face = "bold"),
+        panel.grid = element_blank()
+    )
+```
+
+#### Árvore final
+
+Ajustamos o modelo final no dataset completo para visualização e interpretação:
+
+```{r}
+#| label: cart-final-tree_a
+#| fig-width: 10
+#| fig-height: 8
+
+cart_fit_full <- fit(cart_final_wf, data = df_cart)
+cart_rpart <- extract_fit_engine(cart_fit_full)
+
+# Plot da arvore com rpart.plot
+rpart.plot(
+    cart_rpart,
+    type = 4,
+    extra = 104,
+    under = TRUE,
+    fallen.leaves = TRUE,
+    roundint = FALSE,
+    box.palette = "BuGn",
+    shadow.col = "gray",
+    main = "Decision Tree for MCID (delta <= -5 degrees)"
+)
+```
+
+#### Importância de variáveis
+
+```{r}
+#| label: cart-vip_a
+#| fig-width: 8
+#| fig-height: 6
+
+# Grafico de importancia com vip
+cart_fit_full |>
+    extract_fit_parsnip() |>
+    vip(
+        num_features = 15,
+        geom = "col",
+        aesthetics = list(fill = "steelblue", alpha = 0.8)
+    ) +
+    labs(
+        title = "Variable Importance (CART)",
+        subtitle = "Based on impurity reduction (Gini)",
+        x = "Importance",
+        y = "Variable"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(plot.title = element_text(face = "bold"))
+```
+
+#### Análise de estabilidade (Bootstrap)
+
+```{r}
+#| label: cart-bootstrap-stability_a
+
+# Função para extrair variáveis de split principais de uma árvore (únicas por árvore)
+extract_main_splits <- function(rpart_model, max_levels = 3) {
+    frame <- rpart_model$frame
+    # Filtrar apenas nós internos (não folhas)
+    internal_nodes <- frame[frame$var != "<leaf>", ]
+
+    # Extrair apenas as variáveis (não os valores de corte)
+    if (nrow(internal_nodes) > 0) {
+        # Limitar aos primeiros níveis (mais estáveis)
+        rownames_numeric <- as.numeric(rownames(internal_nodes))
+        main_splits <- internal_nodes[rownames_numeric <= (2^max_levels - 1), ]
+        # Retornar apenas variáveis ÚNICAS por árvore
+        return(unique(main_splits$var))
+    } else {
+        return(character(0))
+    }
+}
+
+# Bootstrap para verificar consistência dos splits
+set.seed(123)
+n_bootstrap <- 100
+bootstrap_splits <- list()
+
+for (i in 1:n_bootstrap) {
+    # Amostra bootstrap
+    boot_sample <- df_cart[sample(nrow(df_cart), replace = TRUE), ]
+
+    # Ajustar modelo com mesmos hiperparâmetros
+    boot_model <- decision_tree(
+        cost_complexity = best_params$cost_complexity,
+        tree_depth = best_params$tree_depth,
+        min_n = best_params$min_n
+    ) |>
+        set_engine("rpart") |>
+        set_mode("classification") |>
+        fit(delta_cat_cart ~ ., data = boot_sample)
+
+    # Extrair splits principais
+    boot_rpart <- extract_fit_engine(boot_model)
+    bootstrap_splits[[i]] <- extract_main_splits(boot_rpart)
+}
+
+# Análise de estabilidade
+main_vars_stability <- table(unlist(bootstrap_splits))
+stability_summary <- sort(main_vars_stability / n_bootstrap, decreasing = TRUE)
+
+cat("Estabilidade das variáveis nos primeiros splits (% de árvores que usam cada variável):\n")
+print(round(stability_summary * 100, 1))
+```
+
+
+#### Tabela de folhas (grupos de predicao)
+
+Esta tabela mostra os **nós terminais** (folhas) da árvore, com as regras que definem cada grupo, o tamanho do grupo e a proporção de melhora:
+
+```{r}
+#| label: cart-leaves-table_a
+
+# Extrair informacoes dos nos terminais
+frame <- cart_rpart$frame
+leaves_idx <- which(frame$var == "<leaf>")
+
+# Funcao para extrair regras de cada no
+get_path_rules <- function(tree, node_id) {
+    path <- rpart::path.rpart(tree, nodes = node_id, print.it = FALSE)
+    rules <- path[[1]][-1] # remover "root"
+    if (length(rules) == 0) {
+        return("(raiz)")
+    }
+    paste(rules, collapse = " E ")
+}
+
+# Construir tabela de folhas
+leaves_tbl <- tibble(
+    no = as.integer(rownames(frame)[leaves_idx]),
+    n = frame$n[leaves_idx],
+    n_melhora = frame$n[leaves_idx] * frame$yval2[leaves_idx, 5],
+    n_nao_melhora = frame$n[leaves_idx] * frame$yval2[leaves_idx, 4],
+    prop_melhora = frame$yval2[leaves_idx, 5],
+    predicao = ifelse(frame$yval[leaves_idx] == 2, "melhora", "nao_melhora")
+) |>
+    rowwise() |>
+    mutate(regras = get_path_rules(cart_rpart, no)) |>
+    ungroup() |>
+    mutate(
+        prop_melhora_pct = scales::percent(prop_melhora, accuracy = 0.1),
+        grupo = paste0("Grupo ", row_number())
+    ) |>
+    select(grupo, predicao, n, prop_melhora_pct, regras) |>
+    arrange(desc(predicao), desc(n))
+
+leaves_tbl |>
+    rename(
+        Grupo = grupo,
+        Predicao = predicao,
+        N = n,
+        `% Melhora` = prop_melhora_pct,
+        Regras = regras
+    ) |>
+    knitr::kable(align = c("l", "l", "r", "r", "l"))
+```
+
+#### Curva ROC
+
+```{r}
+#| label: cart-roc-curve_a
+#| fig-width: 7
+#| fig-height: 6
+
+# Curva ROC a partir das predicoes CV
+roc_data <- preds_all |>
+    roc_curve(truth = delta_cat_cart, .pred_melhora, event_level = "second")
+
+# AUC para o titulo
+auc_val <- preds_all |>
+    roc_auc(truth = delta_cat_cart, .pred_melhora, event_level = "second") |>
+    pull(.estimate)
+
+ggplot(roc_data, aes(x = 1 - specificity, y = sensitivity)) +
+    geom_path(linewidth = 1.2, color = "steelblue") +
+    geom_abline(linetype = "dashed", color = "gray50") +
+    geom_ribbon(
+        aes(ymin = 0, ymax = sensitivity),
+        alpha = 0.1,
+        fill = "steelblue"
+    ) +
+    annotate(
+        "text",
+        x = 0.6,
+        y = 0.3,
+        label = paste0("AUC = ", round(auc_val, 3)),
+        size = 5,
+        fontface = "bold"
+    ) +
+    labs(
+        title = "ROC Curve (CV)",
+        subtitle = "Based on aggregated predictions from all folds",
+        x = "1 - Specificity (False Positive Rate)",
+        y = "Sensitivity (True Positive Rate)"
+    ) +
+    coord_equal() +
+    theme_minimal(base_size = 12) +
+    theme(plot.title = element_text(face = "bold"))
+```
+
+
+
+<br>
+<br>
+<br>
+
+## Desfecho Binário: Progressão Clínica
+
+Análise da **progressão clínica**, definida como piora ≥ 5 graus na maior curva ($\Delta \ge +5°$).
+
+### Modelo Logístico
+
+Estima associações ajustadas com a **chance de progressão clínica**, definida como $\Delta \ge +5°$.
+
+```{r}
+# =============================================================================
+# MODELO LOGÍSTICO - PROGRESS<U+00C3>O CLÍNICA
+# =============================================================================
+
+# Modelo para chance de progressão clínica (delta ≥ +5°)
+# Utiliza as mesmas variáveis dos outros modelos
+
+model_progressao <- glm(
+    delta_progression ~
+        # Variáveis numéricas
+        idade + # idade do paciente
+        imc + # índice de massa corporal
+        cifose_toracica + # ângulo da cifose torácica
+        lordose_lombar + # ângulo da lordose lombar
+        correcao_colete + # percentual de correção com colete
+
+        # Variáveis categóricas
+        sexo + # sexo do paciente
+        lenke + # classificação de Lenke
+        risser + # sinal de Risser
+        flexibilidade + # flexibilidade da curva
+        escoliometro_maior_10_graus, # região com gibosidade > 10°
+    data = df,
+    family = "binomial" # distribuição binomial para regressão logística
+)
+```
+
+#### Parâmetros do modelo
+
+Parâmetros do modelo de regressão logística. Resposta em _Odds Ratio_.
+
+```{r}
+model_progressao |>
+    gtsummary::tbl_regression(exponentiate = TRUE, conf.level = 0.95) |>
+    gtsummary::bold_p() |>
+    gtsummary::bold_labels() |>
+    gtsummary::italicize_levels()
+```
+
+#### Resíduos binarizados
+
+```{r}
+performance::binned_residuals(model_progressao) |> plot()
+```
+
+#### Autocorrelação dos resíduos
+
+Independência dos resíduos (Durbin-Watson test).
+
+```{r}
+performance::check_autocorrelation(model_progressao)
+```
+
+#### Verificações preditivas posteriores
+
+Simulação de dados replicados sob o modelo ajustado e posterior comparação com os dados observados.
+
+```{r}
+performance::check_predictions(model_progressao) |> plot()
+```
+
+#### Qualidade do ajuste do modelo
+
+Teste de Hosmer-Lemeshow para avaliar a qualidade do ajuste de modelos binomiais. P-valor < 0.05 indica que o modelo não ajusta bem os dados.
+
+```{r}
+# Teste de Hosmer-Lemeshow pode falhar com poucos eventos de progressão
+tryCatch(
+    {
+        performance::performance_hosmer(model_progressao)
+    },
+    error = function(e) {
+        cat("Aviso: Teste de Hosmer-Lemeshow não pode ser executado.\n")
+        cat("Possível causa: poucos eventos de progressão ou falta de variação nas predições.\n")
+        cat("Erro:", e$message, "\n")
+    }
+)
+```
+
+#### Colinearidade
+
+Verificação de colinearidade entre as variáveis independentes (_Variance Inflation Factor_).
+Valores maiores que 10 indicam colinearidade entre as variáveis.
+
+```{r}
+performance::check_collinearity(model_progressao) |>
+    arrange(desc(VIF)) |>
+    select(Term, VIF, VIF_CI_low, VIF_CI_high) |>
+    performance::print_html()
+
+performance::check_collinearity(model_progressao) |> plot()
+```
+
+#### Outliers
+
+```{r}
+performance::check_outliers(model_progressao)
+performance::check_outliers(model_progressao) |> plot()
+```
+
+#### Coeficiente de determinação (Tjur)
+
+Coeficiente de determinação de Tjur ($R^2_{Tjur}$). Teste específico para modelos binomiais.
+
+```{r}
+performance::r2(model_progressao)
+```
+
+#### Tamanho amostral efetivo (casos completos)
+
+```{r}
+mf_progressao <- model.frame(model_progressao)
+n_progressao <- nrow(mf_progressao)
+eventos_progressao <- sum(mf_progressao[[1]] == 1, na.rm = TRUE)
+sem_progressao <- sum(mf_progressao[[1]] == 0, na.rm = TRUE)
+tibble(
+    n_modelo = n_progressao,
+    eventos_progressao = eventos_progressao,
+    sem_progressao = sem_progressao
+)
+```
+
+### Modelo CART (Árvore de Decisão)
+
+**Objetivo:** Identificar perfis de pacientes com maior probabilidade de progressão clínica através de árvores de decisão.
+
+**Disclaimer:** Resultados de modelos CART requerem validação externa. Análise baseada em validação cruzada.
+
+#### Setup e preparação dos dados
+
+```{r}
+#| label: cart-setup-progressao
+
+# =============================================================================
+# CART - PROGRESS<U+00C3>O CLÍNICA: PREPARAÇÃO DOS DADOS
+# =============================================================================
+
+# Carregamento de bibliotecas específicas para machine learning
+library(tidymodels) # framework tidyverse para ML
+library(rpart.plot) # visualização de árvores
+library(vip) # importância de variáveis
+
+set.seed(123) # reprodutibilidade
+
+# Preparação do dataset para CART
+# Recodificação do desfecho para labels descritivos
+df_cart_progressao <- df |>
+    mutate(
+        delta_progression_cart = factor(
+            delta_progression,
+            levels = c(0, 1),
+            labels = c("nao_progrediu", "progrediu")
+        )
+    ) |>
+    # Seleção das mesmas variáveis dos modelos parametricos
+    select(
+        delta_progression_cart, # desfecho recodificado
+
+        # Variáveis preditoras numéricas
+        idade,
+        imc,
+        cifose_toracica,
+        lordose_lombar,
+        correcao_colete,
+
+        # Variáveis preditoras categóricas
+        sexo,
+        lenke,
+        risser,
+        flexibilidade,
+        escoliometro_maior_10_graus
+    )
+
+# Verificação: evento de interesse = "progrediu" (segundo nível)
+levels(df_cart_progressao$delta_progression_cart)
+```
+
+#### Recipe (pre-processamento)
+
+O pre-processamento é feito **dentro do resampling** (evita leakage):
+
+- `step_zv()`: remove variáveis com variância zero
+- `step_unknown()` + `step_novel()`: robustez a níveis novos/raros durante CV
+- `step_impute_median()` + `step_impute_mode()`: imputação de missings
+
+```{r}
+#| label: cart-recipe-progressao
+
+cart_rec_progressao <- recipe(delta_progression_cart ~ ., data = df_cart_progressao) |>
+    step_zv(all_predictors()) |>
+    step_unknown(all_nominal_predictors()) |>
+    step_novel(all_nominal_predictors()) |>
+    step_impute_median(all_numeric_predictors()) |>
+    step_impute_mode(all_nominal_predictors())
+
+cart_rec_progressao
+```
+
+#### Modelo e hiperparâmetros
+
+Hiperparâmetros do modelo CART:
+
+- **`cost_complexity` (cp)**: controla poda/complexidade do modelo.
+- **`tree_depth`**: limita profundidade (3-5 níveis).
+- **`min_n`**: mínimo de observações por nó terminal (15-40).
+
+```{r}
+#| label: cart-model-progressao
+
+cart_spec_progressao <- decision_tree(
+    cost_complexity = tune(),
+    tree_depth = tune(),
+    min_n = tune()
+) |>
+    set_engine("rpart") |>
+    set_mode("classification")
+
+cart_wf_progressao <- workflow() |>
+    add_recipe(cart_rec_progressao) |>
+    add_model(cart_spec_progressao)
+
+cart_wf_progressao
+```
+
+#### Validação cruzada e tuning
+
+Usamos **CV estratificada repetida** (10-fold, 5 repetições) para estimar desempenho e selecionar hiperparâmetros.
+
+```{r}
+#| label: cart-cv-tuning-progressao
+
+set.seed(123)
+folds_progressao <- vfold_cv(df_cart_progressao, v = 10, repeats = 5, strata = delta_progression_cart)
+
+# Metricas de interesse
+metricas <- metric_set(roc_auc, accuracy, sens, spec)
+
+# Grid de hiperparametros
+set.seed(123)
+cart_grid_progressao <- grid_latin_hypercube(
+    cost_complexity(range = c(-4, -2)), # menos poda extrema
+    tree_depth(range = c(3L, 5L)), # árvores menos profundas
+    min_n(range = c(15L, 40L)), # mínimo mais alto por nó
+    size = 30
+)
+
+# Tuning
+set.seed(123)
+cart_tuned_progressao <- tune_grid(
+    cart_wf_progressao,
+    resamples = folds_progressao,
+    grid = cart_grid_progressao,
+    metrics = metricas,
+    control = control_grid(save_pred = TRUE)
+)
+```
+
+#### Melhores hiperparâmetros
+
+Selecionamos pelo **maior AUC ROC medio** na CV:
+
+```{r}
+#| label: cart-best-params-progressao
+
+# Top 10 combinacoes por AUC
+cart_tuned_progressao |>
+    collect_metrics() |>
+    filter(.metric == "roc_auc") |>
+    arrange(desc(mean)) |>
+    slice_head(n = 10)
+
+# Melhor combinacao
+best_params_progressao <- cart_tuned_progressao |>
+    select_best(metric = "roc_auc")
+
+best_params_progressao
+```
+
+#### Desempenho final (CV)
+
+Avaliamos o modelo finalizado com os melhores hiperparâmetros:
+
+```{r}
+#| label: cart-final-metrics-progressao
+
+cart_final_wf_progressao <- finalize_workflow(cart_wf_progressao, best_params_progressao)
+
+set.seed(123)
+cart_res_progressao <- fit_resamples(
+    cart_final_wf_progressao,
+    resamples = folds_progressao,
+    metrics = metricas,
+    control = control_resamples(save_pred = TRUE)
+)
+
+# Metricas agregadas (media e SD)
+cart_metrics_progressao <- cart_res_progressao |>
+    collect_metrics() |>
+    select(.metric, mean, std_err, n) |>
+    mutate(
+        ci_lower = mean - 1.96 * std_err,
+        ci_upper = mean + 1.96 * std_err
+    )
+
+cart_metrics_progressao
+```
+
+#### Métricas por fold (dispersão)
+
+Variabilidade das métricas entre os folds de validação cruzada.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+
+cart_res_progressao |>
+    collect_metrics(summarize = FALSE) |>
+    ggplot(aes(x = .metric, y = .estimate, fill = .metric)) +
+    geom_boxplot(alpha = 0.7, show.legend = FALSE) +
+    geom_jitter(width = 0.1, alpha = 0.3, size = 1) +
+    scale_fill_brewer(palette = "Set2") +
+    labs(
+        title = "Distribution of metrics by fold (CV repeated)",
+        subtitle = "10-fold CV x 5 repetitions = 50 estimates per metric",
+        x = "Metric",
+        y = "Value"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+        plot.title = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 0)
+    )
+```
+
+#### Matriz de confusão agregada (normalizada)
+
+```{r}
+# Matriz de confusão agregada
+preds_progressao <- cart_res_progressao |>
+    collect_predictions()
+
+# Predicoes agregadas de todos os folds (mantendo fonte de dados do contexto do documento)
+preds_all_progressao <- cart_res_progressao |>
+    collect_predictions()
+
+# Matriz de confusao
+conf_mat_data_progressao <- preds_all_progressao |>
+    conf_mat(truth = delta_progression_cart, estimate = .pred_class)
+
+# Normalizar por linha (proporcao por classe verdadeira)
+conf_mat_tbl_progressao <- conf_mat_data_progressao$table |>
+    as.data.frame() |>
+    dplyr::group_by(Truth) |>
+    dplyr::mutate(
+        prop = Freq / sum(Freq),
+        label = scales::percent(prop, accuracy = 0.1)
+    ) |>
+    dplyr::ungroup()
+
+# Visualizacao heatmap normalizado
+ggplot(conf_mat_tbl_progressao, aes(x = Prediction, y = Truth, fill = prop)) +
+    geom_tile(color = "white", linewidth = 1) +
+    geom_text(aes(label = label), size = 5, fontface = "bold") +
+    scale_fill_gradient(
+        low = "white",
+        high = "steelblue",
+        labels = scales::percent,
+        name = "Proporcao"
+    ) +
+    scale_y_discrete(limits = rev) +
+    labs(
+        title = "Matriz de Confusão - Progressão (Normalizada por linha)",
+        subtitle = "Agregada de todos os folds de validação cruzada"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+        plot.title = element_text(face = "bold"),
+        panel.grid = element_blank()
+    )
+```
+
+#### Árvore final
+
+Ajustamos o modelo final no dataset completo para visualização e interpretação:
+
+```{r}
+#| label: cart-final-tree-progressao
+#| fig-width: 10
+#| fig-height: 8
+
+cart_fit_full_progressao <- fit(cart_final_wf_progressao, data = df_cart_progressao)
+cart_rpart_progressao <- extract_fit_engine(cart_fit_full_progressao)
+
+# Plot da arvore com rpart.plot
+rpart.plot(
+    cart_rpart_progressao,
+    type = 4,
+    extra = 104,
+    under = TRUE,
+    fallen.leaves = TRUE,
+    roundint = FALSE,
+    box.palette = "BuGn",
+    shadow.col = "gray",
+    main = "Decision Tree for Progression (delta >= +5 degrees)"
+)
+```
+
+#### Importância de variáveis
+
+```{r}
+#| label: cart-vip-progressao
+#| fig-width: 8
+#| fig-height: 6
+
+# Verificar se a árvore tem splits antes de calcular importância
+tryCatch(
+    {
+        # Verificar se há splits na árvore
+        frame_check <- cart_rpart_progressao$frame
+        internal_nodes <- sum(frame_check$var != "<leaf>")
+
+        if (internal_nodes > 0) {
+            # Grafico de importancia com vip
+            cart_fit_full_progressao |>
+                extract_fit_parsnip() |>
+                vip(
+                    num_features = min(15, internal_nodes),
+                    geom = "col",
+                    aesthetics = list(fill = "darkred", alpha = 0.8)
+                ) +
+                labs(
+                    title = "Variable Importance (CART - Progressão)",
+                    subtitle = "Based on impurity reduction (Gini)",
+                    x = "Importance",
+                    y = "Variable"
+                ) +
+                theme_minimal(base_size = 12) +
+                theme(plot.title = element_text(face = "bold"))
+        } else {
+            cat("Aviso: Árvore de progressão não possui splits suficientes para análise de importância.\n")
+            cat("Possível causa: poucos eventos de progressão ou parâmetros muito restritivos.\n")
+
+            # Plot informativo
+            ggplot() +
+                annotate("text",
+                    x = 0.5, y = 0.5,
+                    label = "Árvore sem splits suficientes\npara análise de importância",
+                    size = 6, hjust = 0.5
+                ) +
+                labs(
+                    title = "Variable Importance (CART - Progressão)",
+                    subtitle = "Modelo muito simples para análise de importância"
+                ) +
+                theme_void()
+        }
+    },
+    error = function(e) {
+        cat("Erro na análise de importância:", e$message, "\n")
+        cat("Possível causa: modelo CART muito simples ou dados insuficientes.\n")
+    }
+)
+```
+
+#### Análise de estabilidade (Bootstrap)
+
+```{r}
+#| label: cart-bootstrap-stability-progressao
+
+# Bootstrap para verificar consistência dos splits
+set.seed(123)
+n_bootstrap <- 100
+bootstrap_splits_progressao <- list()
+
+for (i in 1:n_bootstrap) {
+    # Amostra bootstrap
+    boot_sample <- df_cart_progressao[sample(nrow(df_cart_progressao), replace = TRUE), ]
+
+    # Ajustar modelo com mesmos hiperparâmetros
+    boot_model <- decision_tree(
+        cost_complexity = best_params_progressao$cost_complexity,
+        tree_depth = best_params_progressao$tree_depth,
+        min_n = best_params_progressao$min_n
+    ) |>
+        set_engine("rpart") |>
+        set_mode("classification") |>
+        fit(delta_progression_cart ~ ., data = boot_sample)
+
+    # Extrair splits principais
+    boot_rpart <- extract_fit_engine(boot_model)
+    bootstrap_splits_progressao[[i]] <- extract_main_splits(boot_rpart)
+}
+
+# Análise de estabilidade
+main_vars_stability_progressao <- table(unlist(bootstrap_splits_progressao))
+stability_summary_progressao <- sort(main_vars_stability_progressao / n_bootstrap, decreasing = TRUE)
+
+cat("Estabilidade das variáveis nos primeiros splits (% de árvores que usam cada variável):\n")
+print(round(stability_summary_progressao * 100, 1))
+```
+
+#### Tabela de folhas (grupos de predicao)
+
+Esta tabela mostra os **nós terminais** (folhas) da árvore, com as regras que definem cada grupo, o tamanho do grupo e a proporção de progressão:
+
+```{r}
+#| label: cart-leaves-table-progressao
+
+# Extrair informacoes dos nos terminais
+
+frame <- cart_rpart_progressao$frame
+leaves_idx <- which(frame$var == "<leaf>")
+
+# Funcao para extrair regras de cada no
+get_path_rules <- function(tree, node_id) {
+    path <- rpart::path.rpart(tree, nodes = node_id, print.it = FALSE)
+    rules <- path[[1]][-1] # remover "root"
+    if (length(rules) == 0) {
+        return("(raiz)")
+    }
+    paste(rules, collapse = " E ")
+}
+
+# Construir tabela de folhas
+leaves_tbl <- tibble(
+    no = as.integer(rownames(frame)[leaves_idx]),
+    n = frame$n[leaves_idx],
+    n_melhora = frame$n[leaves_idx] * frame$yval2[leaves_idx, 5],
+    n_nao_melhora = frame$n[leaves_idx] * frame$yval2[leaves_idx, 4],
+    prop_melhora = frame$yval2[leaves_idx, 5],
+    predicao = ifelse(frame$yval[leaves_idx] == 2, "progrediu", "nao_progrediu")
+) |>
+    rowwise() |>
+    mutate(regras = get_path_rules(cart_rpart_progressao, no)) |>
+    ungroup() |>
+    mutate(
+        prop_melhora_pct = scales::percent(prop_melhora, accuracy = 0.1),
+        grupo = paste0("Grupo ", row_number())
+    ) |>
+    select(grupo, predicao, n, prop_melhora_pct, regras) |>
+    arrange(desc(predicao), desc(n))
+
+leaves_tbl |>
+    rename(
+        Grupo = grupo,
+        Predicao = predicao,
+        N = n,
+        `% Melhora` = prop_melhora_pct,
+        Regras = regras
+    ) |>
+    knitr::kable(align = c("l", "l", "r", "r", "l"))
+```
+
+#### Curva ROC
+
+```{r}
+#| label: cart-roc-curve-progressao
+#| fig-width: 7
+#| fig-height: 6
+
+# Curva ROC a partir das predicoes CV
+roc_data_progressao <- preds_progressao |>
+    roc_curve(truth = delta_progression_cart, .pred_progrediu, event_level = "second")
+
+# AUC para o titulo
+auc_val_progressao <- preds_progressao |>
+    roc_auc(truth = delta_progression_cart, .pred_progrediu, event_level = "second") |>
+    pull(.estimate)
+
+ggplot(roc_data_progressao, aes(x = 1 - specificity, y = sensitivity)) +
+    geom_path(linewidth = 1.2, color = "steelblue") +
+    geom_abline(linetype = "dashed", color = "gray50") +
+    geom_ribbon(
+        aes(ymin = 0, ymax = sensitivity),
+        alpha = 0.1,
+        fill = "steelblue"
+    ) +
+    annotate(
+        "text",
+        x = 0.6,
+        y = 0.3,
+        label = paste0("AUC = ", round(auc_val_progressao, 3)),
+        size = 5,
+        fontface = "bold"
+    ) +
+    labs(
+        title = "ROC Curve (CV)",
+        subtitle = "Based on aggregated predictions from all folds",
+        x = "1 - Specificity (False Positive Rate)",
+        y = "Sensitivity (True Positive Rate)"
+    ) +
+    coord_equal() +
+    theme_minimal(base_size = 12) +
+    theme(plot.title = element_text(face = "bold"))
+```
+
+

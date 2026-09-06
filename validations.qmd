@@ -1,0 +1,2907 @@
+---
+title: "validacao"
+format: html
+---
+
+
+Abaixo está um **script diagnóstico completo**, pensado para ser executado **depois da criação do objeto `df` e do ajuste de `model_delta` e `model_melhora`** no seu `.qmd`.
+
+Ele não altera os modelos nem a base. Apenas gera as informações necessárias para eu avaliar:
+
+- tamanho amostral real;
+- número de eventos;
+- quantidade efetiva de parâmetros;
+- dados ausentes;
+- categorias raras;
+- possível separação logística;
+- distribuição dos desfechos;
+- estabilidade dos coeficientes;
+- complexidade em relação à amostra;
+- desempenho aparente;
+- calibração aparente;
+- influência de observações;
+- relação entre o Cobb basal e a mudança;
+- viabilidade preliminar de transformar a análise em modelo prognóstico.
+
+## 1. Instalar e carregar os pacotes necessários
+
+Execute uma vez a instalação:
+
+```{r}
+pacotes_diagnostico <- c(
+  "dplyr",
+  "tidyr",
+  "purrr",
+  "tibble",
+  "ggplot2",
+  "broom",
+  "janitor",
+  "skimr",
+  "naniar",
+  "performance",
+  "parameters",
+  "insight",
+  "pROC",
+  "DescTools",
+  "brglm2",
+  "detectseparation",
+  "car",
+  "rsample",
+  "yardstick",
+  "readr"
+)
+
+faltantes <- setdiff(
+  pacotes_diagnostico,
+  rownames(installed.packages())
+)
+
+if (length(faltantes) > 0) {
+  install.packages(faltantes)
+}
+```
+
+Depois, em cada sessão:
+
+```{r}
+invisible(
+  lapply(
+    pacotes_diagnostico,
+    library,
+    character.only = TRUE
+  )
+)
+
+set.seed(123)
+```
+
+---
+
+# 2. Criar uma pasta para salvar os resultados
+
+```{r}
+dir.create(
+  "diagnostico_modelos",
+  showWarnings = FALSE,
+  recursive = TRUE
+)
+```
+
+---
+
+# 3. Definir os preditores usados nos modelos
+
+```{r}
+preditores_modelo <- c(
+  "idade",
+  "imc",
+  "cifose_toracica",
+  "lordose_lombar",
+  "correcao_colete",
+  "sexo",
+  "lenke",
+  "risser",
+  "flexibilidade",
+  "escoliometro_maior_10_graus"
+)
+
+preditores_numericos <- c(
+  "idade",
+  "imc",
+  "cifose_toracica",
+  "lordose_lombar",
+  "correcao_colete"
+)
+
+preditores_categoricos <- c(
+  "sexo",
+  "lenke",
+  "risser",
+  "flexibilidade",
+  "escoliometro_maior_10_graus"
+)
+
+variaveis_desfecho <- c(
+  "cobb_inicial_maior",
+  "maior_curva_6_meses",
+  "delta",
+  "delta_cat",
+  "delta_progression"
+)
+
+variaveis_analise <- unique(
+  c(
+    variaveis_desfecho,
+    preditores_modelo
+  )
+)
+```
+
+Confirme se todos os nomes existem:
+
+```{r}
+variaveis_inexistentes <- setdiff(
+  variaveis_analise,
+  names(df)
+)
+
+variaveis_inexistentes
+```
+
+O resultado esperado é:
+
+```{r}
+character(0)
+```
+
+Caso apareça algum nome, não continue antes de conferir a nomenclatura.
+
+---
+
+# 4. Informações gerais da base
+
+```{r}
+cat("Número de linhas:", nrow(df), "\n")
+cat("Número de colunas:", ncol(df), "\n")
+cat("Participantes duplicados: verificar abaixo, caso exista um ID.\n")
+
+str(df[, intersect(variaveis_analise, names(df))])
+```
+
+Salvar estrutura:
+
+```{r}
+capture.output(
+  str(df[, intersect(variaveis_analise, names(df))]),
+  file = "diagnostico_modelos/01_estrutura_variaveis.txt"
+)
+```
+
+Resumo geral:
+
+```{r}
+skim_base <- skimr::skim(
+  df |>
+    dplyr::select(
+      dplyr::all_of(variaveis_analise)
+    )
+)
+
+skim_base
+```
+
+Salvar:
+
+```{r}
+capture.output(
+  skim_base,
+  file = "diagnostico_modelos/02_skim_base.txt"
+)
+```
+
+---
+
+# 5. Verificar possíveis identificadores e duplicações
+
+Primeiro, procure nomes de colunas que possam representar o participante:
+
+```{r}
+names(df)[
+  grepl(
+    "id|codigo|código|paciente|participante|nome",
+    names(df),
+    ignore.case = TRUE
+  )
+]
+```
+
+Depois de identificar a variável correta, substitua `id_participante` abaixo.
+
+Exemplo:
+
+```{r}
+# Substitua pelo nome real da variável identificadora
+# id_var <- "id_participante"
+
+# df |>
+#   count(.data[[id_var]], name = "n_registros") |>
+#   filter(n_registros > 1) |>
+#   arrange(desc(n_registros))
+```
+
+Caso cada linha represente uma paciente e não haja identificador, informe isso ao enviar os resultados.
+
+---
+
+# 6. Quantidade e percentual de dados ausentes
+
+```{r}
+missing_por_variavel <- df |>
+  dplyr::select(
+    dplyr::all_of(variaveis_analise)
+  ) |>
+  dplyr::summarise(
+    dplyr::across(
+      dplyr::everything(),
+      list(
+        n_missing = ~ sum(is.na(.)),
+        pct_missing = ~ mean(is.na(.)) * 100
+      )
+    )
+  ) |>
+  tidyr::pivot_longer(
+    cols = dplyr::everything(),
+    names_to = c("variavel", ".value"),
+    names_pattern = "^(.*)_(n_missing|pct_missing)$"
+  ) |>
+  dplyr::arrange(
+    dplyr::desc(pct_missing)
+  )
+
+missing_por_variavel
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  missing_por_variavel,
+  "diagnostico_modelos/03_dados_ausentes_por_variavel.csv"
+)
+```
+
+Número de variáveis faltantes por participante:
+
+```{r}
+missing_por_participante <- df |>
+  dplyr::mutate(
+    n_missing_modelo = rowSums(
+      is.na(
+        dplyr::pick(
+          dplyr::all_of(
+            c(
+              "delta",
+              "delta_cat",
+              preditores_modelo
+            )
+          )
+        )
+      )
+    )
+  ) |>
+  dplyr::count(
+    n_missing_modelo,
+    name = "n_participantes"
+  ) |>
+  dplyr::mutate(
+    percentual = 100 * n_participantes / sum(n_participantes)
+  )
+
+missing_por_participante
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  missing_por_participante,
+  "diagnostico_modelos/04_dados_ausentes_por_participante.csv"
+)
+```
+
+Padrões de ausência:
+
+```{r}
+naniar::miss_var_summary(
+  df |>
+    dplyr::select(
+      dplyr::all_of(variaveis_analise)
+    )
+)
+```
+
+```{r}
+naniar::miss_case_summary(
+  df |>
+    dplyr::select(
+      dplyr::all_of(variaveis_analise)
+    )
+)
+```
+
+Gráfico:
+
+```{r}
+grafico_missing <- naniar::gg_miss_var(
+  df |>
+    dplyr::select(
+      dplyr::all_of(variaveis_analise)
+    ),
+  show_pct = TRUE
+)
+
+grafico_missing
+
+ggplot2::ggsave(
+  filename = "diagnostico_modelos/05_grafico_dados_ausentes.png",
+  plot = grafico_missing,
+  width = 10,
+  height = 6,
+  dpi = 300
+)
+```
+
+---
+
+# 7. Quantificar a perda por análise de casos completos
+
+```{r}
+df_linear_completo <- df |>
+  dplyr::select(
+    delta,
+    dplyr::all_of(preditores_modelo)
+  ) |>
+  tidyr::drop_na()
+
+df_logistico_completo <- df |>
+  dplyr::select(
+    delta_cat,
+    dplyr::all_of(preditores_modelo)
+  ) |>
+  tidyr::drop_na()
+```
+
+Resumo:
+
+```{r}
+resumo_casos_completos <- tibble::tibble(
+  conjunto = c(
+    "Base total",
+    "Modelo linear",
+    "Modelo logístico"
+  ),
+  n = c(
+    nrow(df),
+    nrow(df_linear_completo),
+    nrow(df_logistico_completo)
+  )
+) |>
+  dplyr::mutate(
+    percentual_base = 100 * n / nrow(df),
+    perda_n = nrow(df) - n,
+    perda_percentual = 100 * perda_n / nrow(df)
+  )
+
+resumo_casos_completos
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  resumo_casos_completos,
+  "diagnostico_modelos/06_resumo_casos_completos.csv"
+)
+```
+
+---
+
+# 8. Distribuição dos desfechos contínuos
+
+```{r}
+resumo_desfechos_continuos <- df |>
+  dplyr::summarise(
+    n_delta = sum(!is.na(delta)),
+    media_delta = mean(delta, na.rm = TRUE),
+    dp_delta = sd(delta, na.rm = TRUE),
+    mediana_delta = median(delta, na.rm = TRUE),
+    q1_delta = quantile(delta, 0.25, na.rm = TRUE),
+    q3_delta = quantile(delta, 0.75, na.rm = TRUE),
+    minimo_delta = min(delta, na.rm = TRUE),
+    maximo_delta = max(delta, na.rm = TRUE),
+
+    media_cobb_inicial = mean(cobb_inicial_maior, na.rm = TRUE),
+    dp_cobb_inicial = sd(cobb_inicial_maior, na.rm = TRUE),
+
+    media_cobb_6m = mean(maior_curva_6_meses, na.rm = TRUE),
+    dp_cobb_6m = sd(maior_curva_6_meses, na.rm = TRUE)
+  )
+
+resumo_desfechos_continuos
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  resumo_desfechos_continuos,
+  "diagnostico_modelos/07_resumo_desfechos_continuos.csv"
+)
+```
+
+Quantis detalhados do delta:
+
+```{r}
+quantis_delta <- tibble::tibble(
+  probabilidade = c(
+    0,
+    0.01,
+    0.05,
+    0.10,
+    0.25,
+    0.50,
+    0.75,
+    0.90,
+    0.95,
+    0.99,
+    1
+  ),
+  quantil_delta = as.numeric(
+    quantile(
+      df$delta,
+      probs = c(
+        0,
+        0.01,
+        0.05,
+        0.10,
+        0.25,
+        0.50,
+        0.75,
+        0.90,
+        0.95,
+        0.99,
+        1
+      ),
+      na.rm = TRUE
+    )
+  )
+)
+
+quantis_delta
+```
+
+Histograma:
+
+```{r}
+grafico_delta <- df |>
+  dplyr::filter(!is.na(delta)) |>
+  ggplot2::ggplot(
+    ggplot2::aes(x = delta)
+  ) +
+  ggplot2::geom_histogram(
+    bins = 20
+  ) +
+  ggplot2::geom_vline(
+    xintercept = c(-5, 0, 5),
+    linetype = "dashed"
+  ) +
+  ggplot2::labs(
+    x = "Mudança na maior curva de Cobb, em graus",
+    y = "Número de participantes",
+    title = "Distribuição da mudança radiográfica"
+  )
+
+grafico_delta
+
+ggplot2::ggsave(
+  "diagnostico_modelos/08_distribuicao_delta.png",
+  grafico_delta,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+---
+
+# 9. Frequência dos desfechos binários
+
+```{r}
+resumo_desfechos_binarios <- df |>
+  dplyr::summarise(
+    n_delta_disponivel = sum(!is.na(delta)),
+
+    n_melhora = sum(delta_cat == 1, na.rm = TRUE),
+    n_sem_melhora = sum(delta_cat == 0, na.rm = TRUE),
+    pct_melhora = mean(delta_cat == 1, na.rm = TRUE) * 100,
+
+    n_progressao = sum(delta_progression == 1, na.rm = TRUE),
+    n_sem_progressao = sum(delta_progression == 0, na.rm = TRUE),
+    pct_progressao = mean(delta_progression == 1, na.rm = TRUE) * 100,
+
+    n_estavel = sum(
+      delta > -5 & delta < 5,
+      na.rm = TRUE
+    ),
+    pct_estavel = mean(
+      delta > -5 & delta < 5,
+      na.rm = TRUE
+    ) * 100
+  )
+
+resumo_desfechos_binarios
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  resumo_desfechos_binarios,
+  "diagnostico_modelos/09_resumo_desfechos_binarios.csv"
+)
+```
+
+No conjunto efetivamente usado pelo modelo logístico:
+
+```{r}
+eventos_modelo_logistico <- model.frame(model_melhora) |>
+  dplyr::summarise(
+    n_modelo = dplyr::n(),
+    eventos = sum(delta_cat == 1),
+    nao_eventos = sum(delta_cat == 0),
+    prevalencia_evento = mean(delta_cat == 1),
+    percentual_evento = 100 * mean(delta_cat == 1)
+  )
+
+eventos_modelo_logistico
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  eventos_modelo_logistico,
+  "diagnostico_modelos/10_eventos_modelo_logistico.csv"
+)
+```
+
+---
+
+# 10. Resumo dos preditores numéricos
+
+```{r}
+resumo_numericos <- df |>
+  dplyr::select(
+    dplyr::all_of(preditores_numericos)
+  ) |>
+  tidyr::pivot_longer(
+    cols = dplyr::everything(),
+    names_to = "variavel",
+    values_to = "valor"
+  ) |>
+  dplyr::group_by(variavel) |>
+  dplyr::summarise(
+    n = sum(!is.na(valor)),
+    missing = sum(is.na(valor)),
+    media = mean(valor, na.rm = TRUE),
+    dp = sd(valor, na.rm = TRUE),
+    mediana = median(valor, na.rm = TRUE),
+    q1 = quantile(valor, 0.25, na.rm = TRUE),
+    q3 = quantile(valor, 0.75, na.rm = TRUE),
+    minimo = min(valor, na.rm = TRUE),
+    maximo = max(valor, na.rm = TRUE),
+    n_valores_unicos = dplyr::n_distinct(valor, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+resumo_numericos
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  resumo_numericos,
+  "diagnostico_modelos/11_resumo_preditores_numericos.csv"
+)
+```
+
+---
+
+# 11. Frequências dos preditores categóricos
+
+```{r}
+frequencias_categoricas <- purrr::map_dfr(
+  preditores_categoricos,
+  function(variavel) {
+    df |>
+      dplyr::count(
+        categoria = .data[[variavel]],
+        name = "n",
+        .drop = FALSE
+      ) |>
+      dplyr::mutate(
+        variavel = variavel,
+        percentual = 100 * n / sum(n)
+      ) |>
+      dplyr::select(
+        variavel,
+        categoria,
+        n,
+        percentual
+      )
+  }
+)
+
+frequencias_categoricas
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  frequencias_categoricas,
+  "diagnostico_modelos/12_frequencias_categoricas.csv"
+)
+```
+
+Identificar categorias raras:
+
+```{r}
+categorias_raras <- frequencias_categoricas |>
+  dplyr::filter(
+    n < 10 | percentual < 5
+  ) |>
+  dplyr::arrange(
+    variavel,
+    n
+  )
+
+categorias_raras
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  categorias_raras,
+  "diagnostico_modelos/13_categorias_raras.csv"
+)
+```
+
+---
+
+# 12. Cruzar cada variável categórica com a melhora clínica
+
+```{r}
+tabelas_categoria_desfecho <- purrr::map_dfr(
+  preditores_categoricos,
+  function(variavel) {
+    df_logistico_completo |>
+      dplyr::group_by(
+        categoria = .data[[variavel]]
+      ) |>
+      dplyr::summarise(
+        n = dplyr::n(),
+        eventos_melhora = sum(delta_cat == 1),
+        sem_melhora = sum(delta_cat == 0),
+        proporcao_melhora = mean(delta_cat == 1),
+        percentual_melhora = 100 * mean(delta_cat == 1),
+        .groups = "drop"
+      ) |>
+      dplyr::mutate(
+        variavel = variavel
+      ) |>
+      dplyr::select(
+        variavel,
+        categoria,
+        n,
+        eventos_melhora,
+        sem_melhora,
+        proporcao_melhora,
+        percentual_melhora
+      )
+  }
+)
+
+tabelas_categoria_desfecho
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  tabelas_categoria_desfecho,
+  "diagnostico_modelos/14_categorias_por_melhora.csv"
+)
+```
+
+Identificar células zeradas ou muito pequenas:
+
+```{r}
+celulas_problematicas <- tabelas_categoria_desfecho |>
+  dplyr::filter(
+    eventos_melhora < 5 |
+      sem_melhora < 5
+  )
+
+celulas_problematicas
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  celulas_problematicas,
+  "diagnostico_modelos/15_celulas_problematicas_logistico.csv"
+)
+```
+
+Esse resultado será especialmente importante para avaliar separação e instabilidade dos coeficientes.
+
+---
+
+# 13. Matriz real do modelo e número efetivo de parâmetros
+
+Não devemos contar apenas as dez variáveis da fórmula. Precisamos contar todos os coeficientes criados pelas categorias.
+
+## Modelo linear
+
+```{r}
+matriz_linear <- model.matrix(model_delta)
+
+dim(matriz_linear)
+colnames(matriz_linear)
+```
+
+```{r}
+parametros_linear <- tibble::tibble(
+  metrica = c(
+    "Participantes",
+    "Colunas da matriz incluindo intercepto",
+    "Parâmetros preditores sem intercepto",
+    "Graus de liberdade residuais"
+  ),
+  valor = c(
+    nobs(model_delta),
+    ncol(matriz_linear),
+    ncol(matriz_linear) - 1,
+    df.residual(model_delta)
+  )
+)
+
+parametros_linear
+```
+
+## Modelo logístico
+
+```{r}
+matriz_logistica <- model.matrix(model_melhora)
+
+dim(matriz_logistica)
+colnames(matriz_logistica)
+```
+
+```{r}
+y_logistico <- model.response(
+  model.frame(model_melhora)
+)
+
+parametros_logistico <- tibble::tibble(
+  metrica = c(
+    "Participantes",
+    "Eventos de melhora",
+    "Não eventos",
+    "Colunas da matriz incluindo intercepto",
+    "Parâmetros preditores sem intercepto",
+    "Eventos por parâmetro",
+    "Menor grupo por parâmetro"
+  ),
+  valor = c(
+    nobs(model_melhora),
+    sum(y_logistico == 1),
+    sum(y_logistico == 0),
+    ncol(matriz_logistica),
+    ncol(matriz_logistica) - 1,
+    sum(y_logistico == 1) / (ncol(matriz_logistica) - 1),
+    min(
+      sum(y_logistico == 1),
+      sum(y_logistico == 0)
+    ) / (ncol(matriz_logistica) - 1)
+  )
+)
+
+parametros_logistico
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  parametros_linear,
+  "diagnostico_modelos/16_parametros_modelo_linear.csv"
+)
+
+readr::write_csv(
+  parametros_logistico,
+  "diagnostico_modelos/17_parametros_modelo_logistico.csv"
+)
+
+writeLines(
+  colnames(matriz_linear),
+  "diagnostico_modelos/18_nomes_coeficientes_linear.txt"
+)
+
+writeLines(
+  colnames(matriz_logistica),
+  "diagnostico_modelos/19_nomes_coeficientes_logistico.txt"
+)
+```
+
+---
+
+# 14. Verificar postos da matriz e possíveis redundâncias
+
+```{r}
+rank_linear <- qr(matriz_linear)$rank
+rank_logistico <- qr(matriz_logistica)$rank
+
+diagnostico_rank <- tibble::tibble(
+  modelo = c("Linear", "Logístico"),
+  numero_colunas = c(
+    ncol(matriz_linear),
+    ncol(matriz_logistica)
+  ),
+  rank_matriz = c(
+    rank_linear,
+    rank_logistico
+  ),
+  matriz_rank_completo = c(
+    rank_linear == ncol(matriz_linear),
+    rank_logistico == ncol(matriz_logistica)
+  )
+)
+
+diagnostico_rank
+```
+
+Coeficientes não estimáveis:
+
+```{r}
+coeficientes_na_linear <- names(
+  coef(model_delta)
+)[is.na(coef(model_delta))]
+
+coeficientes_na_logistico <- names(
+  coef(model_melhora)
+)[is.na(coef(model_melhora))]
+
+coeficientes_na_linear
+coeficientes_na_logistico
+```
+
+Salvar:
+
+```{r}
+capture.output(
+  diagnostico_rank,
+  file = "diagnostico_modelos/20_rank_matrizes.txt"
+)
+
+capture.output(
+  list(
+    linear = coeficientes_na_linear,
+    logistico = coeficientes_na_logistico
+  ),
+  file = "diagnostico_modelos/21_coeficientes_nao_estimaveis.txt"
+)
+```
+
+---
+
+# 15. Coeficientes completos e intervalos de confiança
+
+## Modelo linear
+
+```{r}
+coeficientes_linear <- broom::tidy(
+  model_delta,
+  conf.int = TRUE,
+  conf.level = 0.95
+)
+
+coeficientes_linear
+```
+
+## Modelo logístico na escala do logit
+
+```{r}
+coeficientes_logit <- broom::tidy(
+  model_melhora,
+  conf.int = TRUE,
+  conf.level = 0.95,
+  exponentiate = FALSE
+)
+
+coeficientes_logit
+```
+
+## Modelo logístico como odds ratios
+
+```{r}
+coeficientes_or <- broom::tidy(
+  model_melhora,
+  conf.int = TRUE,
+  conf.level = 0.95,
+  exponentiate = TRUE
+)
+
+coeficientes_or
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  coeficientes_linear,
+  "diagnostico_modelos/22_coeficientes_modelo_linear.csv"
+)
+
+readr::write_csv(
+  coeficientes_logit,
+  "diagnostico_modelos/23_coeficientes_logit.csv"
+)
+
+readr::write_csv(
+  coeficientes_or,
+  "diagnostico_modelos/24_odds_ratios.csv"
+)
+```
+
+---
+
+# 16. Detectar coeficientes logisticamente instáveis
+
+```{r}
+coeficientes_logisticos_extremos <- coeficientes_logit |>
+  dplyr::mutate(
+    erro_padrao_grande = std.error > 2,
+    coeficiente_extremo = abs(estimate) > 5,
+    intervalo_muito_amplo = (conf.high - conf.low) > 10
+  ) |>
+  dplyr::filter(
+    erro_padrao_grande |
+      coeficiente_extremo |
+      intervalo_muito_amplo |
+      is.na(estimate) |
+      is.na(std.error)
+  )
+
+coeficientes_logisticos_extremos
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  coeficientes_logisticos_extremos,
+  "diagnostico_modelos/25_coeficientes_logisticos_extremos.csv"
+)
+```
+
+---
+
+# 17. Teste formal de separação no modelo logístico
+
+```{r}
+formula_melhora <- formula(model_melhora)
+
+separacao_melhora <- glm(
+  formula = formula_melhora,
+  data = model.frame(model_melhora),
+  family = binomial(),
+  method = detectseparation::detect_separation
+)
+
+separacao_melhora
+```
+
+Salvar:
+
+```{r}
+capture.output(
+  separacao_melhora,
+  file = "diagnostico_modelos/26_diagnostico_separacao.txt"
+)
+```
+
+Também execute:
+
+```{r}
+detectseparation::check_infinite_estimates(
+  model_melhora
+)
+```
+
+Salvar:
+
+```{r}
+capture.output(
+  detectseparation::check_infinite_estimates(model_melhora),
+  file = "diagnostico_modelos/27_estimativas_infinitas.txt"
+)
+```
+
+---
+
+# 18. Colinearidade e correlações
+
+## Correlação entre preditores numéricos
+
+```{r}
+correlacoes_numericas <- df |>
+  dplyr::select(
+    dplyr::all_of(
+      c(
+        preditores_numericos,
+        "cobb_inicial_maior",
+        "maior_curva_6_meses",
+        "delta"
+      )
+    )
+  ) |>
+  stats::cor(
+    use = "pairwise.complete.obs",
+    method = "pearson"
+  )
+
+round(correlacoes_numericas, 3)
+```
+
+Salvar:
+
+```{r}
+write.csv(
+  round(correlacoes_numericas, 4),
+  "diagnostico_modelos/28_correlacoes_numericas.csv",
+  row.names = TRUE
+)
+```
+
+## Colinearidade dos modelos
+
+```{r}
+colinearidade_linear <- performance::check_collinearity(
+  model_delta
+)
+
+colinearidade_logistica <- performance::check_collinearity(
+  model_melhora
+)
+
+colinearidade_linear
+colinearidade_logistica
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  as.data.frame(colinearidade_linear),
+  "diagnostico_modelos/29_colinearidade_linear.csv"
+)
+
+readr::write_csv(
+  as.data.frame(colinearidade_logistica),
+  "diagnostico_modelos/30_colinearidade_logistica.csv"
+)
+```
+
+---
+
+# 19. Relação entre Cobb basal, Cobb final e mudança
+
+Este bloco é fundamental para avaliar o uso do `change score`.
+
+```{r}
+cor_cobb <- df |>
+  dplyr::summarise(
+    cor_baseline_final = cor(
+      cobb_inicial_maior,
+      maior_curva_6_meses,
+      use = "complete.obs"
+    ),
+    cor_baseline_delta = cor(
+      cobb_inicial_maior,
+      delta,
+      use = "complete.obs"
+    ),
+    cor_final_delta = cor(
+      maior_curva_6_meses,
+      delta,
+      use = "complete.obs"
+    )
+  )
+
+cor_cobb
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  cor_cobb,
+  "diagnostico_modelos/31_correlacoes_cobb_delta.csv"
+)
+```
+
+Gráfico Cobb basal versus mudança:
+
+```{r}
+grafico_baseline_delta <- df |>
+  dplyr::filter(
+    !is.na(cobb_inicial_maior),
+    !is.na(delta)
+  ) |>
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = cobb_inicial_maior,
+      y = delta
+    )
+  ) +
+  ggplot2::geom_point() +
+  ggplot2::geom_smooth(
+    method = "loess",
+    se = TRUE
+  ) +
+  ggplot2::geom_hline(
+    yintercept = c(-5, 0, 5),
+    linetype = "dashed"
+  ) +
+  ggplot2::labs(
+    x = "Maior curva de Cobb no baseline",
+    y = "Mudança em seis meses",
+    title = "Relação entre Cobb basal e mudança radiográfica"
+  )
+
+grafico_baseline_delta
+
+ggplot2::ggsave(
+  "diagnostico_modelos/32_cobb_baseline_versus_delta.png",
+  grafico_baseline_delta,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+Gráfico Cobb basal versus Cobb final:
+
+```{r}
+grafico_baseline_final <- df |>
+  dplyr::filter(
+    !is.na(cobb_inicial_maior),
+    !is.na(maior_curva_6_meses)
+  ) |>
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = cobb_inicial_maior,
+      y = maior_curva_6_meses
+    )
+  ) +
+  ggplot2::geom_point() +
+  ggplot2::geom_smooth(
+    method = "loess",
+    se = TRUE
+  ) +
+  ggplot2::geom_abline(
+    slope = 1,
+    intercept = 0,
+    linetype = "dashed"
+  ) +
+  ggplot2::labs(
+    x = "Maior curva de Cobb no baseline",
+    y = "Maior curva de Cobb em seis meses",
+    title = "Cobb basal versus Cobb em seis meses"
+  )
+
+grafico_baseline_final
+
+ggplot2::ggsave(
+  "diagnostico_modelos/33_cobb_baseline_versus_final.png",
+  grafico_baseline_final,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+---
+
+# 20. Desempenho aparente do modelo linear
+
+```{r}
+pred_linear <- tibble::tibble(
+  observado = model.response(
+    model.frame(model_delta)
+  ),
+  previsto = predict(model_delta),
+  residuo = residuals(model_delta)
+)
+```
+
+Calcular as métricas:
+
+```{r}
+metricas_lineares_aparentes <- pred_linear |>
+  dplyr::summarise(
+    n = dplyr::n(),
+    r2 = cor(observado, previsto)^2,
+    r2_ajustado = summary(model_delta)$adj.r.squared,
+    rmse = sqrt(mean((observado - previsto)^2)),
+    mae = mean(abs(observado - previsto)),
+    erro_medio = mean(previsto - observado),
+    dp_residuos = sd(residuo)
+  )
+
+metricas_lineares_aparentes
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  metricas_lineares_aparentes,
+  "diagnostico_modelos/34_metricas_lineares_aparentes.csv"
+)
+```
+
+---
+
+# 21. Calibração aparente do modelo linear
+
+A calibração linear pode ser expressa por:
+
+\[
+Y = \alpha + \beta\widehat{Y}
+\]
+
+Idealmente:
+
+- intercepto \(\alpha=0\);
+- inclinação \(\beta=1\).
+
+```{r}
+modelo_calibracao_linear <- lm(
+  observado ~ previsto,
+  data = pred_linear
+)
+
+summary(modelo_calibracao_linear)
+```
+
+```{r}
+calibracao_linear <- broom::tidy(
+  modelo_calibracao_linear,
+  conf.int = TRUE
+)
+
+calibracao_linear
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  calibracao_linear,
+  "diagnostico_modelos/35_calibracao_linear_aparente.csv"
+)
+```
+
+Gráfico:
+
+```{r}
+grafico_calibracao_linear <- pred_linear |>
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = previsto,
+      y = observado
+    )
+  ) +
+  ggplot2::geom_point() +
+  ggplot2::geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed"
+  ) +
+  ggplot2::geom_smooth(
+    method = "loess",
+    se = TRUE
+  ) +
+  ggplot2::labs(
+    x = "Mudança prevista",
+    y = "Mudança observada",
+    title = "Calibração aparente do modelo linear"
+  )
+
+grafico_calibracao_linear
+
+ggplot2::ggsave(
+  "diagnostico_modelos/36_calibracao_linear_aparente.png",
+  grafico_calibracao_linear,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+```
+
+---
+
+# 22. Desempenho aparente do modelo logístico
+
+```{r}
+pred_logistico <- tibble::tibble(
+  observado = as.numeric(
+    model.response(
+      model.frame(model_melhora)
+    )
+  ),
+  probabilidade = predict(
+    model_melhora,
+    type = "response"
+  ),
+  preditor_linear = predict(
+    model_melhora,
+    type = "link"
+  )
+)
+```
+
+AUC:
+
+```{r}
+roc_melhora <- pROC::roc(
+  response = pred_logistico$observado,
+  predictor = pred_logistico$probabilidade,
+  levels = c(0, 1),
+  direction = "<",
+  quiet = TRUE
+)
+
+auc_aparente <- as.numeric(
+  pROC::auc(roc_melhora)
+)
+
+ic_auc_aparente <- as.numeric(
+  pROC::ci.auc(roc_melhora)
+)
+
+auc_aparente
+ic_auc_aparente
+```
+
+Brier score:
+
+```{r}
+brier_aparente <- mean(
+  (
+    pred_logistico$observado -
+      pred_logistico$probabilidade
+  )^2
+)
+
+brier_aparente
+```
+
+Log loss:
+
+```{r}
+epsilon <- 1e-15
+
+probabilidade_limitada <- pmin(
+  pmax(
+    pred_logistico$probabilidade,
+    epsilon
+  ),
+  1 - epsilon
+)
+
+log_loss_aparente <- -mean(
+  pred_logistico$observado *
+    log(probabilidade_limitada) +
+    (1 - pred_logistico$observado) *
+    log(1 - probabilidade_limitada)
+)
+
+log_loss_aparente
+```
+
+Resumo:
+
+```{r}
+metricas_logisticas_aparentes <- tibble::tibble(
+  n = nrow(pred_logistico),
+  eventos = sum(pred_logistico$observado == 1),
+  prevalencia = mean(pred_logistico$observado == 1),
+  auc = auc_aparente,
+  auc_ic95_inferior = ic_auc_aparente[1],
+  auc_ic95_central = ic_auc_aparente[2],
+  auc_ic95_superior = ic_auc_aparente[3],
+  brier = brier_aparente,
+  log_loss = log_loss_aparente,
+  probabilidade_minima = min(
+    pred_logistico$probabilidade
+  ),
+  probabilidade_mediana = median(
+    pred_logistico$probabilidade
+  ),
+  probabilidade_maxima = max(
+    pred_logistico$probabilidade
+  )
+)
+
+metricas_logisticas_aparentes
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  metricas_logisticas_aparentes,
+  "diagnostico_modelos/37_metricas_logisticas_aparentes.csv"
+)
+```
+
+---
+
+# 23. Calibração aparente do modelo logístico
+
+## Intercepto de calibração
+
+Com o preditor linear original usado como `offset`:
+
+```{r}
+modelo_calibration_intercept <- glm(
+  observado ~ 1,
+  offset = preditor_linear,
+  family = binomial(),
+  data = pred_logistico
+)
+
+calibration_intercept <- coef(
+  modelo_calibration_intercept
+)[1]
+
+calibration_intercept
+```
+
+Idealmente, o valor é zero.
+
+## Inclinação de calibração
+
+```{r}
+modelo_calibration_slope <- glm(
+  observado ~ preditor_linear,
+  family = binomial(),
+  data = pred_logistico
+)
+
+summary(modelo_calibration_slope)
+```
+
+```{r}
+calibracao_logistica <- broom::tidy(
+  modelo_calibration_slope,
+  conf.int = TRUE
+)
+
+calibracao_logistica
+```
+
+Idealmente:
+
+- intercepto = 0;
+- inclinação = 1.
+
+Resumo:
+
+```{r}
+resumo_calibracao_logistica <- tibble::tibble(
+  calibration_intercept = calibration_intercept,
+  calibration_slope = coef(
+    modelo_calibration_slope
+  )[["preditor_linear"]]
+)
+
+resumo_calibracao_logistica
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  calibracao_logistica,
+  "diagnostico_modelos/38_calibracao_logistica_coeficientes.csv"
+)
+
+readr::write_csv(
+  resumo_calibracao_logistica,
+  "diagnostico_modelos/39_calibracao_logistica_resumo.csv"
+)
+```
+
+Observação: como essa calibração é calculada na mesma amostra usada para ajustar o modelo, os valores tenderão artificialmente a 0 e 1. Mesmo assim, preciso desse resultado como referência aparente antes do bootstrap.
+
+---
+
+# 24. Curva de calibração logística por grupos
+
+```{r}
+calibracao_grupos <- pred_logistico |>
+  dplyr::mutate(
+    grupo = dplyr::ntile(
+      probabilidade,
+      10
+    )
+  ) |>
+  dplyr::group_by(grupo) |>
+  dplyr::summarise(
+    n = dplyr::n(),
+    probabilidade_media = mean(probabilidade),
+    proporcao_observada = mean(observado),
+    eventos = sum(observado),
+    .groups = "drop"
+  )
+
+calibracao_grupos
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  calibracao_grupos,
+  "diagnostico_modelos/40_calibracao_logistica_grupos.csv"
+)
+```
+
+Gráfico:
+
+```{r}
+grafico_calibracao_logistica <- calibracao_grupos |>
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = probabilidade_media,
+      y = proporcao_observada
+    )
+  ) +
+  ggplot2::geom_point() +
+  ggplot2::geom_line() +
+  ggplot2::geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed"
+  ) +
+  ggplot2::coord_equal(
+    xlim = c(0, 1),
+    ylim = c(0, 1)
+  ) +
+  ggplot2::labs(
+    x = "Probabilidade média prevista",
+    y = "Proporção observada de melhora",
+    title = "Calibração aparente do modelo logístico"
+  )
+
+grafico_calibracao_logistica
+
+ggplot2::ggsave(
+  "diagnostico_modelos/41_calibracao_logistica_aparente.png",
+  grafico_calibracao_logistica,
+  width = 7,
+  height = 7,
+  dpi = 300
+)
+```
+
+Caso existam poucos eventos, os decis podem não ser adequados. O output mostrará isso.
+
+---
+
+# 25. Distribuição das probabilidades previstas
+
+```{r}
+grafico_probabilidades <- pred_logistico |>
+  dplyr::mutate(
+    observado = factor(
+      observado,
+      levels = c(0, 1),
+      labels = c(
+        "Sem melhora",
+        "Melhora"
+      )
+    )
+  ) |>
+  ggplot2::ggplot(
+    ggplot2::aes(
+      x = probabilidade,
+      fill = observado
+    )
+  ) +
+  ggplot2::geom_histogram(
+    bins = 20,
+    position = "identity",
+    alpha = 0.5
+  ) +
+  ggplot2::labs(
+    x = "Probabilidade prevista de melhora",
+    y = "Número de participantes",
+    fill = "Desfecho",
+    title = "Distribuição das probabilidades previstas"
+  )
+
+grafico_probabilidades
+
+ggplot2::ggsave(
+  "diagnostico_modelos/42_probabilidades_previstas.png",
+  grafico_probabilidades,
+  width = 9,
+  height = 6,
+  dpi = 300
+)
+```
+
+---
+
+# 26. Curva ROC
+
+```{r}
+png(
+  filename = "diagnostico_modelos/43_curva_roc.png",
+  width = 1800,
+  height = 1400,
+  res = 220
+)
+
+plot(
+  roc_melhora,
+  print.auc = TRUE,
+  legacy.axes = TRUE
+)
+
+abline(
+  a = 0,
+  b = 1,
+  lty = 2
+)
+
+dev.off()
+```
+
+---
+
+# 27. Observações influentes no modelo linear
+
+```{r}
+influencia_linear <- broom::augment(
+  model_delta
+) |>
+  dplyr::mutate(
+    indice = dplyr::row_number(),
+    limite_cook = 4 / n(),
+    cook_elevado = .cooksd > limite_cook,
+    leverage_elevado = .hat >
+      2 * length(coef(model_delta)) / n(),
+    residuo_elevado = abs(.std.resid) > 3
+  )
+
+resumo_influencia_linear <- influencia_linear |>
+  dplyr::summarise(
+    n = dplyr::n(),
+    n_cook_elevado = sum(cook_elevado),
+    n_leverage_elevado = sum(leverage_elevado),
+    n_residuo_elevado = sum(residuo_elevado),
+    max_cook = max(.cooksd),
+    max_leverage = max(.hat),
+    max_residuo_padronizado = max(
+      abs(.std.resid)
+    )
+  )
+
+resumo_influencia_linear
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  resumo_influencia_linear,
+  "diagnostico_modelos/44_influencia_linear_resumo.csv"
+)
+
+readr::write_csv(
+  influencia_linear |>
+    dplyr::filter(
+      cook_elevado |
+        leverage_elevado |
+        residuo_elevado
+    ),
+  "diagnostico_modelos/45_observacoes_influentes_linear.csv"
+)
+```
+
+---
+
+# 28. Observações influentes no modelo logístico
+
+```{r}
+influencia_logistica <- broom::augment(
+  model_melhora,
+  type.predict = "response"
+) |>
+  dplyr::mutate(
+    indice = dplyr::row_number(),
+    limite_cook = 4 / n(),
+    cook_elevado = .cooksd > limite_cook,
+    leverage_elevado = .hat >
+      2 * length(coef(model_melhora)) / n(),
+    residuo_elevado = abs(.std.resid) > 3
+  )
+
+resumo_influencia_logistica <- influencia_logistica |>
+  dplyr::summarise(
+    n = dplyr::n(),
+    n_cook_elevado = sum(cook_elevado),
+    n_leverage_elevado = sum(leverage_elevado),
+    n_residuo_elevado = sum(residuo_elevado),
+    max_cook = max(.cooksd),
+    max_leverage = max(.hat),
+    max_residuo_padronizado = max(
+      abs(.std.resid)
+    )
+  )
+
+resumo_influencia_logistica
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  resumo_influencia_logistica,
+  "diagnostico_modelos/46_influencia_logistica_resumo.csv"
+)
+
+readr::write_csv(
+  influencia_logistica |>
+    dplyr::filter(
+      cook_elevado |
+        leverage_elevado |
+        residuo_elevado
+    ),
+  "diagnostico_modelos/47_observacoes_influentes_logistica.csv"
+)
+```
+
+---
+
+# 29. Verificar a forma funcional dos preditores contínuos
+
+## Para o desfecho contínuo
+
+```{r}
+graficos_linearidade_linear <- purrr::map(
+  preditores_numericos,
+  function(variavel) {
+    ggplot2::ggplot(
+      df,
+      ggplot2::aes(
+        x = .data[[variavel]],
+        y = delta
+      )
+    ) +
+      ggplot2::geom_point() +
+      ggplot2::geom_smooth(
+        method = "loess",
+        se = TRUE
+      ) +
+      ggplot2::labs(
+        x = variavel,
+        y = "Mudança no Cobb",
+        title = paste(
+          "Relação entre",
+          variavel,
+          "e mudança no Cobb"
+        )
+      )
+  }
+)
+
+names(graficos_linearidade_linear) <- preditores_numericos
+```
+
+Salvar:
+
+```{r}
+purrr::iwalk(
+  graficos_linearidade_linear,
+  function(grafico, nome) {
+    ggplot2::ggsave(
+      filename = paste0(
+        "diagnostico_modelos/linearidade_delta_",
+        nome,
+        ".png"
+      ),
+      plot = grafico,
+      width = 8,
+      height = 6,
+      dpi = 300
+    )
+  }
+)
+```
+
+## Para o modelo logístico
+
+Aqui usamos proporções observadas por grupos para uma inspeção inicial:
+
+```{r}
+graficos_linearidade_logistica <- purrr::map(
+  preditores_numericos,
+  function(variavel) {
+    dados_grafico <- df_logistico_completo |>
+      dplyr::mutate(
+        grupo = dplyr::ntile(
+          .data[[variavel]],
+          5
+        )
+      ) |>
+      dplyr::group_by(grupo) |>
+      dplyr::summarise(
+        valor_medio = mean(
+          .data[[variavel]],
+          na.rm = TRUE
+        ),
+        proporcao_melhora = mean(delta_cat),
+        n = dplyr::n(),
+        .groups = "drop"
+      )
+
+    ggplot2::ggplot(
+      dados_grafico,
+      ggplot2::aes(
+        x = valor_medio,
+        y = proporcao_melhora
+      )
+    ) +
+      ggplot2::geom_point() +
+      ggplot2::geom_line() +
+      ggplot2::labs(
+        x = variavel,
+        y = "Proporção observada de melhora",
+        title = paste(
+          "Relação entre",
+          variavel,
+          "e melhora"
+        )
+      )
+  }
+)
+
+names(graficos_linearidade_logistica) <- preditores_numericos
+```
+
+Salvar:
+
+```{r}
+purrr::iwalk(
+  graficos_linearidade_logistica,
+  function(grafico, nome) {
+    ggplot2::ggsave(
+      filename = paste0(
+        "diagnostico_modelos/linearidade_logistica_",
+        nome,
+        ".png"
+      ),
+      plot = grafico,
+      width = 8,
+      height = 6,
+      dpi = 300
+    )
+  }
+)
+```
+
+---
+
+# 30. Comparar participantes incluídos e excluídos
+
+Criar indicador de inclusão:
+
+```{r}
+df_inclusao <- df |>
+  dplyr::mutate(
+    incluído_linear = complete.cases(
+      dplyr::pick(
+        delta,
+        dplyr::all_of(preditores_modelo)
+      )
+    ),
+    incluído_logistico = complete.cases(
+      dplyr::pick(
+        delta_cat,
+        dplyr::all_of(preditores_modelo)
+      )
+    )
+  )
+```
+
+Comparação numérica para o modelo linear:
+
+```{r}
+comparacao_inclusao_numerica <- purrr::map_dfr(
+  c(
+    preditores_numericos,
+    "cobb_inicial_maior",
+    "maior_curva_6_meses",
+    "delta"
+  ),
+  function(variavel) {
+    df_inclusao |>
+      dplyr::group_by(
+        incluído_linear
+      ) |>
+      dplyr::summarise(
+        n_disponivel = sum(
+          !is.na(.data[[variavel]])
+        ),
+        media = mean(
+          .data[[variavel]],
+          na.rm = TRUE
+        ),
+        dp = sd(
+          .data[[variavel]],
+          na.rm = TRUE
+        ),
+        mediana = median(
+          .data[[variavel]],
+          na.rm = TRUE
+        ),
+        .groups = "drop"
+      ) |>
+      dplyr::mutate(
+        variavel = variavel
+      )
+  }
+)
+
+comparacao_inclusao_numerica
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  comparacao_inclusao_numerica,
+  "diagnostico_modelos/48_comparacao_incluidos_excluidos_numerica.csv"
+)
+```
+
+Comparação categórica:
+
+```{r}
+comparacao_inclusao_categorica <- purrr::map_dfr(
+  preditores_categoricos,
+  function(variavel) {
+    df_inclusao |>
+      dplyr::count(
+        incluído_linear,
+        categoria = .data[[variavel]],
+        name = "n",
+        .drop = FALSE
+      ) |>
+      dplyr::group_by(
+        incluído_linear
+      ) |>
+      dplyr::mutate(
+        percentual = 100 * n / sum(n)
+      ) |>
+      dplyr::ungroup() |>
+      dplyr::mutate(
+        variavel = variavel
+      )
+  }
+)
+
+comparacao_inclusao_categorica
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  comparacao_inclusao_categorica,
+  "diagnostico_modelos/49_comparacao_incluidos_excluidos_categorica.csv"
+)
+```
+
+---
+
+# 31. Modelo alternativo para Cobb em seis meses ajustado pelo basal
+
+Este modelo é apenas diagnóstico. Ele não substitui automaticamente o modelo principal.
+
+```{r}
+model_cobb_6m <- lm(
+  maior_curva_6_meses ~
+    cobb_inicial_maior +
+    idade +
+    imc +
+    cifose_toracica +
+    lordose_lombar +
+    correcao_colete +
+    sexo +
+    lenke +
+    risser +
+    flexibilidade +
+    escoliometro_maior_10_graus,
+  data = df
+)
+
+summary(model_cobb_6m)
+```
+
+Métricas aparentes:
+
+```{r}
+pred_cobb_6m <- tibble::tibble(
+  observado = model.response(
+    model.frame(model_cobb_6m)
+  ),
+  previsto = predict(model_cobb_6m)
+)
+
+metricas_cobb_6m <- pred_cobb_6m |>
+  dplyr::summarise(
+    n = dplyr::n(),
+    r2 = cor(observado, previsto)^2,
+    r2_ajustado = summary(
+      model_cobb_6m
+    )$adj.r.squared,
+    rmse = sqrt(
+      mean((observado - previsto)^2)
+    ),
+    mae = mean(
+      abs(observado - previsto)
+    )
+  )
+
+metricas_cobb_6m
+```
+
+Comparação preliminar:
+
+```{r}
+comparacao_modelos_continuos <- dplyr::bind_rows(
+  metricas_lineares_aparentes |>
+    dplyr::transmute(
+      modelo = "Mudança no Cobb",
+      n,
+      r2,
+      r2_ajustado,
+      rmse,
+      mae
+    ),
+  metricas_cobb_6m |>
+    dplyr::transmute(
+      modelo = "Cobb em seis meses ajustado pelo basal",
+      n,
+      r2,
+      r2_ajustado,
+      rmse,
+      mae
+    )
+)
+
+comparacao_modelos_continuos
+```
+
+Atenção: RMSE e MAE desses dois modelos estão em graus, mas correspondem a alvos diferentes. A comparação não deve ser tratada como seleção definitiva apenas pelo menor erro.
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  comparacao_modelos_continuos,
+  "diagnostico_modelos/50_comparacao_modelos_continuos.csv"
+)
+
+readr::write_csv(
+  broom::tidy(
+    model_cobb_6m,
+    conf.int = TRUE
+  ),
+  "diagnostico_modelos/51_coeficientes_modelo_cobb_6m.csv"
+)
+```
+
+---
+
+# 32. Fórmulas e referências dos fatores
+
+```{r}
+informacoes_modelos <- list(
+  formula_linear = formula(model_delta),
+  formula_logistica = formula(model_melhora),
+  contrasts_linear = attr(
+    model.matrix(model_delta),
+    "contrasts"
+  ),
+  contrasts_logistica = attr(
+    model.matrix(model_melhora),
+    "contrasts"
+  ),
+  niveis_fatores = lapply(
+    df[preditores_categoricos],
+    levels
+  )
+)
+
+informacoes_modelos
+```
+
+Salvar:
+
+```{r}
+capture.output(
+  informacoes_modelos,
+  file = "diagnostico_modelos/52_formulas_contrastes_referencias.txt"
+)
+```
+
+---
+
+# 33. Informações da sessão e versões dos pacotes
+
+```{r}
+capture.output(
+  sessionInfo(),
+  file = "diagnostico_modelos/53_session_info.txt"
+)
+```
+
+Versões específicas:
+
+```{r}
+versoes_pacotes <- tibble::tibble(
+  pacote = pacotes_diagnostico,
+  versao = purrr::map_chr(
+    pacotes_diagnostico,
+    ~ as.character(
+      packageVersion(.x)
+    )
+  )
+)
+
+versoes_pacotes
+```
+
+Salvar:
+
+```{r}
+readr::write_csv(
+  versoes_pacotes,
+  "diagnostico_modelos/54_versoes_pacotes.csv"
+)
+```
+
+---
+
+# 34. Criar um resumo consolidado em texto
+
+```{r}
+arquivo_resumo <- "diagnostico_modelos/00_RESUMO_DIAGNOSTICO.txt"
+
+sink(arquivo_resumo)
+
+cat(
+  "========================================\n",
+  "DIAGNÓSTICO DOS MODELOS DE ESCOLIOSE\n",
+  "========================================\n\n"
+)
+
+cat("DATA DA EXECUÇÃO:\n")
+print(Sys.time())
+
+cat("\n\nDIMENSÕES DA BASE:\n")
+print(
+  tibble::tibble(
+    linhas = nrow(df),
+    colunas = ncol(df)
+  )
+)
+
+cat("\n\nCASOS COMPLETOS:\n")
+print(resumo_casos_completos)
+
+cat("\n\nDESFECHOS CONTÍNUOS:\n")
+print(resumo_desfechos_continuos)
+
+cat("\n\nDESFECHOS BINÁRIOS:\n")
+print(resumo_desfechos_binarios)
+
+cat("\n\nEVENTOS NO MODELO LOGÍSTICO:\n")
+print(eventos_modelo_logistico)
+
+cat("\n\nPARÂMETROS DO MODELO LINEAR:\n")
+print(parametros_linear)
+
+cat("\n\nPARÂMETROS DO MODELO LOGÍSTICO:\n")
+print(parametros_logistico)
+
+cat("\n\nCATEGORIAS RARAS:\n")
+print(categorias_raras)
+
+cat("\n\nCÉLULAS PROBLEMÁTICAS:\n")
+print(celulas_problematicas)
+
+cat("\n\nRANK DAS MATRIZES:\n")
+print(diagnostico_rank)
+
+cat("\n\nCOEFICIENTES LOGÍSTICOS EXTREMOS:\n")
+print(coeficientes_logisticos_extremos)
+
+cat("\n\nCORRELAÇÕES ENTRE COBB E DELTA:\n")
+print(cor_cobb)
+
+cat("\n\nDESEMPENHO LINEAR APARENTE:\n")
+print(metricas_lineares_aparentes)
+
+cat("\n\nCALIBRAÇÃO LINEAR APARENTE:\n")
+print(calibracao_linear)
+
+cat("\n\nDESEMPENHO LOGÍSTICO APARENTE:\n")
+print(metricas_logisticas_aparentes)
+
+cat("\n\nCALIBRAÇÃO LOGÍSTICA APARENTE:\n")
+print(resumo_calibracao_logistica)
+
+cat("\n\nINFLUÊNCIA NO MODELO LINEAR:\n")
+print(resumo_influencia_linear)
+
+cat("\n\nINFLUÊNCIA NO MODELO LOGÍSTICO:\n")
+print(resumo_influencia_logistica)
+
+cat("\n\nCOMPARAÇÃO DE MODELOS CONTÍNUOS:\n")
+print(comparacao_modelos_continuos)
+
+cat("\n\nFORMULA LINEAR:\n")
+print(formula(model_delta))
+
+cat("\n\nFORMULA LOGÍSTICA:\n")
+print(formula(model_melhora))
+
+cat("\n\nNÍVEIS DOS FATORES:\n")
+print(
+  lapply(
+    df[preditores_categoricos],
+    levels
+  )
+)
+
+sink()
+```
+
+---
+
+# 35. Salvar os objetos necessários sem compartilhar a base original
+
+Este arquivo conterá apenas resultados agregados e objetos dos modelos. Como os objetos `lm` e `glm` podem conter o `model.frame`, eles podem preservar dados individuais. Portanto, para evitar o compartilhamento desnecessário da base, crie versões reduzidas.
+
+```{r}
+modelo_linear_reduzido <- list(
+  formula = formula(model_delta),
+  coeficientes = coef(model_delta),
+  vcov = vcov(model_delta),
+  sigma = sigma(model_delta),
+  n = nobs(model_delta),
+  df_residual = df.residual(model_delta),
+  r_squared = summary(model_delta)$r.squared,
+  adjusted_r_squared = summary(model_delta)$adj.r.squared,
+  matriz_colunas = colnames(
+    model.matrix(model_delta)
+  )
+)
+
+modelo_logistico_reduzido <- list(
+  formula = formula(model_melhora),
+  coeficientes = coef(model_melhora),
+  vcov = vcov(model_melhora),
+  n = nobs(model_melhora),
+  eventos = sum(y_logistico == 1),
+  nao_eventos = sum(y_logistico == 0),
+  matriz_colunas = colnames(
+    model.matrix(model_melhora)
+  )
+)
+
+resultados_diagnostico <- list(
+  resumo_casos_completos = resumo_casos_completos,
+  missing_por_variavel = missing_por_variavel,
+  missing_por_participante = missing_por_participante,
+  resumo_desfechos_continuos = resumo_desfechos_continuos,
+  resumo_desfechos_binarios = resumo_desfechos_binarios,
+  resumo_numericos = resumo_numericos,
+  frequencias_categoricas = frequencias_categoricas,
+  categorias_raras = categorias_raras,
+  tabelas_categoria_desfecho = tabelas_categoria_desfecho,
+  celulas_problematicas = celulas_problematicas,
+  parametros_linear = parametros_linear,
+  parametros_logistico = parametros_logistico,
+  diagnostico_rank = diagnostico_rank,
+  coeficientes_linear = coeficientes_linear,
+  coeficientes_logit = coeficientes_logit,
+  coeficientes_or = coeficientes_or,
+  coeficientes_logisticos_extremos =
+    coeficientes_logisticos_extremos,
+  correlacoes_numericas = correlacoes_numericas,
+  cor_cobb = cor_cobb,
+  metricas_lineares_aparentes =
+    metricas_lineares_aparentes,
+  calibracao_linear = calibracao_linear,
+  metricas_logisticas_aparentes =
+    metricas_logisticas_aparentes,
+  calibracao_logistica =
+    resumo_calibracao_logistica,
+  calibracao_grupos = calibracao_grupos,
+  resumo_influencia_linear =
+    resumo_influencia_linear,
+  resumo_influencia_logistica =
+    resumo_influencia_logistica,
+  comparacao_modelos_continuos =
+    comparacao_modelos_continuos,
+  modelo_linear_reduzido =
+    modelo_linear_reduzido,
+  modelo_logistico_reduzido =
+    modelo_logistico_reduzido
+)
+
+saveRDS(
+  resultados_diagnostico,
+  "diagnostico_modelos/resultados_diagnostico.rds"
+)
+```
+
+---
+
+# 36. Compactar os resultados
+
+```{r}
+arquivos_diagnostico <- list.files(
+  "diagnostico_modelos",
+  full.names = TRUE,
+  recursive = TRUE
+)
+
+utils::zip(
+  zipfile = "diagnostico_modelos_escoliose.zip",
+  files = arquivos_diagnostico
+)
+```
+
+Ao final, confirme:
+
+```{r}
+file.exists(
+  "diagnostico_modelos_escoliose.zip"
+)
+
+file.info(
+  "diagnostico_modelos_escoliose.zip"
+)
+```
+
+O arquivo principal para me enviar será:
+
+```text
+diagnostico_modelos_escoliose.zip
+```
+
+## Outputs mais importantes
+
+Caso o script apresente algum erro e não seja possível gerar tudo, os resultados indispensáveis são:
+
+```{r}
+resumo_casos_completos
+resumo_desfechos_continuos
+resumo_desfechos_binarios
+missing_por_variavel
+frequencias_categoricas
+tabelas_categoria_desfecho
+parametros_linear
+parametros_logistico
+coeficientes_linear
+coeficientes_logit
+coeficientes_logisticos_extremos
+diagnostico_rank
+cor_cobb
+metricas_lineares_aparentes
+metricas_logisticas_aparentes
+resumo_calibracao_logistica
+resumo_influencia_linear
+resumo_influencia_logistica
+```
+
+Com esses resultados, será possível emitir um parecer direcionado sobre três decisões:
+
+1. se a base sustenta um estudo de desenvolvimento de modelo prognóstico;
+2. se o modelo linear pode ser apresentado como principal;
+3. se o modelo logístico tem eventos e estabilidade suficientes para permanecer como modelo prognóstico secundário.
+
+
+# Avaliacao de tamanho amostral
+
+
+O código abaixo utiliza:
+
+- 19 parâmetros candidatos;
+- 618 participantes disponíveis;
+- R² ajustado de 0,381 para o modelo contínuo;
+- prevalência de melhora de 318/618;
+- Cox–Snell R² calculado diretamente do modelo logístico;
+- cenários progressivamente conservadores;
+- shrinkage desejado de 0,90, conforme o padrão recomendado pelo pacote.
+
+O método segue Riley e colaboradores e está implementado no [`pmsampsize`](https://search.r-project.org/CRAN/refmans/pmsampsize/html/pmsampsize.html).
+
+## 1. Instalação
+
+```{r}
+if (!requireNamespace("pmsampsize", quietly = TRUE)) {
+  install.packages("pmsampsize")
+}
+
+library(pmsampsize)
+```
+
+## 2. Confirmar os números dos modelos
+
+Execute depois de criar `model_delta` e `model_melhora`:
+
+```{r}
+n_disponivel <- nobs(model_delta)
+
+p_linear <- ncol(model.matrix(model_delta)) - 1
+p_logistico <- ncol(model.matrix(model_melhora)) - 1
+
+y_logistico <- model.response(
+  model.frame(model_melhora)
+)
+
+n_eventos <- sum(y_logistico == 1)
+n_nao_eventos <- sum(y_logistico == 0)
+prevalencia <- mean(y_logistico == 1)
+
+media_delta <- mean(
+  model.response(model.frame(model_delta))
+)
+
+dp_delta <- sd(
+  model.response(model.frame(model_delta))
+)
+
+r2_linear_aparente <- summary(model_delta)$r.squared
+r2_linear_ajustado <- summary(model_delta)$adj.r.squared
+
+resumo_entradas <- data.frame(
+  medida = c(
+    "Participantes disponíveis",
+    "Parâmetros do modelo linear",
+    "Parâmetros do modelo logístico",
+    "Eventos de melhora",
+    "Não eventos",
+    "Prevalência de melhora",
+    "Média do delta",
+    "DP do delta",
+    "R² linear aparente",
+    "R² linear ajustado"
+  ),
+  valor = c(
+    n_disponivel,
+    p_linear,
+    p_logistico,
+    n_eventos,
+    n_nao_eventos,
+    prevalencia,
+    media_delta,
+    dp_delta,
+    r2_linear_aparente,
+    r2_linear_ajustado
+  )
+)
+
+print(resumo_entradas)
+```
+
+O esperado é algo próximo de:
+
+- `n = 618`;
+- 19 parâmetros;
+- 318 eventos;
+- prevalência de 0,515;
+- média do delta de −4,65°;
+- DP de 5,35°;
+- R² ajustado de 0,381.
+
+## 3. Modelo linear: análise principal
+
+A documentação recomenda usar um R² ajustado ou obtido de validação externa, evitando o R² aparente. Como ainda não temos validação interna, começaremos pelo R² ajustado:
+
+```{r}
+amostra_linear_principal <- pmsampsize::pmsampsize(
+  type = "c",
+  rsquared = r2_linear_ajustado,
+  parameters = p_linear,
+  intercept = media_delta,
+  sd = dp_delta,
+  shrinkage = 0.90
+)
+
+print(amostra_linear_principal)
+```
+
+## 4. Modelo linear: cenários conservadores
+
+Como `0.381` ainda vem da própria base, precisamos testar desempenhos esperados menores:
+
+```{r}
+amostra_linear_r2_035 <- pmsampsize::pmsampsize(
+  type = "c",
+  rsquared = 0.35,
+  parameters = p_linear,
+  intercept = media_delta,
+  sd = dp_delta,
+  shrinkage = 0.90
+)
+
+amostra_linear_r2_030 <- pmsampsize::pmsampsize(
+  type = "c",
+  rsquared = 0.30,
+  parameters = p_linear,
+  intercept = media_delta,
+  sd = dp_delta,
+  shrinkage = 0.90
+)
+
+amostra_linear_r2_025 <- pmsampsize::pmsampsize(
+  type = "c",
+  rsquared = 0.25,
+  parameters = p_linear,
+  intercept = media_delta,
+  sd = dp_delta,
+  shrinkage = 0.90
+)
+
+amostra_linear_r2_020 <- pmsampsize::pmsampsize(
+  type = "c",
+  rsquared = 0.20,
+  parameters = p_linear,
+  intercept = media_delta,
+  sd = dp_delta,
+  shrinkage = 0.90
+)
+
+cat("\n\n===== LINEAR: R² AJUSTADO OBSERVADO =====\n")
+print(amostra_linear_principal)
+
+cat("\n\n===== LINEAR: R² ESPERADO 0,35 =====\n")
+print(amostra_linear_r2_035)
+
+cat("\n\n===== LINEAR: R² ESPERADO 0,30 =====\n")
+print(amostra_linear_r2_030)
+
+cat("\n\n===== LINEAR: R² ESPERADO 0,25 =====\n")
+print(amostra_linear_r2_025)
+
+cat("\n\n===== LINEAR: R² ESPERADO 0,20 =====\n")
+print(amostra_linear_r2_020)
+```
+
+Se a amostra mínima continuar abaixo de 618 mesmo nos cenários de R² entre 0,25 e 0,30, teremos uma justificativa relativamente sólida de suficiência para o modelo linear atual.
+
+## 5. Calcular o Cox–Snell R² do modelo logístico
+
+O `pmsampsize` precisa de Cox–Snell R², Nagelkerke R² ou uma AUC externa. Podemos calcular o Cox–Snell aparente diretamente das log-verossimilhanças:
+
+```{r}
+loglik_modelo <- as.numeric(logLik(model_melhora))
+
+modelo_nulo <- update(
+  model_melhora,
+  . ~ 1
+)
+
+loglik_nulo <- as.numeric(logLik(modelo_nulo))
+
+n_logistico <- nobs(model_melhora)
+
+r2_cox_snell_aparente <- 1 - exp(
+  (2 / n_logistico) *
+    (loglik_nulo - loglik_modelo)
+)
+
+r2_cox_snell_aparente
+```
+
+Também calcule o máximo possível para essa prevalência e o Nagelkerke R²:
+
+```{r}
+r2_cox_snell_maximo <- 1 - exp(
+  (2 / n_logistico) * loglik_nulo
+)
+
+r2_nagelkerke_aparente <-
+  r2_cox_snell_aparente /
+  r2_cox_snell_maximo
+
+data.frame(
+  medida = c(
+    "Cox-Snell R² aparente",
+    "Cox-Snell R² máximo",
+    "Nagelkerke R² aparente"
+  ),
+  valor = c(
+    r2_cox_snell_aparente,
+    r2_cox_snell_maximo,
+    r2_nagelkerke_aparente
+  )
+)
+```
+
+## 6. Modelo logístico: cenário baseado no modelo atual
+
+Este resultado deve ser interpretado como otimista:
+
+```{r}
+amostra_logistica_aparente <- pmsampsize::pmsampsize(
+  type = "b",
+  csrsquared = r2_cox_snell_aparente,
+  parameters = p_logistico,
+  prevalence = prevalencia,
+  shrinkage = 0.90
+)
+
+print(amostra_logistica_aparente)
+```
+
+## 7. Modelo logístico: cenários conservadores
+
+Vamos assumir que o Cox–Snell R² verdadeiro possa ser apenas 80%, 70%, 60% ou 50% do valor aparente:
+
+```{r}
+r2_cs_80 <- 0.80 * r2_cox_snell_aparente
+r2_cs_70 <- 0.70 * r2_cox_snell_aparente
+r2_cs_60 <- 0.60 * r2_cox_snell_aparente
+r2_cs_50 <- 0.50 * r2_cox_snell_aparente
+```
+
+```{r}
+amostra_logistica_80 <- pmsampsize::pmsampsize(
+  type = "b",
+  csrsquared = r2_cs_80,
+  parameters = p_logistico,
+  prevalence = prevalencia,
+  shrinkage = 0.90
+)
+
+amostra_logistica_70 <- pmsampsize::pmsampsize(
+  type = "b",
+  csrsquared = r2_cs_70,
+  parameters = p_logistico,
+  prevalence = prevalencia,
+  shrinkage = 0.90
+)
+
+amostra_logistica_60 <- pmsampsize::pmsampsize(
+  type = "b",
+  csrsquared = r2_cs_60,
+  parameters = p_logistico,
+  prevalence = prevalencia,
+  shrinkage = 0.90
+)
+
+amostra_logistica_50 <- pmsampsize::pmsampsize(
+  type = "b",
+  csrsquared = r2_cs_50,
+  parameters = p_logistico,
+  prevalence = prevalencia,
+  shrinkage = 0.90
+)
+
+cat("\n\n===== LOGÍSTICO: COX-SNELL APARENTE =====\n")
+print(amostra_logistica_aparente)
+
+cat("\n\n===== LOGÍSTICO: 80% DO COX-SNELL APARENTE =====\n")
+print(amostra_logistica_80)
+
+cat("\n\n===== LOGÍSTICO: 70% DO COX-SNELL APARENTE =====\n")
+print(amostra_logistica_70)
+
+cat("\n\n===== LOGÍSTICO: 60% DO COX-SNELL APARENTE =====\n")
+print(amostra_logistica_60)
+
+cat("\n\n===== LOGÍSTICO: 50% DO COX-SNELL APARENTE =====\n")
+print(amostra_logistica_50)
+```
+
+## 8. Análise complementar baseada na AUC
+
+Como a AUC de 0,867 é aparente, não recomendo usá-la como análise principal de tamanho amostral. Mas ela pode ser usada como sensibilidade:
+
+```{r}
+amostra_logistica_auc_0867 <- pmsampsize::pmsampsize(
+  type = "b",
+  cstatistic = 0.867,
+  parameters = p_logistico,
+  prevalence = prevalencia,
+  shrinkage = 0.90,
+  seed = 123
+)
+
+amostra_logistica_auc_082 <- pmsampsize::pmsampsize(
+  type = "b",
+  cstatistic = 0.82,
+  parameters = p_logistico,
+  prevalence = prevalencia,
+  shrinkage = 0.90,
+  seed = 123
+)
+
+amostra_logistica_auc_078 <- pmsampsize::pmsampsize(
+  type = "b",
+  cstatistic = 0.78,
+  parameters = p_logistico,
+  prevalence = prevalencia,
+  shrinkage = 0.90,
+  seed = 123
+)
+
+cat("\n\n===== LOGÍSTICO: AUC 0,867 =====\n")
+print(amostra_logistica_auc_0867)
+
+cat("\n\n===== LOGÍSTICO: AUC 0,82 =====\n")
+print(amostra_logistica_auc_082)
+
+cat("\n\n===== LOGÍSTICO: AUC 0,78 =====\n")
+print(amostra_logistica_auc_078)
+```
+
+## 9. Comparar diretamente com os 618 participantes
+
+```{r}
+resultados_amostra <- data.frame(
+  modelo_cenario = c(
+    "Linear — R² ajustado observado",
+    "Linear — R² 0,35",
+    "Linear — R² 0,30",
+    "Linear — R² 0,25",
+    "Linear — R² 0,20",
+    "Logístico — Cox-Snell aparente",
+    "Logístico — 80% do Cox-Snell",
+    "Logístico — 70% do Cox-Snell",
+    "Logístico — 60% do Cox-Snell",
+    "Logístico — 50% do Cox-Snell"
+  ),
+  n_minimo = c(
+    amostra_linear_principal$sample_size,
+    amostra_linear_r2_035$sample_size,
+    amostra_linear_r2_030$sample_size,
+    amostra_linear_r2_025$sample_size,
+    amostra_linear_r2_020$sample_size,
+    amostra_logistica_aparente$sample_size,
+    amostra_logistica_80$sample_size,
+    amostra_logistica_70$sample_size,
+    amostra_logistica_60$sample_size,
+    amostra_logistica_50$sample_size
+  )
+)
+
+resultados_amostra$participantes_disponiveis <- n_disponivel
+
+resultados_amostra$margem_n <-
+  n_disponivel - resultados_amostra$n_minimo
+
+resultados_amostra$suficiente <-
+  resultados_amostra$margem_n >= 0
+
+print(
+  resultados_amostra,
+  row.names = FALSE
+)
+```
+
+## 10. Gerar um único arquivo para me enviar
+
+```{r}
+capture.output(
+  {
+    cat("========================================\n")
+    cat("AVALIAÇÃO FORMAL DO TAMANHO AMOSTRAL\n")
+    cat("========================================\n\n")
+
+    cat("ENTRADAS:\n")
+    print(resumo_entradas)
+
+    cat("\nR² DO MODELO LOGÍSTICO:\n")
+    print(
+      data.frame(
+        Cox_Snell_aparente =
+          r2_cox_snell_aparente,
+        Cox_Snell_maximo =
+          r2_cox_snell_maximo,
+        Nagelkerke_aparente =
+          r2_nagelkerke_aparente
+      )
+    )
+
+    cat("\n\nRESULTADOS CONSOLIDADOS:\n")
+    print(
+      resultados_amostra,
+      row.names = FALSE
+    )
+
+    cat("\n\nDETALHES — LINEAR PRINCIPAL:\n")
+    print(amostra_linear_principal)
+
+    cat("\n\nDETALHES — LINEAR R² 0,30:\n")
+    print(amostra_linear_r2_030)
+
+    cat("\n\nDETALHES — LINEAR R² 0,25:\n")
+    print(amostra_linear_r2_025)
+
+    cat("\n\nDETALHES — LOGÍSTICO APARENTE:\n")
+    print(amostra_logistica_aparente)
+
+    cat("\n\nDETALHES — LOGÍSTICO 70%:\n")
+    print(amostra_logistica_70)
+
+    cat("\n\nDETALHES — LOGÍSTICO 50%:\n")
+    print(amostra_logistica_50)
+
+    cat("\n\nANÁLISE BASEADA EM AUC 0,82:\n")
+    print(amostra_logistica_auc_082)
+
+    cat("\n\nINFORMAÇÕES DA SESSÃO:\n")
+    print(sessionInfo())
+  },
+  file = "avaliacao_tamanho_amostral.txt"
+)
+```
+
+Depois, cole aqui:
+
+```{r}
+print(resultados_amostra, row.names = FALSE)
+```
+
+e, se possível, anexe o arquivo:
+
+```text
+avaliacao_tamanho_amostral.txt
+```
+
+A interpretação principal será:
+
+- se `n_minimo ≤ 618`, a base satisfaz aquele cenário;
+- se isso ocorrer apenas usando o desempenho aparente, a conclusão será frágil;
+- se permanecer suficiente em cenários conservadores — por exemplo R² linear de 0,25–0,30 e 60–70% do Cox–Snell aparente — teremos um argumento bem mais convincente;
+- esse cálculo avalia viabilidade amostral, mas não substitui o bootstrap posterior.

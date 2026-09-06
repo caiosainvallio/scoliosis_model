@@ -1,0 +1,182 @@
+========================================
+ DIAGNÓSTICO DOS MODELOS DE ESCOLIOSE
+ ========================================
+
+DATA DA EXECUÇÃO:
+[1] "2026-07-21 21:05:00 -03"
+
+
+DIMENSÕES DA BASE:
+# A tibble: 1 × 2
+  linhas colunas
+   <int>   <int>
+1    621      28
+
+
+CASOS COMPLETOS:
+# A tibble: 3 × 5
+  conjunto             n percentual_base perda_n perda_percentual
+  <chr>            <int>           <dbl>   <int>            <dbl>
+1 Base total         621           100         0            0    
+2 Modelo linear      618            99.5       3            0.483
+3 Modelo logístico   618            99.5       3            0.483
+
+
+DESFECHOS CONTÍNUOS:
+# A tibble: 1 × 12
+  n_delta media_delta dp_delta mediana_delta q1_delta q3_delta minimo_delta maximo_delta media_cobb_inicial
+    <int>       <dbl>    <dbl>         <dbl>    <dbl>    <dbl>        <dbl>        <dbl>              <dbl>
+1     621       -4.65     5.35            -5       -8       -1          -23           13               36.6
+# ℹ 3 more variables: dp_cobb_inicial <dbl>, media_cobb_6m <dbl>, dp_cobb_6m <dbl>
+
+
+DESFECHOS BINÁRIOS:
+# A tibble: 1 × 9
+  n_delta_disponivel n_melhora n_sem_melhora pct_melhora n_progressao n_sem_progressao pct_progressao
+               <int>     <int>         <int>       <dbl>        <int>            <int>          <dbl>
+1                621       320           301        51.5           25              596           4.03
+# ℹ 2 more variables: n_estavel <int>, pct_estavel <dbl>
+
+
+EVENTOS NO MODELO LOGÍSTICO:
+  n_modelo eventos nao_eventos prevalencia_evento percentual_evento
+1      618     318         300          0.5145631          51.45631
+
+
+PARÂMETROS DO MODELO LINEAR:
+# A tibble: 4 × 2
+  metrica                                valor
+  <chr>                                  <dbl>
+1 Participantes                            618
+2 Colunas da matriz incluindo intercepto    20
+3 Parâmetros preditores sem intercepto      19
+4 Graus de liberdade residuais             598
+
+
+PARÂMETROS DO MODELO LOGÍSTICO:
+# A tibble: 7 × 2
+  metrica                                valor
+  <chr>                                  <dbl>
+1 Participantes                          618  
+2 Eventos de melhora                     318  
+3 Não eventos                            300  
+4 Colunas da matriz incluindo intercepto  20  
+5 Parâmetros preditores sem intercepto    19  
+6 Eventos por parâmetro                   16.7
+7 Menor grupo por parâmetro               15.8
+
+
+CATEGORIAS RARAS:
+# A tibble: 1 × 4
+  variavel categoria     n percentual
+  <chr>    <fct>     <int>      <dbl>
+1 lenke    <NA>          3      0.483
+
+
+CÉLULAS PROBLEMÁTICAS:
+# A tibble: 0 × 7
+# ℹ 7 variables: variavel <chr>, categoria <fct>, n <int>, eventos_melhora <int>, sem_melhora <int>,
+#   proporcao_melhora <dbl>, percentual_melhora <dbl>
+
+
+RANK DAS MATRIZES:
+# A tibble: 2 × 4
+  modelo    numero_colunas rank_matriz matriz_rank_completo
+  <chr>              <int>       <int> <lgl>               
+1 Linear                20          20 TRUE                
+2 Logístico             20          20 TRUE                
+
+
+COEFICIENTES LOGÍSTICOS EXTREMOS:
+# A tibble: 0 × 10
+# ℹ 10 variables: term <chr>, estimate <dbl>, std.error <dbl>, statistic <dbl>, p.value <dbl>,
+#   conf.low <dbl>, conf.high <dbl>, erro_padrao_grande <lgl>, coeficiente_extremo <lgl>,
+#   intervalo_muito_amplo <lgl>
+
+
+CORRELAÇÕES ENTRE COBB E DELTA:
+# A tibble: 1 × 3
+  cor_baseline_final cor_baseline_delta cor_final_delta
+               <dbl>              <dbl>           <dbl>
+1              0.716            -0.0234           0.681
+
+
+DESEMPENHO LINEAR APARENTE:
+# A tibble: 1 × 7
+      n    r2 r2_ajustado  rmse   mae erro_medio dp_residuos
+  <int> <dbl>       <dbl> <dbl> <dbl>      <dbl>       <dbl>
+1   618 0.400       0.381  4.15  3.30  -1.83e-16        4.15
+
+
+CALIBRAÇÃO LINEAR APARENTE:
+# A tibble: 2 × 7
+  term          estimate std.error statistic   p.value conf.low conf.high
+  <chr>            <dbl>     <dbl>     <dbl>     <dbl>    <dbl>     <dbl>
+1 (Intercept) -5.79 e-15    0.284  -2.04e-14 1.000e+ 0   -0.558     0.558
+2 previsto     1.000e+ 0    0.0493  2.03e+ 1 2.20 e-70    0.903     1.10 
+
+
+DESEMPENHO LOGÍSTICO APARENTE:
+# A tibble: 1 × 12
+      n eventos prevalencia   auc auc_ic95_inferior auc_ic95_central auc_ic95_superior brier log_loss
+  <int>   <int>       <dbl> <dbl>             <dbl>            <dbl>             <dbl> <dbl>    <dbl>
+1   618     318       0.515 0.867             0.839            0.867             0.895 0.148    0.457
+# ℹ 3 more variables: probabilidade_minima <dbl>, probabilidade_mediana <dbl>, probabilidade_maxima <dbl>
+
+
+CALIBRAÇÃO LOGÍSTICA APARENTE:
+# A tibble: 1 × 2
+  calibration_intercept calibration_slope
+                  <dbl>             <dbl>
+1              6.34e-10              1.00
+
+
+INFLUÊNCIA NO MODELO LINEAR:
+# A tibble: 1 × 7
+      n n_cook_elevado n_leverage_elevado n_residuo_elevado max_cook max_leverage max_residuo_padronizado
+  <int>          <int>              <int>             <int>    <dbl>        <dbl>                   <dbl>
+1   618             41                 13                 2   0.0196       0.0888                    4.44
+
+
+INFLUÊNCIA NO MODELO LOGÍSTICO:
+# A tibble: 1 × 7
+      n n_cook_elevado n_leverage_elevado n_residuo_elevado max_cook max_leverage max_residuo_padronizado
+  <int>          <int>              <int>             <int>    <dbl>        <dbl>                   <dbl>
+1   618             50                 50                 0   0.0154        0.107                    2.68
+
+
+COMPARAÇÃO DE MODELOS CONTÍNUOS:
+# A tibble: 2 × 6
+  modelo                                     n    r2 r2_ajustado  rmse   mae
+  <chr>                                  <int> <dbl>       <dbl> <dbl> <dbl>
+1 Mudança no Cobb                          618 0.400       0.381  4.15  3.30
+2 Cobb em seis meses ajustado pelo basal   618 0.717       0.707  4.08  3.28
+
+
+FORMULA LINEAR:
+delta ~ idade + imc + cifose_toracica + lordose_lombar + correcao_colete + 
+    sexo + lenke + risser + flexibilidade + escoliometro_maior_10_graus
+
+
+FORMULA LOGÍSTICA:
+delta_cat ~ idade + imc + cifose_toracica + lordose_lombar + 
+    correcao_colete + sexo + lenke + risser + flexibilidade + 
+    escoliometro_maior_10_graus
+
+
+NÍVEIS DOS FATORES:
+$sexo
+[1] "feminino"  "masculino"
+
+$lenke
+[1] "1" "2" "3" "4" "5" "6"
+
+$risser
+[1] "0" "1" "2" "3" "4"
+
+$flexibilidade
+[1] "flexivel" "rigido"  
+
+$escoliometro_maior_10_graus
+[1] "normal"          "lombar"          "toracica"        "toracica_lombar"
+

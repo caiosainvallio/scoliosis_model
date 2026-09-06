@@ -1,0 +1,24 @@
+Implementation: ROI | Solver: lpsolve 
+Separation: FALSE 
+Existence of maximum likelihood estimates
+                               (Intercept)                                      idade 
+                                         0                                          0 
+                                       imc                            cifose_toracica 
+                                         0                                          0 
+                            lordose_lombar                            correcao_colete 
+                                         0                                          0 
+                             sexomasculino                                     lenke2 
+                                         0                                          0 
+                                    lenke3                                     lenke4 
+                                         0                                          0 
+                                    lenke5                                     lenke6 
+                                         0                                          0 
+                                   risser1                                    risser2 
+                                         0                                          0 
+                                   risser3                                    risser4 
+                                         0                                          0 
+                       flexibilidaderigido          escoliometro_maior_10_grauslombar 
+                                         0                                          0 
+       escoliometro_maior_10_graustoracica escoliometro_maior_10_graustoracica_lombar 
+                                         0                                          0 
+0: finite value, Inf: infinity, -Inf: -infinity

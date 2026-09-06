@@ -1,0 +1,60 @@
+$formula_linear
+delta ~ idade + imc + cifose_toracica + lordose_lombar + correcao_colete + 
+    sexo + lenke + risser + flexibilidade + escoliometro_maior_10_graus
+
+$formula_logistica
+delta_cat ~ idade + imc + cifose_toracica + lordose_lombar + 
+    correcao_colete + sexo + lenke + risser + flexibilidade + 
+    escoliometro_maior_10_graus
+
+$contrasts_linear
+$contrasts_linear$sexo
+[1] "contr.treatment"
+
+$contrasts_linear$lenke
+[1] "contr.treatment"
+
+$contrasts_linear$risser
+[1] "contr.treatment"
+
+$contrasts_linear$flexibilidade
+[1] "contr.treatment"
+
+$contrasts_linear$escoliometro_maior_10_graus
+[1] "contr.treatment"
+
+
+$contrasts_logistica
+$contrasts_logistica$sexo
+[1] "contr.treatment"
+
+$contrasts_logistica$lenke
+[1] "contr.treatment"
+
+$contrasts_logistica$risser
+[1] "contr.treatment"
+
+$contrasts_logistica$flexibilidade
+[1] "contr.treatment"
+
+$contrasts_logistica$escoliometro_maior_10_graus
+[1] "contr.treatment"
+
+
+$niveis_fatores
+$niveis_fatores$sexo
+[1] "feminino"  "masculino"
+
+$niveis_fatores$lenke
+[1] "1" "2" "3" "4" "5" "6"
+
+$niveis_fatores$risser
+[1] "0" "1" "2" "3" "4"
+
+$niveis_fatores$flexibilidade
+[1] "flexivel" "rigido"  
+
+$niveis_fatores$escoliometro_maior_10_graus
+[1] "normal"          "lombar"          "toracica"        "toracica_lombar"
+
+

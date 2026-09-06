@@ -1,0 +1,5 @@
+# A tibble: 2 × 4
+  modelo    numero_colunas rank_matriz matriz_rank_completo
+  <chr>              <int>       <int> <lgl>               
+1 Linear                20          20 TRUE                
+2 Logístico             20          20 TRUE                
