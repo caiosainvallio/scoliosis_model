@@ -1,0 +1,76 @@
+---
+title: "Relatório prognóstico — estrutura reprodutível"
+author: "Caio Vallio"
+lang: pt-BR
+format:
+  html:
+    self-contained: true
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: true
+  message: true
+  error: false
+  freeze: false
+knitr:
+  opts_chunk:
+    comment: "#>"
+    R.options:
+      save: "no"
+      repos:
+        CRAN: "https://cloud.r-project.org"
+---
+
+## Escopo desta versão
+
+Este documento é o esqueleto inicial do novo relatório prognóstico. Nesta etapa,
+nenhum modelo é ajustado e nenhum resultado definitivo é apresentado. A base
+bruta histórica e `analisys.qmd` permanecem fora do fluxo de escrita.
+
+## Reprodutibilidade
+
+O setup deve ser executado em uma sessão limpa (`Rscript --vanilla`). A fonte
+documentada é `data/dataset_escoliose_01.xlsx`, aba `dados`. O relatório não
+restaura nem salva `.RData` e não executa `install.packages()`.
+
+```{r setup}
+source("R/00_config.R")
+ensure_output_dirs()
+source("R/01_dependencies.R")
+dependency_status <- check_dependencies(write_log = TRUE, fail = TRUE)
+source("R/02_import_prepare.R")
+source("R/03_metrics_calibration.R")
+source("R/04_bootstrap_stability.R")
+source("R/05_nested_resampling.R")
+source("R/06_report_helpers.R")
+record_environment(dependency_status)
+data_raw <- import_prognostic_data()
+data_prepared <- prepare_prognostic_data(data_raw)
+```
+
+Dependências presentes e ausentes são registradas em
+`results/prognostico/logs/dependency_status.csv`. Dependências obrigatórias
+ausentes interrompem o documento com uma mensagem explícita; nenhuma instalação
+é tentada.
+
+## Fonte e estrutura carregadas
+
+```{r source-check}
+cat(source_description(), "\n")
+cat("Dimensões:", nrow(data_prepared), "linhas x", ncol(data_prepared), "colunas\n")
+cat("Semente global:", GLOBAL_SEED, "\n")
+cat("Sementes específicas das rotinas paralelas:", paste(PARALLEL_SEEDS, collapse = ", "), "\n")
+```
+
+## Módulos planejados
+
+- `R/02_import_prepare.R`: importação e preparação da base.
+- `R/03_metrics_calibration.R`: métricas de desempenho e calibração.
+- `R/04_bootstrap_stability.R`: bootstrap e estabilidade.
+- `R/05_nested_resampling.R`: índices para reamostragem aninhada.
+- `R/06_report_helpers.R`: tabelas, equações e textos dinâmicos.
+
+Os diretórios `results/prognostico/aggregated`, `figures`, `logs` e
+`reduced_objects` são reservados exclusivamente aos resultados agregados,
+figuras, registros e objetos reduzidos do novo relatório.

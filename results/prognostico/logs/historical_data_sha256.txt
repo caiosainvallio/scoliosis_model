@@ -1,0 +1,6 @@
+Hashes registrados após a tarefa:
+52d7e721fc5456c67f6d9111715c90f0ffa1917e  analisys.qmd
+863704d70052caa664143f0e9b1e20cbef3000f7  analisys.html
+545916ece508ae5439b0c7d6221aaa0fb009de94  data/dataset_escoliose_01.xlsx
+
+Esses arquivos não foram editados pelo setup ou pela renderização inicial.

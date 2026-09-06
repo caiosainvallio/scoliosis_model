@@ -1,0 +1,7 @@
+Comando: git status --short
+?? R/
+?? relatorio_prognostico.qmd
+?? results/
+?? scripts/
+
+Somente os novos artefatos da estrutura prognóstica aparecem como não rastreados.

@@ -1,0 +1,9 @@
+Verificações da Tarefa 01
+
+- Setup limpo: `Rscript --vanilla scripts/run_setup.R` — OK.
+- Dados encontrados: `data/dataset_escoliose_01.xlsx`, aba `dados`; 621 linhas x 19 colunas.
+- Smoke test dos seis módulos R — OK.
+- Dependência ausente simulada — interrupção explícita e informativa — OK.
+- Renderização inicial: `quarto render relatorio_prognostico.qmd` — OK; saída validada em diretório temporário.
+- Comparação Git de `analisys.qmd`, `analisys.html` e `data/dataset_escoliose_01.xlsx` — sem diferenças.
+- Nenhum `install.packages()` é executado pelo relatório.

@@ -1,0 +1,10 @@
+Verificação de restauração/salvamento de workspace
+
+Comando executado:
+Rscript --vanilla -e 'cat(file.exists(".RData")); cat(ls())'
+
+Resultado:
+- Um arquivo .RData preexistente foi detectado no diretório, mas não foi alterado nem removido.
+- A sessão iniciada com --vanilla apresentou zero objetos iniciais.
+- O setup não chama load(.RData), attach() ou save.image().
+- A execução do relatório usa Rscript --vanilla e as opções save = "no".

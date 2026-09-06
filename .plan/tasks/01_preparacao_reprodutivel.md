@@ -56,3 +56,8 @@ Criar a estrutura técnica do novo relatório prognóstico sem alterar a base br
 - Publicação no RPubs.
 - Commit, push ou alteração do índice Git.
 
+## Status de execução
+
+- **Concluída em 2026-09-06.** Estrutura reprodutível criada e validada em
+  sessão limpa; renderização inicial do Quarto concluída. Os arquivos
+  históricos e a base bruta permaneceram inalterados.

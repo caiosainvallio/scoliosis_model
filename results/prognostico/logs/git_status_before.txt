@@ -1,0 +1,5 @@
+Comando: git status --branch
+* main...origin/main [ahead 1]
+clean — nothing to commit
+
+Os arquivos históricos e a base bruta estavam sem modificações antes da tarefa.

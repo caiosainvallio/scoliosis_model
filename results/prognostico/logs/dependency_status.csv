@@ -1,0 +1,17 @@
+"package","required_for_setup","present","version"
+"readxl",TRUE,TRUE,"1.5.0"
+"dplyr",FALSE,TRUE,"1.2.1"
+"tidyr",FALSE,TRUE,"1.3.2"
+"purrr",FALSE,TRUE,"1.2.2"
+"tibble",FALSE,TRUE,"3.3.1"
+"ggplot2",FALSE,TRUE,"4.0.3"
+"scales",FALSE,TRUE,"1.4.0"
+"broom",FALSE,TRUE,"1.0.13"
+"pROC",FALSE,FALSE,
+"rsample",FALSE,FALSE,
+"yardstick",FALSE,FALSE,
+"future",FALSE,TRUE,"1.75.0"
+"furrr",FALSE,FALSE,
+"withr",FALSE,TRUE,"3.0.3"
+"knitr",FALSE,TRUE,"1.51"
+"rmarkdown",FALSE,TRUE,"2.32"

@@ -1,0 +1,35 @@
+Registro inicial de ambiente — relatório prognóstico
+data_registro: 2026-09-06 17:58:18 -03
+project_root: /Users/caiosainvallio/consultoria/scoliosis_model
+data_file: /Users/caiosainvallio/consultoria/scoliosis_model/data/dataset_escoliose_01.xlsx
+data_sheet: dados
+R.version: R version 4.6.1 (2026-06-24)
+R.platform: aarch64-apple-darwin23
+OS.type: unix
+system: Darwin
+system_release: 25.6.0
+quarto: /usr/local/bin/quarto
+global_seed: 20260906
+parallel_seeds: 20260907, 20260908, 20260909, 20260910
+
+Pacotes relevantes (AUSENTE também é registrado explicitamente):
+readxl	1.5.0
+dplyr	1.2.1
+tidyr	1.3.2
+purrr	1.2.2
+tibble	3.3.1
+ggplot2	4.0.3
+scales	1.4.0
+broom	1.0.13
+pROC	AUSENTE
+rsample	AUSENTE
+yardstick	AUSENTE
+future	1.75.0
+furrr	AUSENTE
+withr	3.0.3
+knitr	1.51
+rmarkdown	2.32
+
+Política de workspace:
+execução esperada com R --vanilla ou Rscript --vanilla; nenhum load(.RData) é usado.
+O relatório não chama install.packages().
