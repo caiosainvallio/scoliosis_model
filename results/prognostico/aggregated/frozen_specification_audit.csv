@@ -1,0 +1,3 @@
+"model","formula","p_value_selection","stepwise","splines","interactions","parameters_predictors"
+"linear","delta ~ idade + imc + cifose_toracica + lordose_lombar + correcao_colete +     sexo + lenke + risser + flexibilidade + escoliometro_maior_10_graus",FALSE,FALSE,FALSE,FALSE,19
+"logistic","delta_cat ~ idade + imc + cifose_toracica + lordose_lombar +     correcao_colete + sexo + lenke + risser + flexibilidade +     escoliometro_maior_10_graus",FALSE,FALSE,FALSE,FALSE,19

@@ -1,0 +1,9 @@
+Equações aparentes dos modelos congelados
+Linear: delta ~ idade + imc + cifose_toracica + lordose_lombar + correcao_colete +     sexo + lenke + risser + flexibilidade + escoliometro_maior_10_graus
+Previsão linear: aplicar os coeficientes da tabela frozen_coefficients_linear.csv às colunas da matriz de desenho.
+Logístico: delta_cat ~ idade + imc + cifose_toracica + lordose_lombar +     correcao_colete + sexo + lenke + risser + flexibilidade +     escoliometro_maior_10_graus
+Probabilidade: p = 1 / (1 + exp(-eta)); eta é a soma do intercepto e dos produtos coeficiente × preditor.
+Referências dos fatores: feminino, Lenke 1, Risser 0, flexível e escoliômetro normal.
+Parâmetros preditores: 19
+Intercepto incluído: 20
+Resultados de calibração aparente com intercepto 0 e slope 1 são esperados por construção e não constituem validação externa.

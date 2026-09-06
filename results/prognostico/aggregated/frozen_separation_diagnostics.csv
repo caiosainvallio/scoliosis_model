@@ -1,0 +1,5 @@
+"diagnostic","result","expected"
+"glm_converged",1,1
+"all_logistic_coefficients_finite",1,1
+"warning_during_fit",0,0
+"problematic_factor_cells",0,0

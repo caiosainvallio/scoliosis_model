@@ -1,0 +1,18 @@
+Tarefa 03 — verificação dos modelos congelados
+data_execucao: 2026-09-06 18:26:08 -03
+n: 615
+eventos: 317
+nao_eventos: 298
+parametros_preditivos: 19
+colunas_com_intercepto: 20
+posto_linear: 20
+posto_logistico: 20
+mesmas_linhas_e_colunas_preditoras: TRUE
+convergencia_logistica: TRUE
+coeficientes_finitos: TRUE
+equivalencia_metricas: TRUE
+observacoes_influentes_linear: 55
+observacoes_influentes_logistica: 99
+selecao_p_valor_stepwise_splines_interacoes: FALSE FALSE FALSE FALSE
+Nenhuma observação influente foi excluída automaticamente.
+Nenhum texto ou objeto de progressão foi introduzido.

@@ -1,0 +1,2 @@
+"n","events","nonevents","prevalence","auc","auc_ci_lower","auc_ci_upper","brier_score","log_loss","probability_min","probability_median","probability_max"
+615,317,298,0.515447154471545,0.86741790697182,0.838732593162725,0.896103220780916,0.14771746002286,0.45481499881369,0.00655661182701175,0.50841011471862,0.999986089923119

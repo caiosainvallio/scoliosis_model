@@ -1,0 +1,3 @@
+"model","calibration_intercept","calibration_slope","intercept_expected_by_construction","slope_expected_by_construction"
+"linear",0.0000000000000139998162521017,1,TRUE,TRUE
+"logistic",0.000000000756720780891315,1.00000000331318,TRUE,TRUE

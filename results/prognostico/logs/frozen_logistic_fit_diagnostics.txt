@@ -1,0 +1,5 @@
+Diagnóstico de ajuste logístico
+converged: TRUE
+coeficientes_finitos: TRUE
+warnings: nenhum
+celulas_problematicas: 0

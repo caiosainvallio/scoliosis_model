@@ -66,3 +66,9 @@ Os fatores deverão manter as referências: feminino, Lenke 1, Risser 0, flexív
 - Resultados aparentes estão claramente identificados como otimistas.
 - Nenhum texto ou objeto de progressão foi introduzido.
 
+## Status de execução
+
+- **Concluída em 2026-09-06.** Os modelos linear e logístico congelados foram
+  reajustados e auditados com `n = 615`; diagnósticos, métricas aparentes,
+  objetos reduzidos e comparação histórica foram regenerados sem exclusões
+  automáticas de observações influentes.
