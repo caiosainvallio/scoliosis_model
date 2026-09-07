@@ -1,0 +1,3 @@
+"attempts","valid","failed","validity_rate","sample_size","n_original","minimum_valid","criterion_met","model"
+2000,2000,0,1,615,615,1980,TRUE,"linear"
+2000,2000,0,1,615,615,1980,TRUE,"logistic"

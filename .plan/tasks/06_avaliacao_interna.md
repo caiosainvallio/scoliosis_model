@@ -65,3 +65,10 @@ Modelo logístico:
 - A execução é reproduzível e não depende de estado de sessão.
 - Os resultados estão prontos para shrinkage, estabilidade e apresentação.
 
+## Status de execução
+
+- **Concluída em 2026-09-06.** Foram registradas exatamente 2.000 tentativas
+  para cada modelo, todas válidas, com amostras de tamanho 615, semente fixa,
+  métricas por réplica, tempo, índices, previsões internas e tabelas agregadas.
+  A reexecução com a mesma semente reproduziu índices, status e métricas com
+  diferença máxima igual a zero.

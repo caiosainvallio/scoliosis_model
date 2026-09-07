@@ -309,6 +309,8 @@ bootstrap_replicates <- function(data, formula, family, times = 2000L, seed = 20
   if (times < 1L || times != as.integer(times)) stop("times deve ser inteiro positivo.", call. = FALSE)
   seeds <- derive_replica_seeds(seed, as.integer(times))
   run_one <- function(i) {
+    started_at <- Sys.time()
+    started_clock <- proc.time()[["elapsed"]]
     result <- bootstrap_replica(
       data = data, formula = formula, family = family, seed = seeds[[i]],
       original_data = original_data, sample_size = sample_size, replicate = i
@@ -316,6 +318,9 @@ bootstrap_replicates <- function(data, formula, family, times = 2000L, seed = 20
     # O helper de falha preserva a réplica direta como NA; aqui a tentativa
     # recebe sempre seu número para a tabela de auditoria.
     result$replicate <- as.integer(i)
+    result$started_at <- started_at
+    result$finished_at <- Sys.time()
+    result$elapsed_seconds <- unname(proc.time()[["elapsed"]] - started_clock)
     result
   }
   # Cada chamada recebe a própria semente; mclapply, quando solicitado, não

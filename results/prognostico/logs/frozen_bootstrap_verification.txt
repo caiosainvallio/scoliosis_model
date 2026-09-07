@@ -1,0 +1,16 @@
+Tarefa 06 — avaliação interna por bootstrap
+data_execucao: 2026-09-06 19:03:59 -03
+seed: 20260906
+tentativas_por_modelo: 2000
+tamanho_amostra_bootstrap: 615
+n_original: 615
+linear_validas: 2000
+logistico_validas: 2000
+linear_taxa_validade: 1
+logistico_taxa_validade: 1
+linear_criterio_99_porcento: TRUE
+logistico_criterio_99_porcento: TRUE
+Cada réplica reajusta a fórmula congelada sem seleção ou alteração de variáveis.
+Treino = desempenho na amostra bootstrap; teste = desempenho do mesmo ajuste na base original.
+As métricas corrigidas são avaliação interna por bootstrap e não validação externa.
+O objeto interno contém previsões e índices por réplica; tabelas agregadas não contêm IDs clínicos.
