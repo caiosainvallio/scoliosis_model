@@ -64,3 +64,6 @@ Consolidar métodos, resultados, interpretação e limitações em um relatório
 - Tabelas, figuras, narrativa e equações usam os mesmos objetos de origem.
 - Apêndices mantêm as análises exploratórias separadas da conclusão principal.
 
+## Status de execução
+
+- **Concluída em 2026-09-07.** Relatório Quarto autocontido gerado com resultados dinâmicos, equações reproduzíveis, síntese para manuscrito, checklist TRIPOD+AI e autoavaliação PROBAST. A revisão de escopo não identificou conteúdo individual, código exposto ou artefatos excessivos.
