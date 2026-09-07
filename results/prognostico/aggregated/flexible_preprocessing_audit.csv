@@ -1,0 +1,9 @@
+"evidence","approved"
+"spline_knots_from_training_only",TRUE
+"centering_scales_from_training_only",TRUE
+"factor_modes_from_training_only",TRUE
+"external_test_excluded_from_tuning",TRUE
+"interactions_use_linear_components",TRUE
+"hierarchy_main_effects_present",TRUE
+"global_fit_after_external_evaluation",TRUE
+"same_external_folds_as_cart_when_available",TRUE

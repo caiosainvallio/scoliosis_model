@@ -1,0 +1,10 @@
+Tarefa 09 — auditoria de execução
+data: 2026-09-07 11:38:36 -03
+seed: 20261714
+outer: 10
+repeats: 5
+inner: 5
+n_external_predictions: 6150
+n_outer_splits: 50
+preprocessing_audit_passed: TRUE
+same_external_folds_as_cart: TRUE

@@ -76,3 +76,12 @@ Avaliar, em apêndice exploratório, se penalização, Cobb basal, não linearid
 - Limitações de multiplicidade, instabilidade e exploração pós-dados são declaradas.
 - Nenhuma conclusão clínica depende exclusivamente dessa estratégia.
 
+## Status de execução
+
+- **Concluída em 2026-09-07.** Foram implementadas as versões contínua e
+  logística penalizadas, com splines naturais de baixa complexidade, interações
+  hierárquicas, pré-processamento aprendido dentro de cada reamostragem,
+  validação cruzada aninhada estratificada, seleção one-SE, avaliação externa,
+  ajuste exploratório pós-avaliação em toda a coorte e comparação pareada com
+  os modelos congelados. Os detalhes internos permanecem em objeto reduzido;
+  os resultados públicos são agregados e acompanhados de cautela metodológica.
