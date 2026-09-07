@@ -4,7 +4,7 @@
 - **Complexidade:** Alta.
 - **Justificativa do modelo:** Exige síntese clínica, leitura crítica de literatura e distinção entre informação confirmada e hipótese prognóstica.
 - **Dependências:** [Task 01](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/01_inventario_e_rastreabilidade.md)
-- **Status:** Pendente.
+- **Status:** Concluída em 2026-09-07.
 
 ## Contexto e regras
 
