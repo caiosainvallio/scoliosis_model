@@ -1,0 +1,7 @@
+Interpretação da Tarefa 07
+
+O fator de shrinkage é a inclinação de calibração corrigida por otimismo, limitada a [0, 1]. Se exceder 1, nenhum coeficiente é expandido.
+O intercepto linear preserva a média observada de delta; o intercepto logístico preserva a prevalência observada de melhora.
+A instabilidade individual é a amplitude entre os quantis 2,5% e 97,5% das previsões bootstrap aplicadas à base original. O maior décimo define a faixa mais instável.
+O intervalo de confiança descreve a média condicional; o intervalo de predição inclui a variabilidade de um novo desfecho individual e é mais amplo. Ambos estão em graus no modelo linear.
+Shrinkage é validação interna e não substitui validação externa independente antes do uso clínico.

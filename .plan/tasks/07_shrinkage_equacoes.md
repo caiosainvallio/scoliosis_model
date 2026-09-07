@@ -52,3 +52,11 @@ Transformar os resultados da avaliação interna em equações prognósticas tra
 - A instabilidade está quantificada e interpretada.
 - A incerteza da previsão linear está apresentada em unidades de graus.
 
+## Status de execução
+
+- **Concluída em 2026-09-07.** Foram produzidos os fatores de shrinkage, interceptos
+  recalibrados, tabelas de coeficientes aparentes e corrigidos, equações completas,
+  casos sintéticos, resumos de estabilidade sem IDs clínicos, gráficos anônimos e
+  intervalos de confiança da média versus predição individual em graus. As
+  verificações numéricas passaram e o texto afirma que shrinkage não substitui
+  validação externa.

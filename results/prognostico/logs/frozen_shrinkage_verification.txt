@@ -1,0 +1,9 @@
+Tarefa 07 — shrinkage, equações e estabilidade
+data_execucao: 2026-09-07 08:57:22 -03
+linear_slope_corrected: 0.958050229513248
+linear_shrinkage_factor: 0.958050229513248
+logistic_slope_corrected: 0.883549380927767
+logistic_shrinkage_factor: 0.883549380927767
+max_validation_error: 0.00000000000000115038962998761
+Tabelas e gráficos públicos de estabilidade não contêm IDs clínicos.
+Shrinkage não substitui validação externa.

@@ -1,0 +1,7 @@
+"criterion","value","tolerance","passed"
+"linear_mean_error",-0.00000000000000115038962998761,0.0000000001,TRUE
+"logistic_prevalence_error",-0.000000000000000333066907387547,0.0000000001,TRUE
+"linear_manual_max_abs_difference",0,0.000000000001,TRUE
+"logistic_manual_max_abs_difference",0,0.000000000001,TRUE
+"linear_factor_in_unit_interval",1,0,TRUE
+"logistic_factor_in_unit_interval",1,0,TRUE

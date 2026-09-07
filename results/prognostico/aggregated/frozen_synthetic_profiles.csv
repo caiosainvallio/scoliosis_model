@@ -1,0 +1,4 @@
+"case","idade","imc","cifose_toracica","lordose_lombar","correcao_colete","sexo","lenke","risser","flexibilidade","escoliometro_maior_10_graus"
+"referencia_media",13.1821138211382,19.217268676415,22.8617886178862,54.5642276422764,47.0571292202975,"feminino","1","0","flexivel","normal"
+"perfil_masculino",14.1821138211382,19.717268676415,24.8617886178862,53.5642276422764,50.0571292202975,"masculino","3","2","rigido","toracica"
+"perfil_lenke6",12.1821138211382,18.717268676415,20.8617886178862,55.5642276422764,44.0571292202975,"feminino","6","4","flexivel","toracica_lombar"
