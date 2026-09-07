@@ -1,5 +1,5 @@
 Registro inicial de ambiente — relatório prognóstico
-data_registro: 2026-09-06 18:12:57 -03
+data_registro: 2026-09-07 18:36:26 -03
 project_root: /Users/caiosainvallio/consultoria/scoliosis_model
 data_file: /Users/caiosainvallio/consultoria/scoliosis_model/data/dataset_escoliose_01.xlsx
 data_sheet: dados
@@ -29,6 +29,7 @@ furrr	AUSENTE
 withr	3.0.3
 knitr	1.51
 rmarkdown	2.32
+rpart	4.1.27
 
 Política de workspace:
 execução esperada com R --vanilla ou Rscript --vanilla; nenhum load(.RData) é usado.

@@ -59,3 +59,7 @@ Demonstrar que a análise é reproduzível, estatisticamente coerente, segura pa
 - Qualquer limitação remanescente está declarada no relatório.
 - Os artefatos finais estão prontos para revisão da equipe, sem publicação automática, commit ou push.
 
+## Status de execução
+
+- **Concluída em 2026-09-07.** Suíte de testes, repetição do bootstrap com a mesma semente, conferência das predições manuais, auditoria de segurança dos artefatos e renderização limpa do HTML foram aprovadas.
+- Manifesto, log de renderização, comparação reprodutível, checklist TRIPOD+AI, autoavaliação PROBAST e resumo de evidências estão em `results/prognostico/logs/task12_*.{md,txt,log}`.

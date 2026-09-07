@@ -1,0 +1,19 @@
+Tarefa 12 — reprodutibilidade e comparações
+data: 2026-09-07 18:44:21 -0300
+seed_global: 20260906
+bootstrap_tentativas_por_modelo: 2000
+bootstrap_validas_linear: 2000
+bootstrap_validas_logistico: 2000
+bootstrap_minimo_exigido: 1980
+comparacao_repeticao: aprovada
+linhas_comparadas: 4000
+campos_analiticos_comparados: 40
+max_diferenca_absoluta_numerica_nos_campos_analiticos: 0
+campos_excluidos_da_comparacao: started_at, finished_at, elapsed_seconds
+motivo_campos_excluidos: tempos de execução variam entre sessões
+predicoes_manuais_vs_funcao_publicada: aprovada
+max_erro_linear_manual: 0
+max_erro_logistico_manual: 0
+max_erro_recalibracao_linear: 1.15038962998761e-15
+max_erro_recalibracao_logistico: 3.33066907387547e-16
+equivalencia_auc_brier_log_loss: aprovada; tolerância 1e-12

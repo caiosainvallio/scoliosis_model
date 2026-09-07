@@ -1,5 +1,5 @@
 Tarefa 06 — avaliação interna por bootstrap
-data_execucao: 2026-09-06 19:03:59 -03
+data_execucao: 2026-09-07 18:37:29 -03
 seed: 20260906
 tentativas_por_modelo: 2000
 tamanho_amostra_bootstrap: 615

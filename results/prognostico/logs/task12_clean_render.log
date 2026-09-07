@@ -1,0 +1,12 @@
+Tarefa 12 — log da renderização limpa
+data: 2026-09-07 18:44:21 -0300
+comando: quarto render relatorio_prognostico.qmd --execute
+modo_R: Rscript --vanilla; save=no; freeze=false
+etapas_quarto: 49/49
+saida: relatorio_prognostico.html
+html_autocontido: TRUE
+erros: 0
+warnings_criticos: 0
+instalacao_de_pacotes: FALSE
+restauracao_ou_salvamento_de_RData: FALSE
+observacao: a primeira tentativa na sandbox foi bloqueada pelo sysctl de arquitetura do Quarto; a execução final autorizada concluiu integralmente.
