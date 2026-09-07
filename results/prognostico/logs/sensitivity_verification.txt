@@ -1,0 +1,10 @@
+Tarefa 10 — verificação das análises de sensibilidade
+data_execucao: 2026-09-07 17:50:22 -03
+n_principal: 615
+hipercorrecoes_na_principal: 81, 174, 401
+n_influentes_linear: 55
+n_influentes_logistico: 99
+casos retirados aparecem somente nos cenarios de sensibilidade e logs internos
+nenhuma exclusao foi incorporada ao modelo principal
+nenhum teste de subgrupo ou interacao nao pre-especificado foi executado
+regiao anatomica aos seis meses nao disponivel na fonte

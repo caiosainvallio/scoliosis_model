@@ -1,0 +1,6 @@
+"region_at_baseline","n","source_contains_six_month_region","interpretation"
+"lombar",328,FALSE,"A base fornece apenas a magnitude maxima aos 6 meses; a regiao aos 6 meses nao pode ser identificada."
+"toracica",273,FALSE,"A base fornece apenas a magnitude maxima aos 6 meses; a regiao aos 6 meses nao pode ser identificada."
+"toracica|lombar",8,FALSE,"A base fornece apenas a magnitude maxima aos 6 meses; a regiao aos 6 meses nao pode ser identificada."
+"toracico_proximal",4,FALSE,"A base fornece apenas a magnitude maxima aos 6 meses; a regiao aos 6 meses nao pode ser identificada."
+"toracico_proximal|toracica",2,FALSE,"A base fornece apenas a magnitude maxima aos 6 meses; a regiao aos 6 meses nao pode ser identificada."

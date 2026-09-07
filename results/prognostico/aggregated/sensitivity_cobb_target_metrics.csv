@@ -1,0 +1,3 @@
+"scenario","model","scope","n","events","nonevents","prevalence","r2","r2_adjusted","rmse","mae","mean_error","auc","brier_score","log_loss","target_scale"
+"alvo_alternativo","cobb_6_meses_condicionado","coorte_completa_615",615,,,,0.718650365434622,0.708686887650687,4.06243065841844,3.26897194548781,-0.0000000000000000693212425131805,,,,"graus_Cobb_6_meses"
+"alvo_principal","delta","coorte_completa_615",615,,,,0.402943114063757,0.382840188611358,4.13251633220789,3.28303126408354,-0.000000000000000209859230264511,,,,"graus_delta"

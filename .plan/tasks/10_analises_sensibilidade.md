@@ -54,3 +54,19 @@ Verificar se decisões específicas, observações influentes ou característica
 - Mudanças materiais e ausência de mudanças materiais são relatadas objetivamente.
 - Limitações relevantes estão prontas para o relatório e manuscrito.
 
+## Status de execução
+
+- **Concluída em 2026-09-07.** Foram implementadas as análises de influência
+  com critérios pré-especificados de Cook, leverage e resíduos padronizados;
+  exclusões temporárias por modelo e pela união dos critérios; sensibilidade às
+  três hipercorreções; resumos descritivos por faixas de previsão, sexo e
+  categorias clínicas; e o alvo alternativo de Cobb aos seis meses condicionado
+  ao Cobb basal.
+- A análise principal permaneceu com 615 participantes e as hipercorreções
+  permaneceram intactas. Foram sinalizados 55 casos no modelo linear e 99 no
+  logístico pelo critério combinado, sem exclusão automática do modelo final.
+- Saídas agregadas estão em `results/prognostico/aggregated/`, observações e
+  previsões individuais em `results/prognostico/logs/`, e o resumo auditável em
+  `results/prognostico/reduced_objects/sensitivity_results_reduced.rds`.
+- Execução validada por `scripts/run_sensitivity_analysis.R` e por
+  `tests/test_task10.R`; a suíte `tests/run_tests.R` foi aprovada.

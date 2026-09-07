@@ -1,0 +1,3 @@
+"target","scope","n","calibration_intercept","calibration_slope","calibration_status"
+"cobb_6_meses_condicionado","coorte_completa_615",615,-0.0000000000000708214627073342,1,"ok"
+"delta","coorte_completa_615",615,0.0000000000000139998162521017,1,"ok"

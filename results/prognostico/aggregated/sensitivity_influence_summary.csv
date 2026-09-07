@@ -1,0 +1,9 @@
+"model","criterion","n_flagged"
+"linear","flag_cook",40
+"linear","flag_leverage",11
+"linear","flag_standardized_residual",27
+"linear","influential_any",55
+"logistic","flag_cook",49
+"logistic","flag_leverage",51
+"logistic","flag_standardized_residual",36
+"logistic","influential_any",99
