@@ -4,7 +4,7 @@
 - **Complexidade:** Baixa.
 - **Justificativa do modelo:** Leitura estruturada, inventário de arquivos e registro de evidências, sem decisões estatísticas novas.
 - **Dependências:** Nenhuma.
-- **Status:** Pendente.
+- **Status:** Concluída em 2026-09-07.
 
 ## Contexto e regras
 
@@ -54,4 +54,3 @@ Registre comandos, arquivos produzidos/alterados, verificações e limitações 
 ## Encerramento e passagem
 
 Atualize o status deste arquivo somente após verificar os critérios. Informe o que mudou, como foi verificado, quais saídas devem ser consumidas e se há dependências afetadas. Registre pendências sem inventar informação ou tratar uma limitação não resolvida como aprovação. Não execute automaticamente a próxima task.
-
