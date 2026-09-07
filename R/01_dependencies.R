@@ -4,7 +4,7 @@ REQUIRED_PACKAGES <- c("readxl")
 RELEVANT_PACKAGES <- c(
   "readxl", "dplyr", "tidyr", "purrr", "tibble", "ggplot2", "scales",
   "broom", "pROC", "rsample", "yardstick", "future", "furrr", "withr",
-  "knitr", "rmarkdown"
+  "knitr", "rmarkdown", "rpart"
 )
 
 check_dependencies <- function(

@@ -55,3 +55,9 @@ Reavaliar a CART de melhora sem reutilizar os mesmos dados para escolher hiperpa
 - O relatório identifica a CART como exploratória e não concorrente clínica dos modelos regressivos.
 - Nenhum modelo de progressão permanece.
 
+## Status de execução
+
+- **Concluída em 2026-09-07.** A CART exploratória foi reavaliada com 10 folds
+  externos por 5 repetições, tuning interno estratificado e regra one-SE
+  determinística. Resultados públicos são agregados; folds e previsões
+  detalhados foram preservados somente em objeto interno compacto.

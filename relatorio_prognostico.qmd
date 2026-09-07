@@ -44,6 +44,7 @@ source("R/03_metrics_calibration.R")
 source("R/04_bootstrap_stability.R")
 source("R/05_nested_resampling.R")
 source("R/06_report_helpers.R")
+source("R/10_cart_nested.R")
 record_environment(dependency_status)
 data_raw <- import_prognostic_data()
 data_prepared <- prepare_prognostic_data(data_raw)
@@ -113,3 +114,27 @@ knitr::kable(
 Os diretórios `results/prognostico/aggregated`, `figures`, `logs` e
 `reduced_objects` são reservados exclusivamente aos resultados agregados,
 figuras, registros e objetos reduzidos do novo relatório.
+
+## CART exploratória de melhora
+
+A CART para `delta_cat` é uma análise exclusivamente exploratória e geradora
+de hipóteses. Ela não é concorrente clínica dos modelos regressivos e não há
+modelo de progressão nesta versão. A avaliação usa 10 folds externos,
+repetidos 5 vezes, e 5 folds internos em cada treinamento externo. O
+pré-processamento e a seleção da grade de `cost_complexity`, `tree_depth` e
+`min_n` são refeitos dentro de cada treinamento externo; a partição externa é
+usada somente uma vez para produzir a previsão correspondente.
+
+```{r cart-nested, eval=FALSE}
+cart_outputs <- run_cart_nested_analysis(data_prepared, ids = data_prepared$id)
+```
+
+Os arquivos `cart_external_fold_summary.csv`,
+`cart_internal_fold_summary.csv` e `cart_selected_hyperparameters.csv` formam
+a trilha pública agregada de separação. As definições detalhadas dos folds e
+as previsões individuais são mantidas somente no objeto interno
+`cart_nested_internal.rds`; nenhum ID ou linha individual é exportado para as
+tabelas públicas. As métricas externas agregadas são AUC, Brier e log loss,
+acompanhadas de calibração exploratória. A árvore ajustada em toda a coorte
+serve somente para visualizar regras e não tem seu desempenho apresentado
+como avaliação externa.

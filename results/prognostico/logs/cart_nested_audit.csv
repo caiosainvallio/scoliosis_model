@@ -1,0 +1,8 @@
+"evidencia","aprovado"
+"external_test_disjoint_external_train",TRUE
+"inner_folds_contained_in_external_train",TRUE
+"one_se_rule_deterministic",TRUE
+"external_predictions_only_for_outer_test",TRUE
+"metrics_from_external_predictions",TRUE
+"illustrative_tree_not_external_evaluation",TRUE
+"no_progression_model",TRUE

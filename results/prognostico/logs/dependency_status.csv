@@ -1,5 +1,6 @@
 "package","required_for_setup","present","version"
 "readxl",TRUE,TRUE,"1.5.0"
+"rpart",TRUE,TRUE,"4.1.27"
 "dplyr",FALSE,TRUE,"1.2.1"
 "tidyr",FALSE,TRUE,"1.3.2"
 "purrr",FALSE,TRUE,"1.2.2"
