@@ -1,0 +1,30 @@
+"secao","variavel","rotulo","nivel","tipo","n","ausentes","pct_ausentes","media","dp","mediana","q1","q3","minimo","maximo","contagem","proporcao"
+"preditor","idade","Idade (anos)",,"numerica",615,0,0,13.1821138211382,1.6899796907365,13,12,14,10,18,,
+"preditor","imc","IMC (kg/m²)",,"numerica",615,0,0,19.217268676415,2.92216211619906,18.9386056191467,17.0966477522341,20.8383207252067,13.2590930940554,34.0650437868909,,
+"preditor","cifose_toracica","Cifose torácica (graus)",,"numerica",615,0,0,22.8617886178862,11.4404884203982,22,14,30,0,68,,
+"preditor","lordose_lombar","Lordose lombar (graus)",,"numerica",615,0,0,54.5642276422764,11.6406015414913,55,47,63,17,82,,
+"preditor","correcao_colete","Correção pelo colete (%)",,"numerica",615,0,0,47.0571292202975,19.6081069071105,45.2380952380952,32.5,57.1428571428571,3.7037037037037,142.424242424242,,
+"desfecho_ou_magnitude","cobb_inicial_maior","Maior Cobb basal (graus)",,"numerica",615,0,0,36.6829268292683,5.60263588670565,38,32.5,42,25,45,,
+"desfecho_ou_magnitude","maior_curva_6_meses","Maior Cobb aos 6 meses (graus)",,"numerica",615,0,0,32.0276422764228,7.66507053596617,32,26,38,10,50,,
+"desfecho_ou_magnitude","delta","Delta: maior Cobb aos 6 meses − maior Cobb basal (graus)",,"numerica",615,0,0,-4.65528455284553,5.35254214089323,-5,-8,-1,-23,13,,
+"preditor","sexo","Sexo","feminino","categorica",615,0,0,,,,,,,,551,0.895934959349593
+"preditor","sexo","Sexo","masculino","categorica",615,0,0,,,,,,,,64,0.104065040650407
+"preditor","lenke","Classificação Lenke","1","categorica",615,0,0,,,,,,,,37,0.0601626016260163
+"preditor","lenke","Classificação Lenke","2","categorica",615,0,0,,,,,,,,41,0.0666666666666667
+"preditor","lenke","Classificação Lenke","3","categorica",615,0,0,,,,,,,,137,0.222764227642276
+"preditor","lenke","Classificação Lenke","4","categorica",615,0,0,,,,,,,,60,0.0975609756097561
+"preditor","lenke","Classificação Lenke","5","categorica",615,0,0,,,,,,,,55,0.0894308943089431
+"preditor","lenke","Classificação Lenke","6","categorica",615,0,0,,,,,,,,285,0.463414634146341
+"preditor","risser","Risser","0","categorica",615,0,0,,,,,,,,132,0.214634146341463
+"preditor","risser","Risser","1","categorica",615,0,0,,,,,,,,92,0.149593495934959
+"preditor","risser","Risser","2","categorica",615,0,0,,,,,,,,122,0.198373983739837
+"preditor","risser","Risser","3","categorica",615,0,0,,,,,,,,127,0.20650406504065
+"preditor","risser","Risser","4","categorica",615,0,0,,,,,,,,142,0.230894308943089
+"preditor","flexibilidade","Flexibilidade","flexivel","categorica",615,0,0,,,,,,,,390,0.634146341463415
+"preditor","flexibilidade","Flexibilidade","rigido","categorica",615,0,0,,,,,,,,225,0.365853658536585
+"preditor","escoliometro_maior_10_graus","Classe do escoliômetro","normal","categorica",615,0,0,,,,,,,,146,0.23739837398374
+"preditor","escoliometro_maior_10_graus","Classe do escoliômetro","toracica","categorica",615,0,0,,,,,,,,222,0.360975609756098
+"preditor","escoliometro_maior_10_graus","Classe do escoliômetro","lombar","categorica",615,0,0,,,,,,,,201,0.326829268292683
+"preditor","escoliometro_maior_10_graus","Classe do escoliômetro","toracica_lombar","categorica",615,0,0,,,,,,,,46,0.0747967479674797
+"desfecho","delta_cat","Melhora radiográfica ≥5°","não melhora","categorica",615,0,0,,,,,,,,298,0.484552845528455
+"desfecho","delta_cat","Melhora radiográfica ≥5°","melhora","categorica",615,0,0,,,,,,,,317,0.515447154471545

@@ -1,0 +1,13 @@
+Tarefa 11 — descrição da coorte e tamanho amostral
+fonte_sha256: f601adb42c299c2b0572f3e50ff26550b63a2f24dd7173f244a442b498965b71
+n_bruto: 621
+n_deduplicado: 618
+n_analitico: 615
+eventos_nao_eventos: 317 / 298
+incompletos_deduplicados: 3 (0.485%)
+empates_cobb_basal: 10
+delta_media_dp: -4.655285 / 5.352542
+delta_leq_-5_0_5: -5:317 (0.5154); 0:523 (0.8504); 5:603 (0.9805)
+parametros_preditores: 19; intercepto: 1; shrinkage_desejado: 0.90
+comparacao_incluidos_excluidos: descritiva agregada; sem testes de hipótese
+limitacao: entradas de desempenho aparentes são retrospectivas e otimistas; cálculo não cobre complexidade flexível.

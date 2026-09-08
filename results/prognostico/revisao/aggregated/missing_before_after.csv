@@ -1,0 +1,31 @@
+"componente","variavel","n_bruto","n_deduplicados","ausentes_deduplicados","pct_ausentes_deduplicados","n_analitico","ausentes_analitico","pct_ausentes_analitico"
+"ausencia_por_variavel","idade",,618,0,0,615,0,0
+"ausencia_por_variavel","sexo",,618,0,0,615,0,0
+"ausencia_por_variavel","altura",,618,0,0,615,0,0
+"ausencia_por_variavel","peso",,618,0,0,615,0,0
+"ausencia_por_variavel","cobb_toracico_proximal",,618,503,81.3915857605178,615,502,81.6260162601626
+"ausencia_por_variavel","cobb_toracica",,618,23,3.72168284789644,615,23,3.73983739837398
+"ausencia_por_variavel","cobb_lombar",,618,38,6.14886731391586,615,38,6.17886178861789
+"ausencia_por_variavel","lenke",,618,3,0.485436893203883,615,0,0
+"ausencia_por_variavel","risser",,618,0,0,615,0,0
+"ausencia_por_variavel","cifose_toracica",,618,0,0,615,0,0
+"ausencia_por_variavel","lordose_lombar",,618,0,0,615,0,0
+"ausencia_por_variavel","escoliometro_cervical",,618,263,42.5566343042071,615,263,42.7642276422764
+"ausencia_por_variavel","escoliometro_torarica",,618,17,2.75080906148867,615,17,2.76422764227642
+"ausencia_por_variavel","escoliometro_lombar",,618,32,5.17799352750809,615,32,5.20325203252033
+"ausencia_por_variavel","flexibilidade",,618,0,0,615,0,0
+"ausencia_por_variavel","dif_colete",,618,0,0,615,0,0
+"ausencia_por_variavel","correcao_colete",,618,0,0,615,0,0
+"ausencia_por_variavel","maior_curva_6_meses",,618,0,0,615,0,0
+"ausencia_por_variavel","escoliometro_maior_10_graus",,618,0,0,615,0,0
+"ausencia_por_variavel","imc",,618,0,0,615,0,0
+"ausencia_por_variavel","cobb_inicial_maior",,618,0,0,615,0,0
+"ausencia_por_variavel","regiao_cobb_inicial",,618,0,0,615,0,0
+"ausencia_por_variavel","empate_cobb_inicial",,618,0,0,615,0,0
+"ausencia_por_variavel","regioes_cobb_inicial_empate",,618,607,98.2200647249191,615,605,98.3739837398374
+"ausencia_por_variavel","delta",,618,0,0,615,0,0
+"ausencia_por_variavel","delta_cat",,618,0,0,615,0,0
+"fluxo","registros brutos",621,,,,,,
+"fluxo","após deduplicação",,618,,,,,
+"fluxo","coorte analítica",,,,,615,,
+"casos_incompletos","variáveis do modelo",,618,3,0.485436893203883,615,0,0
