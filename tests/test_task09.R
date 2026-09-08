@@ -48,7 +48,10 @@ tuning <- flexible_tuning_one(toy[1:70, , drop = FALSE], toy$delta[1:70],
                                       validation = ((f - 1) * 23 + 1):min(f * 23, 70))),
   "continuous", grid)
 stopifnot(nrow(tuning$summary) == nrow(grid), is.finite(tuning$threshold),
-          tuning$selected$lambda_fraction >= tuning$best$lambda_fraction || TRUE)
+          tuning$selected$mean_metric <= tuning$threshold,
+          tuning$selected$lambda_fraction == max(
+            tuning$summary$lambda_fraction[tuning$summary$eligible_one_se]
+          ))
 
 continuous <- flexible_fit_selected(toy[1:70, , drop = FALSE], toy$delta[1:70],
                                     "continuous", tuning$selected)

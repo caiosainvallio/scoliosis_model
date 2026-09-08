@@ -19,7 +19,16 @@ source(file.path(project_root, "R", "11_flexible_modeling.R"), local = .GlobalEn
 
 raw <- import_prognostic_data()
 cohort <- prepare_prognostic_data(raw)
-result <- run_flexible_analysis(cohort, ids = cohort$id, write_outputs = TRUE)
+revision_root <- file.path(project_root, "results", "prognostico", "revisao")
+revision_dirs <- c(
+  aggregated = file.path(revision_root, "aggregated"),
+  figures = file.path(revision_root, "figures"),
+  logs = file.path(revision_root, "logs"),
+  reduced_objects = file.path(revision_root, "reduced_objects")
+)
+result <- run_flexible_analysis(
+  cohort, ids = cohort$id, write_outputs = TRUE, output_dirs = revision_dirs
+)
 
 pooled <- result$metrics[result$metrics$scope == "pooled_external_repeated", , drop = FALSE]
 cat("Tarefa 09 concluída: modelagem flexível exploratória aninhada.\n")

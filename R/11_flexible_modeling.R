@@ -3,8 +3,13 @@
 # A implementação é deliberadamente autocontida: o projeto não instala pacotes
 # e glmnet não é uma dependência disponível no ambiente. O algoritmo abaixo usa
 # coordenadas para o caso contínuo e IRLS + coordenadas para o caso logístico.
-# O objetivo penalizado é o mesmo parametrizado pela convenção usual do
-# elastic net: loss + lambda * ((1-alpha) / 2 * ||beta||^2 + alpha * ||beta||_1).
+# O objetivo penalizado usa perda média (denominador n), intercepto não
+# penalizado e preditores já padronizados pela receita de treino:
+#   gaussian: mean((y - eta)^2) / 2 + penalidade
+#   logistic: mean(log(1 + exp(eta)) - y * eta) + penalidade
+#   penalidade = lambda * ((1-alpha) / 2 * ||beta||^2 + alpha * ||beta||_1).
+# O subproblema IRLS também é normalizado por n (e não por sum(weights)), para
+# que lambda conserve exatamente a mesma escala do objetivo acima.
 #
 # Nenhuma função lê ou escreve .GlobalEnv. Todas as receitas de pré-processamento
 # são ajustadas somente nos dados recebidos como treino.
@@ -22,6 +27,7 @@ FLEXIBLE_ALPHA_GRID <- c(0, 0.25, 0.50, 0.75, 1)
 FLEXIBLE_LAMBDA_FRACTIONS <- exp(seq(log(1), log(0.001), length.out = 4L))
 FLEXIBLE_SPLINE_DF <- 3L
 FLEXIBLE_ZERO_TOLERANCE <- 1e-8
+FLEXIBLE_KKT_TOLERANCE <- 1e-6
 
 flexible_requirements <- function() {
   if (!requireNamespace("splines", quietly = TRUE)) {
@@ -336,91 +342,191 @@ flexible_lambda_max <- function(x, y, family, alpha_floor = 0.05) {
 
 flexible_soft_threshold <- function(z, gamma) sign(z) * max(abs(z) - gamma, 0)
 
-flexible_cd_gaussian <- function(x, y, lambda, alpha, initial = NULL, maxit = 2000L, tol = 1e-8) {
+flexible_objective <- function(intercept, beta, x, y, family, lambda, alpha) {
+  eta <- as.numeric(intercept + x %*% beta)
+  loss <- if (family == "continuous") {
+    mean((y - eta)^2) / 2
+  } else {
+    mean(pmax(eta, 0) + log1p(exp(-abs(eta))) - y * eta)
+  }
+  loss + lambda * ((1 - alpha) * sum(beta^2) / 2 + alpha * sum(abs(beta)))
+}
+
+flexible_kkt <- function(intercept, beta, x, y, family, lambda, alpha,
+                         zero_tolerance = FLEXIBLE_ZERO_TOLERANCE) {
+  eta <- as.numeric(intercept + x %*% beta)
+  residual_gradient <- if (family == "continuous") eta - y else plogis(eta) - y
+  smooth <- as.numeric(crossprod(x, residual_gradient)) / nrow(x) +
+    lambda * (1 - alpha) * beta
+  active <- abs(beta) > zero_tolerance
+  violation <- numeric(length(beta))
+  violation[active] <- abs(smooth[active] + lambda * alpha * sign(beta[active]))
+  violation[!active] <- pmax(abs(smooth[!active]) - lambda * alpha, 0)
+  intercept_gradient <- mean(residual_gradient)
+  list(
+    intercept_gradient = intercept_gradient,
+    coefficient_violation = setNames(violation, colnames(x)),
+    maximum = max(abs(intercept_gradient), violation),
+    n_zero = sum(!active),
+    zero_maximum = if (any(!active)) max(violation[!active]) else 0
+  )
+}
+
+flexible_cd_gaussian <- function(x, y, lambda, alpha, initial = NULL,
+                                 initial_intercept = NULL, maxit = 2000L,
+                                 tol = 1e-8) {
   n <- nrow(x); p <- ncol(x)
   beta <- if (is.null(initial)) numeric(p) else as.numeric(initial)
-  residual <- y - as.numeric(x %*% beta)
+  intercept <- if (is.null(initial_intercept)) mean(y) else as.numeric(initial_intercept)
+  residual <- y - intercept - as.numeric(x %*% beta)
   denominator <- colSums(x * x) / n + lambda * (1 - alpha)
   denominator[!is.finite(denominator) | denominator <= 0] <- 1
   for (iteration in seq_len(maxit)) {
-    old <- beta
+    old <- c(intercept, beta)
+    intercept_change <- mean(residual)
+    intercept <- intercept + intercept_change
+    residual <- residual - intercept_change
     for (j in seq_len(p)) {
       residual <- residual + x[, j] * beta[[j]]
       rho <- sum(x[, j] * residual) / n
       beta[[j]] <- flexible_soft_threshold(rho, lambda * alpha) / denominator[[j]]
       residual <- residual - x[, j] * beta[[j]]
     }
-    if (max(abs(beta - old)) < tol) break
+    if (max(abs(c(intercept, beta) - old)) < tol) break
   }
-  list(beta = beta, iterations = iteration, converged = iteration < maxit || max(abs(beta - old)) < tol)
+  change <- max(abs(c(intercept, beta) - old))
+  list(intercept = intercept, beta = beta, iterations = iteration,
+       converged = is.finite(change) && change < tol)
 }
 
 flexible_cd_weighted <- function(x, z, weights, lambda, alpha, initial = NULL,
-                                 maxit = 1000L, tol = 1e-7) {
-  n <- nrow(x); p <- ncol(x); weight_sum <- sum(weights)
+                                 initial_intercept = NULL, maxit = 1000L,
+                                 tol = 1e-8) {
+  n <- nrow(x); p <- ncol(x)
   beta <- if (is.null(initial)) numeric(p) else as.numeric(initial)
-  residual <- z - as.numeric(x %*% beta)
-  denominator <- colSums(x * (weights * x)) / weight_sum + lambda * (1 - alpha)
+  intercept <- if (is.null(initial_intercept)) weighted.mean(z, weights) else as.numeric(initial_intercept)
+  residual <- z - intercept - as.numeric(x %*% beta)
+  # Dividir por n é essencial: esta é a Hessiana da perda média declarada.
+  denominator <- colSums(x * (weights * x)) / n + lambda * (1 - alpha)
   denominator[!is.finite(denominator) | denominator <= 0] <- 1
   for (iteration in seq_len(maxit)) {
-    old <- beta
+    old <- c(intercept, beta)
+    intercept_change <- sum(weights * residual) / sum(weights)
+    intercept <- intercept + intercept_change
+    residual <- residual - intercept_change
     for (j in seq_len(p)) {
       residual <- residual + x[, j] * beta[[j]]
-      rho <- sum(weights * x[, j] * residual) / weight_sum
+      rho <- sum(weights * x[, j] * residual) / n
       beta[[j]] <- flexible_soft_threshold(rho, lambda * alpha) / denominator[[j]]
       residual <- residual - x[, j] * beta[[j]]
     }
-    if (max(abs(beta - old)) < tol) break
+    if (max(abs(c(intercept, beta) - old)) < tol) break
   }
-  list(beta = beta, iterations = iteration, converged = iteration < maxit || max(abs(beta - old)) < tol)
+  change <- max(abs(c(intercept, beta) - old))
+  list(intercept = intercept, beta = beta, iterations = iteration,
+       converged = is.finite(change) && change < tol)
 }
 
 flexible_fit_one <- function(x, y, family = c("continuous", "logistic"), lambda, alpha,
                              feature_means = numeric(), feature_scales = numeric(),
-                             maxit = 2000L, initial_beta = NULL, initial_intercept = NULL) {
+                             maxit = 2000L, initial_beta = NULL, initial_intercept = NULL,
+                             kkt_tol = FLEXIBLE_KKT_TOLERANCE) {
   family <- match.arg(family)
   x <- as.matrix(x); y <- as.numeric(y)
+  if (length(maxit) != 1L || !is.finite(maxit) || maxit < 1L) {
+    stop("maxit deve ser um inteiro positivo.", call. = FALSE)
+  }
   if (!nrow(x) || !ncol(x)) stop("Matriz de preditores vazia.", call. = FALSE)
+  if (length(y) != nrow(x) || any(!is.finite(x)) || any(!is.finite(y))) {
+    stop("x e y devem ser finitos e ter dimensões compatíveis.", call. = FALSE)
+  }
+  if (!is.finite(lambda) || lambda < 0 || !is.finite(alpha) || alpha < 0 || alpha > 1) {
+    stop("lambda deve ser não negativo e alpha deve estar em [0, 1].", call. = FALSE)
+  }
+  if (family == "logistic" && (!all(y %in% c(0, 1)) || length(unique(y)) < 2L)) {
+    stop("O ajuste logístico requer y binário com as duas classes.", call. = FALSE)
+  }
+  if (!length(feature_means)) feature_means <- rep(0, ncol(x))
+  if (!length(feature_scales)) feature_scales <- rep(1, ncol(x))
+  if (length(feature_means) != ncol(x) || length(feature_scales) != ncol(x) ||
+      any(!is.finite(feature_means)) || any(!is.finite(feature_scales)) ||
+      any(feature_scales <= 0)) stop("Metadados de padronização inválidos.", call. = FALSE)
+  failure_reason <- NA_character_
   if (family == "continuous") {
-    intercept <- if (is.null(initial_intercept)) mean(y) else initial_intercept
-    fit <- flexible_cd_gaussian(x, y - intercept, lambda, alpha, initial = initial_beta, maxit = maxit)
+    fit <- flexible_cd_gaussian(x, y, lambda, alpha, initial = initial_beta,
+                                initial_intercept = initial_intercept, maxit = maxit)
+    intercept <- fit$intercept
     beta <- fit$beta
   } else {
     prevalence <- min(max(mean(y), 1e-6), 1 - 1e-6)
     intercept <- if (is.null(initial_intercept)) stats::qlogis(prevalence) else initial_intercept
     beta <- if (is.null(initial_beta)) numeric(ncol(x)) else as.numeric(initial_beta)
     converged <- FALSE
-    for (iteration in seq_len(25L)) {
+    objective <- flexible_objective(intercept, beta, x, y, family, lambda, alpha)
+    outer_maxit <- max(1L, min(as.integer(maxit), 100L))
+    for (iteration in seq_len(outer_maxit)) {
+      old_intercept <- intercept; old_beta <- beta; old_objective <- objective
       eta <- intercept + as.numeric(x %*% beta)
       probability <- plogis(eta)
-      weights <- pmax(probability * (1 - probability), 1e-5)
+      weights <- pmax(probability * (1 - probability), 1e-8)
       z <- eta + (y - probability) / weights
-      working <- flexible_cd_weighted(x, z - intercept, weights, lambda, alpha, beta,
-                                      maxit = min(150L, maxit), tol = 1e-7)
+      working <- flexible_cd_weighted(x, z, weights, lambda, alpha, beta,
+                                      initial_intercept = intercept,
+                                      maxit = max(50L, min(2000L, as.integer(maxit))), tol = 1e-10)
       beta_new <- working$beta
-      intercept_new <- sum(weights * (z - as.numeric(x %*% beta_new))) / sum(weights)
-      if (max(abs(c(beta_new - beta, intercept_new - intercept))) < 1e-7) {
-        beta <- beta_new; intercept <- intercept_new; converged <- TRUE; break
+      intercept_new <- working$intercept
+      new_objective <- flexible_objective(intercept_new, beta_new, x, y, family, lambda, alpha)
+      step <- 1
+      while ((!is.finite(new_objective) || new_objective > old_objective + 1e-12) && step > 2^-20) {
+        step <- step / 2
+        intercept_new <- old_intercept + step * (working$intercept - old_intercept)
+        beta_new <- old_beta + step * (working$beta - old_beta)
+        new_objective <- flexible_objective(intercept_new, beta_new, x, y, family, lambda, alpha)
       }
-      beta <- beta_new; intercept <- intercept_new
+      if (!is.finite(new_objective) || new_objective > old_objective + 1e-10) {
+        failure_reason <- "line_search_failed"
+        break
+      }
+      beta <- beta_new; intercept <- intercept_new; objective <- new_objective
+      kkt <- flexible_kkt(intercept, beta, x, y, family, lambda, alpha)
+      parameter_change <- max(abs(c(beta - old_beta, intercept - old_intercept)))
+      if (kkt$maximum <= kkt_tol &&
+          (parameter_change <= 1e-7 || abs(old_objective - objective) <= 1e-10 * (1 + abs(objective)))) {
+        converged <- TRUE
+        break
+      }
     }
     fit <- list(iterations = iteration, converged = converged)
+    if (!converged && is.na(failure_reason)) failure_reason <- "maximum_iterations_or_kkt_not_met"
   }
-  if (!is.finite(intercept) || any(!is.finite(beta))) {
+  diagnostics <- flexible_kkt(intercept, beta, x, y, family, lambda, alpha)
+  objective <- flexible_objective(intercept, beta, x, y, family, lambda, alpha)
+  fit$converged <- isTRUE(fit$converged) && is.finite(objective) &&
+    is.finite(diagnostics$maximum) && diagnostics$maximum <= kkt_tol
+  if (!is.finite(intercept) || any(!is.finite(beta)) || !is.finite(objective)) {
     fit$converged <- FALSE
+    failure_reason <- "non_finite_solution"
   }
+  if (!fit$converged && is.na(failure_reason)) failure_reason <- "kkt_not_met"
   beta_raw <- beta / feature_scales
   intercept_raw <- intercept - sum(feature_means * beta_raw)
   structure(list(family = family, lambda = lambda, alpha = alpha,
                  intercept = intercept, beta = setNames(beta, colnames(x)),
                  intercept_raw = intercept_raw, beta_raw = setNames(beta_raw, colnames(x)),
                  converged = isTRUE(fit$converged), iterations = fit$iterations,
+                 objective = objective, kkt_max = diagnostics$maximum,
+                 intercept_gradient = diagnostics$intercept_gradient,
+                 n_zero = diagnostics$n_zero, zero_kkt_max = diagnostics$zero_maximum,
+                 failure_reason = if (isTRUE(fit$converged)) NA_character_ else failure_reason,
                  feature_means = feature_means, feature_scales = feature_scales),
             class = "flexible_enet_fit")
 }
 
 flexible_predict <- function(model, x) {
   x <- as.matrix(x)
+  if (!isTRUE(model$converged) || any(!is.finite(model$beta)) || !is.finite(model$intercept)) {
+    return(rep(NA_real_, nrow(x)))
+  }
   eta <- model$intercept + as.numeric(x %*% model$beta)
   if (model$family == "logistic") plogis(eta) else eta
 }
@@ -434,14 +540,29 @@ flexible_fit_path <- function(x, y, family, alpha, lambda_fractions, lambda_max,
     models[[i]] <- flexible_fit_one(x, y, family, lambdas[[i]], alpha,
                                     feature_means, feature_scales, maxit = 300L,
                                     initial_beta = previous, initial_intercept = previous_intercept)
-    previous <- models[[i]]$beta
-    previous_intercept <- models[[i]]$intercept
+    if (isTRUE(models[[i]]$converged)) {
+      previous <- models[[i]]$beta
+      previous_intercept <- models[[i]]$intercept
+    } else {
+      previous <- NULL
+      previous_intercept <- NULL
+    }
   }
   models
 }
 
 flexible_metric_row <- function(y, prediction, family, repeat_id = NA_integer_,
                                 outer_fold = NA_integer_, scope = "outer_fold") {
+  valid_prediction <- length(y) == length(prediction) && length(y) > 0L &&
+    all(is.finite(y)) && all(is.finite(prediction))
+  if (!valid_prediction) {
+    return(data.frame(
+      family = family, scope = scope, repeat_id = repeat_id, outer_fold = outer_fold,
+      n = length(y), r2 = NA_real_, rmse = NA_real_, mae = NA_real_,
+      calibration_intercept = NA_real_, calibration_slope = NA_real_, auc = NA_real_,
+      brier_score = NA_real_, log_loss = NA_real_, stringsAsFactors = FALSE
+    ))
+  }
   if (family == "continuous") {
     values <- data.frame(
       family = family, scope = scope, repeat_id = repeat_id, outer_fold = outer_fold,
@@ -514,13 +635,21 @@ flexible_tuning_one <- function(data, y, inner_splits, family, grid) {
         config <- grid[config_id, , drop = FALSE]
         model <- path[[match(config$lambda_fraction, fractions[order_path])]]
         prediction <- flexible_predict(model, x_validation)
-        metric <- if (family == "continuous") rmse(y[inner_split$validation], prediction) else log_loss(y[inner_split$validation], prediction)
+        metric <- if (!isTRUE(model$converged) || any(!is.finite(prediction))) {
+          NA_real_
+        } else if (family == "continuous") {
+          rmse(y[inner_split$validation], prediction)
+        } else {
+          log_loss(y[inner_split$validation], prediction)
+        }
         counter <- counter + 1L
         rows[[counter]] <- data.frame(
           config_id = config$config_id, inner_fold = inner_split$fold,
           alpha = config$alpha, lambda_fraction = config$lambda_fraction,
           lambda_max = lambda_max, lambda = model$lambda, metric = metric,
-          converged = model$converged, n_features = ncol(x_train),
+          converged = model$converged, objective = model$objective,
+          kkt_max = model$kkt_max, failure_reason = model$failure_reason,
+          n_features = ncol(x_train),
           stringsAsFactors = FALSE
         )
       }
@@ -539,7 +668,13 @@ flexible_tuning_one <- function(data, y, inner_splits, family, grid) {
   }))
   summary$sd_metric[!is.finite(summary$sd_metric)] <- 0
   summary$se_metric[!is.finite(summary$se_metric)] <- 0
-  valid <- is.finite(summary$mean_metric) & summary$n_valid > 0L
+  summary$n_failed <- length(inner_splits) - summary$n_converged
+  complete <- summary$n_valid == length(inner_splits) &
+    summary$n_converged == length(inner_splits)
+  summary$mean_metric[!complete] <- NA_real_
+  summary$sd_metric[!complete] <- NA_real_
+  summary$se_metric[!complete] <- NA_real_
+  valid <- is.finite(summary$mean_metric) & complete
   if (!any(valid)) stop("Nenhuma configuração teve métrica interna válida.", call. = FALSE)
   best <- summary[which(valid)[order(summary$mean_metric[valid], summary$config_id[valid])][1L], , drop = FALSE]
   threshold <- best$mean_metric + best$se_metric
@@ -750,8 +885,20 @@ flexible_make_figure <- function(predictions, coefficients, output_dir) {
 
 run_flexible_analysis <- function(
     cohort, ids = cohort$id, seed = GLOBAL_SEED + 808L, grid = flexible_default_grid(),
-    outer = 10L, repeats = 5L, inner = 5L, write_outputs = TRUE) {
+    outer = 10L, repeats = 5L, inner = 5L, write_outputs = TRUE,
+    output_dirs = NULL) {
   flexible_requirements(); grid <- flexible_validate_grid(grid)
+  if (write_outputs) {
+    required_dirs <- c("aggregated", "figures", "logs", "reduced_objects")
+    if (is.null(output_dirs) || !all(required_dirs %in% names(output_dirs))) {
+      stop("write_outputs=TRUE requer output_dirs explícito com aggregated, figures, logs e reduced_objects.",
+           call. = FALSE)
+    }
+    output_dirs <- vapply(output_dirs[required_dirs], function(path) {
+      dir.create(path, recursive = TRUE, showWarnings = FALSE)
+      normalizePath(path, mustWork = TRUE)
+    }, character(1))
+  }
   required <- c(MODEL_PREDICTORS, "cobb_inicial_maior", "delta", "delta_cat")
   if (!all(required %in% names(cohort))) stop("Coorte não contém variáveis da Tarefa 09.", call. = FALSE)
   indices <- flexible_nested_resample_indices(nrow(cohort), cohort$delta_cat, outer, repeats, inner, seed)
@@ -786,7 +933,10 @@ run_flexible_analysis <- function(
         lambda_max = outer_fit$lambda_max, best_mean_metric = inner_tuning$best$mean_metric,
         best_se_metric = inner_tuning$best$se_metric, one_se_threshold = inner_tuning$threshold,
         selected_mean_metric = selected$mean_metric, selected_se_metric = selected$se_metric,
-        converged = outer_fit$model$converged, n_features = ncol(outer_fit$x), stringsAsFactors = FALSE
+        converged = outer_fit$model$converged, objective = outer_fit$model$objective,
+        kkt_max = outer_fit$model$kkt_max,
+        failure_reason = outer_fit$model$failure_reason,
+        n_features = ncol(outer_fit$x), stringsAsFactors = FALSE
       )
       frozen <- flexible_fit_frozen_external(cohort, split$train, split$test, family)
       frozen_rows[[length(frozen_rows) + 1L]] <- data.frame(
@@ -850,7 +1000,8 @@ run_flexible_analysis <- function(
     stringsAsFactors = FALSE
   )
   if (write_outputs) {
-    ensure_output_dirs(); agg <- RESULTS_DIRS[["aggregated"]]; logs <- RESULTS_DIRS[["logs"]]; obj <- RESULTS_DIRS[["reduced_objects"]]; fig <- RESULTS_DIRS[["figures"]]
+    agg <- output_dirs[["aggregated"]]; logs <- output_dirs[["logs"]]
+    obj <- output_dirs[["reduced_objects"]]; fig <- output_dirs[["figures"]]
     write <- function(x, file, directory = agg) utils::write.csv(x, file.path(directory, file), row.names = FALSE, na = "")
     write(selected_table, "flexible_selected_hyperparameters.csv")
     write(tuning_table, "flexible_internal_tuning.csv")
