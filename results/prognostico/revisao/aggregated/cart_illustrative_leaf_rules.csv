@@ -1,0 +1,8 @@
+"tree_id","repeat_id","outer_fold","fit_origin","leaf_node","depth","node_n","predicted_class","event_n","event_probability","rule"
+0,,,"full_cohort_illustrative_saved_hyperparameters",4,2,65,"nao_melhora",2,0.0307692307692308,"correcao_colete < 49.418604651162795 & correcao_colete < 29.448961156278202"
+0,,,"full_cohort_illustrative_saved_hyperparameters",40,5,195,"nao_melhora",46,0.235897435897436,"correcao_colete < 49.418604651162795 & correcao_colete >= 29.448961156278202 & risser in {0 | 2 | 3 | 4} & lenke in {2 | 3 | 4 | 6} & sexo in {feminino}"
+0,,,"full_cohort_illustrative_saved_hyperparameters",41,5,25,"melhora",16,0.64,"correcao_colete < 49.418604651162795 & correcao_colete >= 29.448961156278202 & risser in {0 | 2 | 3 | 4} & lenke in {2 | 3 | 4 | 6} & sexo in {masculino}"
+0,,,"full_cohort_illustrative_saved_hyperparameters",42,5,13,"nao_melhora",3,0.230769230769231,"correcao_colete < 49.418604651162795 & correcao_colete >= 29.448961156278202 & risser in {0 | 2 | 3 | 4} & lenke in {1 | 5} & lordose_lombar < 46.5"
+0,,,"full_cohort_illustrative_saved_hyperparameters",43,5,30,"melhora",21,0.7,"correcao_colete < 49.418604651162795 & correcao_colete >= 29.448961156278202 & risser in {0 | 2 | 3 | 4} & lenke in {1 | 5} & lordose_lombar >= 46.5"
+0,,,"full_cohort_illustrative_saved_hyperparameters",11,3,44,"melhora",28,0.636363636363636,"correcao_colete < 49.418604651162795 & correcao_colete >= 29.448961156278202 & risser in {1}"
+0,,,"full_cohort_illustrative_saved_hyperparameters",3,1,243,"melhora",201,0.82716049382716,"correcao_colete >= 49.418604651162795"

@@ -1,0 +1,7 @@
+"tree_id","repeat_id","outer_fold","fit_origin","node","depth","node_n","variable","split_role","split_rank","count","ncat","improve","index","adjusted_agreement","split_type","cutpoint","left_levels","right_levels","left_rule","right_rule"
+0,,,"full_cohort_illustrative_saved_hyperparameters",1,0,615,"correcao_colete","primary",1,615,-1,78.0691086050645,49.4186046511628,0,"continuous",49.4186046511628,,,"correcao_colete < 49.418604651162795","correcao_colete >= 49.418604651162795"
+0,,,"full_cohort_illustrative_saved_hyperparameters",2,1,372,"correcao_colete","primary",1,372,-1,12.4434860155781,29.4489611562782,0,"continuous",29.4489611562782,,,"correcao_colete < 29.448961156278202","correcao_colete >= 29.448961156278202"
+0,,,"full_cohort_illustrative_saved_hyperparameters",5,2,307,"risser","primary",1,307,5,7.21521452996168,9,0,"categorical",,"0 | 2 | 3 | 4","1","risser in {0 | 2 | 3 | 4}","risser in {1}"
+0,,,"full_cohort_illustrative_saved_hyperparameters",10,3,263,"lenke","primary",1,263,6,5.49280621226859,12,0,"categorical",,"2 | 3 | 4 | 6","1 | 5","lenke in {2 | 3 | 4 | 6}","lenke in {1 | 5}"
+0,,,"full_cohort_illustrative_saved_hyperparameters",20,4,220,"sexo","primary",1,220,2,7.23710955710956,15,0,"categorical",,"feminino","masculino","sexo in {feminino}","sexo in {masculino}"
+0,,,"full_cohort_illustrative_saved_hyperparameters",21,4,43,"lordose_lombar","primary",1,43,-1,3.99391771019678,46.5,0,"continuous",46.5,,,"lordose_lombar < 46.5","lordose_lombar >= 46.5"

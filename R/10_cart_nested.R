@@ -391,45 +391,166 @@ cart_tree_summary <- function(model, tree_id, repeat_id = NA_integer_, outer_fol
   )
 }
 
-cart_structure_tables <- function(models) {
-  variable_rows <- list(); cut_rows <- list(); node_rows <- list()
+cart_empty_split_table <- function() {
+  data.frame(
+    tree_id = integer(), repeat_id = integer(), outer_fold = integer(),
+    fit_origin = character(), node = integer(), depth = integer(), node_n = integer(),
+    variable = character(), split_role = character(), split_rank = integer(),
+    count = numeric(), ncat = numeric(), improve = numeric(), index = numeric(),
+    adjusted_agreement = numeric(), split_type = character(), cutpoint = numeric(),
+    left_levels = character(), right_levels = character(),
+    left_rule = character(), right_rule = character(), stringsAsFactors = FALSE
+  )
+}
+
+cart_decode_split <- function(model, split_row, variable) {
+  ncat <- as.numeric(split_row[["ncat"]])
+  index <- as.numeric(split_row[["index"]])
+  if (ncat < 2L) {
+    left_operator <- if (ncat < 0) "<" else ">="
+    right_operator <- if (ncat < 0) ">=" else "<"
+    return(list(
+      split_type = "continuous", cutpoint = index,
+      left_levels = NA_character_, right_levels = NA_character_,
+      left_rule = paste(variable, left_operator, format(index, digits = 17, trim = TRUE)),
+      right_rule = paste(variable, right_operator, format(index, digits = 17, trim = TRUE))
+    ))
+  }
+  csplit_row <- as.integer(index)
+  if (is.null(model$csplit) || csplit_row < 1L || csplit_row > nrow(model$csplit)) {
+    stop("Índice csplit inválido para a variável ", variable, ".", call. = FALSE)
+  }
+  xlevels <- attr(model, "xlevels")[[variable]]
+  if (is.null(xlevels) && !is.null(model$model[[variable]]) && is.factor(model$model[[variable]])) {
+    xlevels <- levels(model$model[[variable]])
+  }
+  codes <- model$csplit[csplit_row, seq_len(min(length(xlevels), ncol(model$csplit)))]
+  left <- xlevels[codes == 1L]
+  right <- xlevels[codes == 3L]
+  left_text <- paste(left, collapse = " | ")
+  right_text <- paste(right, collapse = " | ")
+  list(
+    split_type = "categorical", cutpoint = NA_real_,
+    left_levels = left_text, right_levels = right_text,
+    left_rule = paste0(variable, " in {", left_text, "}"),
+    right_rule = paste0(variable, " in {", right_text, "}")
+  )
+}
+
+cart_split_rows <- function(model, model_info,
+                            fit_origin = "outer_training_saved_hyperparameters") {
+  frame <- model$frame
+  if (is.null(model$splits) || !nrow(model$splits) || all(frame$var == "<leaf>")) {
+    return(cart_empty_split_table())
+  }
+  nodes <- as.integer(row.names(frame))
+  is_leaf <- frame$var == "<leaf>"
+  # Este é o mesmo índice documentado/usado por labels.rpart e summary.rpart:
+  # para cada nó interno, primário, concorrentes e substitutos são consecutivos.
+  starts <- cumsum(c(1L, frame$ncompete + frame$nsurrogate + !is_leaf))
+  starts <- starts[seq_len(nrow(frame))]
+  rows <- list()
+  for (frame_row in which(!is_leaf)) {
+    n_compete <- as.integer(frame$ncompete[[frame_row]])
+    n_surrogate <- as.integer(frame$nsurrogate[[frame_row]])
+    split_indices <- seq.int(starts[[frame_row]], length.out = 1L + n_compete + n_surrogate)
+    roles <- c("primary", rep("competitor", n_compete), rep("surrogate", n_surrogate))
+    ranks <- c(1L, seq_len(n_compete), seq_len(n_surrogate))
+    for (j in seq_along(split_indices)) {
+      matrix_row <- split_indices[[j]]
+      variable <- row.names(model$splits)[[matrix_row]]
+      decoded <- cart_decode_split(model, model$splits[matrix_row, ], variable)
+      rows[[length(rows) + 1L]] <- data.frame(
+        tree_id = model_info$tree_id, repeat_id = model_info$repeat_id,
+        outer_fold = model_info$outer_fold, fit_origin = fit_origin,
+        node = nodes[[frame_row]], depth = floor(log2(nodes[[frame_row]])),
+        node_n = frame$n[[frame_row]], variable = variable,
+        split_role = roles[[j]], split_rank = ranks[[j]],
+        count = model$splits[matrix_row, "count"], ncat = model$splits[matrix_row, "ncat"],
+        improve = model$splits[matrix_row, "improve"], index = model$splits[matrix_row, "index"],
+        adjusted_agreement = model$splits[matrix_row, "adj"],
+        split_type = decoded$split_type, cutpoint = decoded$cutpoint,
+        left_levels = decoded$left_levels, right_levels = decoded$right_levels,
+        left_rule = decoded$left_rule, right_rule = decoded$right_rule,
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  out <- if (length(rows)) do.call(rbind, rows) else cart_empty_split_table()
+  expected <- sum(!is_leaf) + sum(frame$ncompete[!is_leaf]) + sum(frame$nsurrogate[!is_leaf])
+  if (nrow(out) != expected || nrow(out) != nrow(model$splits)) {
+    stop("A travessia de model$splits não consumiu exatamente as linhas esperadas.", call. = FALSE)
+  }
+  out
+}
+
+cart_leaf_rules <- function(model, model_info, primary_splits,
+                            fit_origin = "outer_training_saved_hyperparameters") {
+  frame <- model$frame
+  nodes <- as.integer(row.names(frame))
+  leaf_rows <- which(frame$var == "<leaf>")
+  ylevels <- attr(model, "ylevels")
+  do.call(rbind, lapply(leaf_rows, function(frame_row) {
+    leaf_node <- nodes[[frame_row]]
+    current <- leaf_node
+    rule_parts <- character()
+    while (current > 1L) {
+      parent <- current %/% 2L
+      parent_split <- primary_splits[primary_splits$node == parent, , drop = FALSE]
+      if (nrow(parent_split) != 1L) stop("Corte primário ausente ou duplicado no caminho da folha.", call. = FALSE)
+      rule_parts <- c(if (current %% 2L == 0L) parent_split$left_rule else parent_split$right_rule, rule_parts)
+      current <- parent
+    }
+    yval2 <- frame$yval2[frame_row, ]
+    n_classes <- length(ylevels)
+    class_counts <- if (n_classes) yval2[seq.int(2L, 1L + n_classes)] else numeric()
+    class_probabilities <- if (n_classes) yval2[seq.int(2L + n_classes, 1L + 2L * n_classes)] else numeric()
+    event_index <- if ("melhora" %in% ylevels) match("melhora", ylevels) else NA_integer_
+    data.frame(
+      tree_id = model_info$tree_id, repeat_id = model_info$repeat_id,
+      outer_fold = model_info$outer_fold, fit_origin = fit_origin,
+      leaf_node = leaf_node, depth = floor(log2(leaf_node)), node_n = frame$n[[frame_row]],
+      predicted_class = if (length(ylevels)) ylevels[[as.integer(frame$yval[[frame_row]])]] else as.character(frame$yval[[frame_row]]),
+      event_n = if (is.finite(event_index)) class_counts[[event_index]] else NA_real_,
+      event_probability = if (is.finite(event_index)) class_probabilities[[event_index]] else NA_real_,
+      rule = if (length(rule_parts)) paste(rule_parts, collapse = " & ") else "<root leaf>",
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+cart_structure_tables <- function(models, fit_origin = "outer_training_saved_hyperparameters") {
+  split_rows <- list(); node_rows <- list(); leaf_rows <- list()
   for (i in seq_along(models)) {
     model_info <- models[[i]]
     model <- model_info$model
     frame <- model$frame
     nodes <- as.integer(row.names(frame))
     depths <- floor(log2(nodes))
-    split_nodes <- which(frame$var != "<leaf>")
-    if (length(split_nodes)) {
-      variable_rows[[length(variable_rows) + 1L]] <- data.frame(
-        tree_id = model_info$tree_id, repeat_id = model_info$repeat_id, outer_fold = model_info$outer_fold,
-        variable = as.character(frame$var[split_nodes]), depth = depths[split_nodes],
-        scope = ifelse(depths[split_nodes] == 0, "root", ifelse(depths[split_nodes] <= 2, "first_levels", "all_levels")),
-        stringsAsFactors = FALSE
-      )
-    }
     node_rows[[length(node_rows) + 1L]] <- data.frame(
       tree_id = model_info$tree_id, repeat_id = model_info$repeat_id, outer_fold = model_info$outer_fold,
-      node = nodes, depth = depths, variable = as.character(frame$var),
+      fit_origin = fit_origin, node = nodes, depth = depths, variable = as.character(frame$var),
       terminal = frame$var == "<leaf>", node_n = frame$n,
       stringsAsFactors = FALSE
     )
-    if (!is.null(model$splits) && nrow(model$splits)) {
-      split_names <- row.names(model$splits)
-      for (j in seq_len(nrow(model$splits))) {
-        variable <- split_names[[j]]
-        is_numeric <- variable %in% names(model$model) && is.numeric(model$model[[variable]])
-        if (is_numeric) cut_rows[[length(cut_rows) + 1L]] <- data.frame(
-          tree_id = model_info$tree_id, repeat_id = model_info$repeat_id, outer_fold = model_info$outer_fold,
-          variable = variable, cutpoint = model$splits[j, "index"], stringsAsFactors = FALSE
-        )
-      }
-    }
+    all_splits <- cart_split_rows(model, model_info, fit_origin)
+    split_rows[[length(split_rows) + 1L]] <- all_splits
+    primary <- all_splits[all_splits$split_role == "primary", , drop = FALSE]
+    leaf_rows[[length(leaf_rows) + 1L]] <- cart_leaf_rules(model, model_info, primary, fit_origin)
   }
-  variable_frequency <- if (length(variable_rows)) do.call(rbind, variable_rows) else data.frame()
-  cutpoints <- if (length(cut_rows)) do.call(rbind, cut_rows) else data.frame()
+  all_splits <- if (length(split_rows)) do.call(rbind, split_rows) else cart_empty_split_table()
+  primary_splits <- all_splits[all_splits$split_role == "primary", , drop = FALSE]
+  competitor_splits <- all_splits[all_splits$split_role == "competitor", , drop = FALSE]
+  surrogate_splits <- all_splits[all_splits$split_role == "surrogate", , drop = FALSE]
   node_sizes <- do.call(rbind, node_rows)
-  list(variable_frequency = variable_frequency, cutpoints = cutpoints, node_sizes = node_sizes)
+  leaves <- do.call(rbind, leaf_rows)
+  if (nrow(primary_splits) != sum(!node_sizes$terminal)) {
+    stop("A contagem de cortes primários difere da contagem de nós internos.", call. = FALSE)
+  }
+  list(primary_splits = primary_splits, competitor_splits = competitor_splits,
+       surrogate_splits = surrogate_splits, leaf_rules = leaves,
+       variable_frequency = primary_splits, cutpoints = primary_splits[primary_splits$split_type == "continuous", , drop = FALSE],
+       node_sizes = node_sizes)
 }
 
 cart_stability_summary <- function(tree_summaries, variable_frequency) {
@@ -445,7 +566,7 @@ cart_stability_summary <- function(tree_summaries, variable_frequency) {
     metrics$value[metrics$metric == "root_variable_mode_frequency"] <- sum(roots == mode_root)
   }
   root_frequency <- if (nrow(variable_frequency)) {
-    as.data.frame(table(variable_frequency$variable[variable_frequency$scope == "root"]), stringsAsFactors = FALSE)
+    as.data.frame(table(variable_frequency$variable[variable_frequency$depth == 0L]), stringsAsFactors = FALSE)
   } else data.frame(Var1 = character(), Freq = integer())
   if (nrow(root_frequency)) {
     names(root_frequency) <- c("variable", "frequency")
@@ -454,20 +575,154 @@ cart_stability_summary <- function(tree_summaries, variable_frequency) {
   list(summary = metrics, root_frequency = root_frequency)
 }
 
-cart_variable_frequency_summary <- function(variable_frequency) {
-  if (!nrow(variable_frequency)) {
-    return(data.frame(scope = character(), variable = character(), frequency = integer(),
-                      relative_frequency = numeric(), stringsAsFactors = FALSE))
+cart_categorical_split_summary <- function(primary_splits, n_trees) {
+  x <- primary_splits[primary_splits$split_type == "categorical", , drop = FALSE]
+  if (!nrow(x)) return(data.frame(
+    scope = character(), variable = character(), left_levels = character(), right_levels = character(),
+    n_splits = integer(), trees_with_rule = integer(), denominator_trees = integer(),
+    relative_trees = numeric(), stringsAsFactors = FALSE))
+  x$scope <- ifelse(x$depth == 0L, "root", "non_root")
+  x_all <- x; x_all$scope <- "all_levels"
+  x <- rbind(x, x_all)
+  groups <- split(x, list(x$scope, x$variable, x$left_levels, x$right_levels), drop = TRUE)
+  out <- do.call(rbind, lapply(groups, function(g) data.frame(
+    scope = g$scope[[1]], variable = g$variable[[1]], left_levels = g$left_levels[[1]],
+    right_levels = g$right_levels[[1]], n_splits = nrow(g),
+    trees_with_rule = length(unique(g$tree_id)), denominator_trees = n_trees,
+    relative_trees = length(unique(g$tree_id)) / n_trees, stringsAsFactors = FALSE
+  )))
+  row.names(out) <- NULL
+  out
+}
+
+cart_calibration_validity <- function(metrics, predictions = NULL) {
+  folds <- metrics[metrics$scope == "outer_fold", , drop = FALSE]
+  long <- do.call(rbind, lapply(c("calibration_intercept", "calibration_slope"), function(metric) {
+    values <- folds[[metric]]
+    data.frame(
+      metric = metric, total_outer_folds = nrow(folds), valid_folds = sum(is.finite(values)),
+      invalid_folds = sum(!is.finite(values)), denominator_summary = sum(is.finite(values)),
+      treatment = "invalid excluded only from this metric summary",
+      stringsAsFactors = FALSE
+    )
+  }))
+  invalid <- do.call(rbind, lapply(seq_len(nrow(folds)), function(i) {
+    bad <- c("calibration_intercept", "calibration_slope")[
+      !is.finite(as.numeric(folds[i, c("calibration_intercept", "calibration_slope")]))
+    ]
+    if (!length(bad)) return(NULL)
+    fold_predictions <- if (is.null(predictions)) NULL else predictions[
+      predictions$repeat_id == folds$repeat_id[[i]] & predictions$outer_fold == folds$outer_fold[[i]], , drop = FALSE
+    ]
+    at_boundary <- if (is.null(fold_predictions)) NA_integer_ else sum(
+      fold_predictions$predicted <= 1e-15 | fold_predictions$predicted >= 1 - 1e-15
+    )
+    data.frame(
+      repeat_id = folds$repeat_id[[i]], outer_fold = folds$outer_fold[[i]],
+      metric = bad,
+      reason = ifelse(
+        bad == "calibration_intercept" && is.finite(at_boundary) && at_boundary > 0L,
+        "original glm offset fit returned an implausible coefficient (>100) after boundary predictions were clipped; numerical fit failure, not evidence that a finite intercept does not exist",
+        "non-finite or implausible absolute coefficient (>100) in original glm fit"
+      ),
+      n_predictions = if (is.null(fold_predictions)) NA_integer_ else nrow(fold_predictions),
+      n_at_boundary = at_boundary,
+      min_predicted = if (is.null(fold_predictions)) NA_real_ else min(fold_predictions$predicted),
+      max_predicted = if (is.null(fold_predictions)) NA_real_ else max(fold_predictions$predicted),
+      stringsAsFactors = FALSE
+    )
+  }))
+  if (is.null(invalid)) invalid <- data.frame(
+    repeat_id = integer(), outer_fold = integer(), metric = character(), reason = character(),
+    n_predictions = integer(), n_at_boundary = integer(), min_predicted = numeric(), max_predicted = numeric()
+  )
+  list(summary = long, invalid = invalid)
+}
+
+cart_refit_saved_outer_models <- function(cohort, saved) {
+  if (length(saved$indices) != nrow(saved$selected)) {
+    stop("O número de índices difere do número de hiperparâmetros salvos.", call. = FALSE)
   }
-  out <- do.call(rbind, lapply(split(variable_frequency, variable_frequency$scope), function(x) {
-    counts <- sort(table(x$variable), decreasing = TRUE)
-    tree_counts <- vapply(names(counts), function(variable) {
-      length(unique(x$tree_id[x$variable == variable]))
-    }, integer(1))
-    data.frame(scope = x$scope[[1]], variable = names(counts), frequency = as.integer(counts),
-               trees_with_variable = tree_counts,
-               relative_frequency = tree_counts / length(unique(variable_frequency$tree_id)),
-               stringsAsFactors = FALSE)
+  models <- vector("list", length(saved$indices))
+  summaries <- vector("list", length(saved$indices))
+  for (i in seq_along(saved$indices)) {
+    split <- saved$indices[[i]]
+    selected <- saved$selected[
+      saved$selected$repeat_id == split$repeat_id & saved$selected$outer_fold == split$outer_fold,
+      , drop = FALSE
+    ]
+    if (nrow(selected) != 1L) stop("Hiperparâmetros salvos ausentes ou duplicados para um fold.", call. = FALSE)
+    recipe <- cart_preprocess_fit(cohort[split$train, , drop = FALSE])
+    x_train <- cart_preprocess_apply(cohort[split$train, , drop = FALSE], recipe)
+    model <- cart_fit(x_train, as.integer(cohort$delta_cat[split$train]), selected)
+    model_info <- list(model = model, tree_id = i, repeat_id = split$repeat_id, outer_fold = split$outer_fold)
+    models[[i]] <- model_info
+    summaries[[i]] <- cart_tree_summary(model, i, split$repeat_id, split$outer_fold)
+  }
+  tree_summaries <- do.call(rbind, summaries)
+  if (!identical(tree_summaries[, c("tree_id", "repeat_id", "outer_fold", "n_splits", "n_leaves", "max_depth", "root_variable", "no_split")],
+                 saved$tree_summaries[, c("tree_id", "repeat_id", "outer_fold", "n_splits", "n_leaves", "max_depth", "root_variable", "no_split")])) {
+    stop("As árvores reconstruídas não reproduzem os resumos estruturais salvos.", call. = FALSE)
+  }
+  models
+}
+
+cart_review_structure_outputs <- function(models, saved, output_dir) {
+  dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+  tree_summaries <- do.call(rbind, lapply(models, function(x) cart_tree_summary(x$model, x$tree_id, x$repeat_id, x$outer_fold)))
+  structures <- cart_structure_tables(models)
+  n_trees <- nrow(tree_summaries)
+  variable_summary <- cart_variable_frequency_summary(structures$primary_splits, n_trees)
+  cutpoint_summary <- cart_cutpoint_summary(structures$cutpoints, n_trees)
+  categorical_summary <- cart_categorical_split_summary(structures$primary_splits, n_trees)
+  node_summary <- cart_node_size_summary(structures$node_sizes)
+  stability <- cart_stability_summary(tree_summaries, structures$primary_splits)
+  calibration_validity <- cart_calibration_validity(saved$metrics, saved$predictions)
+  outputs <- list(
+    cart_tree_summaries = tree_summaries,
+    cart_primary_splits = structures$primary_splits,
+    cart_competing_splits = structures$competitor_splits,
+    cart_surrogate_splits = structures$surrogate_splits,
+    cart_leaf_rules = structures$leaf_rules,
+    cart_variable_frequency_summary = variable_summary,
+    cart_cutpoint_summary = cutpoint_summary,
+    cart_categorical_split_summary = categorical_summary,
+    cart_node_size_summary = node_summary,
+    cart_stability_summary = stability$summary,
+    cart_root_frequency = stability$root_frequency,
+    cart_calibration_validity_summary = calibration_validity$summary,
+    cart_calibration_invalid_folds = calibration_validity$invalid
+  )
+  for (name in names(outputs)) {
+    utils::write.csv(outputs[[name]], file.path(output_dir, paste0(name, ".csv")), row.names = FALSE, na = "")
+  }
+  list(structures = structures, outputs = outputs)
+}
+
+cart_variable_frequency_summary <- function(variable_frequency, n_trees = NULL) {
+  if (is.null(n_trees)) n_trees <- length(unique(variable_frequency$tree_id))
+  if (!nrow(variable_frequency)) return(data.frame(
+    scope = character(), variable = character(), n_primary_splits = integer(),
+    trees_with_variable = integer(), denominator_trees = integer(), relative_frequency = numeric(),
+    stringsAsFactors = FALSE))
+  scopes <- list(
+    root = variable_frequency$depth == 0L,
+    depths_1_2 = variable_frequency$depth %in% 1:2,
+    deeper_than_2 = variable_frequency$depth > 2L,
+    all_levels = rep(TRUE, nrow(variable_frequency))
+  )
+  out <- do.call(rbind, lapply(names(scopes), function(scope_name) {
+    x <- variable_frequency[scopes[[scope_name]], , drop = FALSE]
+    if (!nrow(x)) return(NULL)
+    variables <- names(sort(table(x$variable), decreasing = TRUE))
+    data.frame(
+      scope = scope_name, variable = variables,
+      n_primary_splits = as.integer(table(x$variable)[variables]),
+      trees_with_variable = vapply(variables, function(variable) length(unique(x$tree_id[x$variable == variable])), integer(1)),
+      denominator_trees = n_trees,
+      relative_frequency = vapply(variables, function(variable) length(unique(x$tree_id[x$variable == variable])), integer(1)) / n_trees,
+      stringsAsFactors = FALSE
+    )
   }))
   row.names(out) <- NULL
   out
@@ -475,17 +730,24 @@ cart_variable_frequency_summary <- function(variable_frequency) {
 
 cart_cutpoint_summary <- function(cutpoints, n_trees) {
   if (!nrow(cutpoints)) {
-    return(data.frame(variable = character(), n_splits = integer(), n_trees = integer(),
-                      relative_trees = numeric(), min = numeric(), median = numeric(),
+    return(data.frame(scope = character(), variable = character(), n_splits = integer(), trees_with_cutpoint = integer(),
+                      denominator_trees = integer(), relative_trees = numeric(), min = numeric(), median = numeric(),
                       q25 = numeric(), q75 = numeric(), max = numeric(), stringsAsFactors = FALSE))
   }
-  do.call(rbind, lapply(split(cutpoints, cutpoints$variable), function(x) {
-    data.frame(variable = x$variable[[1]], n_splits = nrow(x),
-               n_trees = length(unique(x$tree_id)), relative_trees = length(unique(x$tree_id)) / n_trees,
-               min = min(x$cutpoint), median = stats::median(x$cutpoint),
-               q25 = stats::quantile(x$cutpoint, .25, names = FALSE),
-               q75 = stats::quantile(x$cutpoint, .75, names = FALSE), max = max(x$cutpoint),
-               stringsAsFactors = FALSE)
+  scopes <- list(root = cutpoints$depth == 0L, non_root = cutpoints$depth > 0L,
+                 all_levels = rep(TRUE, nrow(cutpoints)))
+  do.call(rbind, lapply(names(scopes), function(scope_name) {
+    scoped <- cutpoints[scopes[[scope_name]], , drop = FALSE]
+    if (!nrow(scoped)) return(NULL)
+    do.call(rbind, lapply(split(scoped, scoped$variable), function(x) data.frame(
+      scope = scope_name, variable = x$variable[[1]], n_splits = nrow(x),
+      trees_with_cutpoint = length(unique(x$tree_id)), denominator_trees = n_trees,
+      relative_trees = length(unique(x$tree_id)) / n_trees,
+      min = min(x$cutpoint), median = stats::median(x$cutpoint),
+      q25 = stats::quantile(x$cutpoint, .25, names = FALSE),
+      q75 = stats::quantile(x$cutpoint, .75, names = FALSE), max = max(x$cutpoint),
+      stringsAsFactors = FALSE
+    )))
   }))
 }
 
@@ -568,7 +830,7 @@ run_cart_nested_analysis <- function(
   selected_table <- do.call(rbind, selected_rows)
   tree_summaries <- do.call(rbind, tree_info)
   structures <- cart_structure_tables(fitted_models)
-  variable_frequency_summary <- cart_variable_frequency_summary(structures$variable_frequency)
+  variable_frequency_summary <- cart_variable_frequency_summary(structures$variable_frequency, nrow(tree_summaries))
   cutpoint_summary <- cart_cutpoint_summary(structures$cutpoints, nrow(tree_summaries))
   node_size_summary <- cart_node_size_summary(structures$node_sizes)
   stability <- cart_stability_summary(tree_summaries, structures$variable_frequency)

@@ -1,0 +1,26 @@
+Task 06 — reconstrução estrutural CART
+executed_at: 2026-09-08 00:00:23 -03
+r_version: R version 4.6.1 (2026-06-24)
+rpart_version: 4.1.27
+baseline_object_sha256: 498ca47391ca4c5530bbf0c618577458d940c42c0ccffa6dcb7602c4fab0029d
+source_sha256: f601adb42c299c2b0572f3e50ff26550b63a2f24dd7173f244a442b498965b71
+method: refit outer trees from saved indices and selected hyperparameters; no retuning
+trees: 50
+primary_splits: 313
+internal_nodes: 313
+competitor_splits: 1252
+surrogate_splits: 898
+categorical_primary_splits: 92
+leaf_rules: 363
+illustrative_primary_splits: 6
+illustrative_leaf_rules: 7
+calibration_intercept_valid_folds: 49
+calibration_intercept_invalid_folds: 1
+primary_equals_internal_nodes: TRUE
+all_primary_roles: TRUE
+frequency_in_unit_interval: TRUE
+explicit_scopes: TRUE
+calibration_intercepts_valid_49: TRUE
+source_rows_preserved: TRUE
+cohort_rows_preserved: TRUE
+events_preserved: TRUE

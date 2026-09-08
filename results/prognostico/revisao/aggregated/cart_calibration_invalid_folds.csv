@@ -1,0 +1,2 @@
+"repeat_id","outer_fold","metric","reason","n_predictions","n_at_boundary","min_predicted","max_predicted"
+3,1,"calibration_intercept","original glm offset fit returned an implausible coefficient (>100) after boundary predictions were clipped; numerical fit failure, not evidence that a finite intercept does not exist",62,9,0,0.81981981981982

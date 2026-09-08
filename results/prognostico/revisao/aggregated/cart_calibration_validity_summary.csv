@@ -1,0 +1,3 @@
+"metric","total_outer_folds","valid_folds","invalid_folds","denominator_summary","treatment"
+"calibration_intercept",50,49,1,49,"invalid excluded only from this metric summary"
+"calibration_slope",50,50,0,50,"invalid excluded only from this metric summary"

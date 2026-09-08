@@ -4,7 +4,7 @@
 - **Complexidade:** Alta.
 - **Justificativa do modelo:** A interpretação depende de distinguir cortes primários, concorrentes e substitutos e de contar corretamente nós e árvores.
 - **Dependências:** [Task 01](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/01_inventario_e_rastreabilidade.md), [Task 03](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/03_bibliografia_e_fontes.md)
-- **Status:** Pendente.
+- **Status:** Concluída em 2026-09-08.
 
 ## Contexto e regras
 
@@ -57,4 +57,3 @@ Registre comandos, arquivos produzidos/alterados, verificações e limitações 
 ## Encerramento e passagem
 
 Atualize o status deste arquivo somente após verificar os critérios. Informe o que mudou, como foi verificado, quais saídas devem ser consumidas e se há dependências afetadas. Registre pendências sem inventar informação ou tratar uma limitação não resolvida como aprovação. Não execute automaticamente a próxima task.
-

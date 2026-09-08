@@ -1,0 +1,31 @@
+"scope","variable","left_levels","right_levels","n_splits","trees_with_rule","denominator_trees","relative_trees"
+"all_levels","risser","0 | 2 | 3 | 4","1",30,30,50,0.6
+"non_root","risser","0 | 2 | 3 | 4","1",30,30,50,0.6
+"all_levels","risser","0","1 | 2 | 3 | 4",1,1,50,0.02
+"non_root","risser","0","1 | 2 | 3 | 4",1,1,50,0.02
+"all_levels","risser","0 | 3","1 | 2 | 4",11,11,50,0.22
+"non_root","risser","0 | 3","1 | 2 | 4",11,11,50,0.22
+"all_levels","lenke","3 | 6","1 | 2 | 4 | 5",1,1,50,0.02
+"non_root","lenke","3 | 6","1 | 2 | 4 | 5",1,1,50,0.02
+"all_levels","lenke","3 | 4 | 6","1 | 2 | 5",3,3,50,0.06
+"non_root","lenke","3 | 4 | 6","1 | 2 | 5",3,3,50,0.06
+"all_levels","lenke","3 | 4","1 | 2 | 5 | 6",1,1,50,0.02
+"non_root","lenke","3 | 4","1 | 2 | 5 | 6",1,1,50,0.02
+"all_levels","lenke","2 | 4 | 5 | 6","1 | 3",1,1,50,0.02
+"non_root","lenke","2 | 4 | 5 | 6","1 | 3",1,1,50,0.02
+"all_levels","lenke","4 | 5","1 | 3 | 6",1,1,50,0.02
+"non_root","lenke","4 | 5","1 | 3 | 6",1,1,50,0.02
+"all_levels","risser","0 | 2 | 3","1 | 4",5,5,50,0.1
+"non_root","risser","0 | 2 | 3","1 | 4",5,5,50,0.1
+"all_levels","lenke","2 | 3 | 4 | 6","1 | 5",17,17,50,0.34
+"non_root","lenke","2 | 3 | 4 | 6","1 | 5",17,17,50,0.34
+"all_levels","lenke","6","2 | 4 | 5",1,1,50,0.02
+"non_root","lenke","6","2 | 4 | 5",1,1,50,0.02
+"all_levels","escoliometro_maior_10_graus","normal | toracica | toracica_lombar","lombar",1,1,50,0.02
+"non_root","escoliometro_maior_10_graus","normal | toracica | toracica_lombar","lombar",1,1,50,0.02
+"all_levels","sexo","feminino","masculino",6,6,50,0.12
+"non_root","sexo","feminino","masculino",6,6,50,0.12
+"all_levels","escoliometro_maior_10_graus","toracica | toracica_lombar","normal | lombar",1,1,50,0.02
+"non_root","escoliometro_maior_10_graus","toracica | toracica_lombar","normal | lombar",1,1,50,0.02
+"all_levels","escoliometro_maior_10_graus","toracica_lombar","normal | toracica | lombar",12,12,50,0.24
+"non_root","escoliometro_maior_10_graus","toracica_lombar","normal | toracica | lombar",12,12,50,0.24
