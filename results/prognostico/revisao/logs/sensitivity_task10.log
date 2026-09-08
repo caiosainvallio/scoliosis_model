@@ -1,0 +1,18 @@
+Task 10 — sensitivities, Cobb baseline and simple comparators
+execution_datetime: 2026-09-08 18:30:50 -03
+source_sha256: f601adb42c299c2b0572f3e50ff26550b63a2f24dd7173f244a442b498965b71
+cohort_events_nonevents: 615 317 298
+resampling: 5 repeats x 10 stratified folds; seed 20260909; same as Task 09
+preprocessing_and_all_estimation: training fold only; factor coding fixed a priori
+evaluation: complete common held-out folds; 615 predictions per repeat
+cobb_equivalence_max_prediction_difference: 1.39444e-13
+cobb_equivalence_max_coefficient_difference: 1.585398e-13
+baseline_comparisons: primary 1.05102; cobb_baseline_augmented 1.11958; primary 0.0892898
+influence_logistic_folds_with_extreme_probability_warning: 11 of 50
+repeat_metric_rows_with_warning: 15
+repeat_metric_rows_unavailable: 0
+main_cohort_changed: FALSE
+external_validation: not performed
+anatomical_limit: six-month maximum-curve region unavailable
+elapsed_seconds: 2.190803
+R: R version 4.6.1 (2026-06-24)

@@ -1,0 +1,2 @@
+"formulation_a","formulation_b","folds","same_design_all_folds","maximum_prediction_absolute_difference","maximum_coefficient_absolute_difference_after_conversion","numerical_tolerance","equivalent_within_tolerance","target_scale_for_comparison"
+"delta ~ Cobb_basal + X","Cobb_final ~ Cobb_basal + X; prediction reconverted to delta",50,TRUE,0.00000000000013944401189292,0.000000000000158539847916472,0.0000000001,TRUE,"degrees_delta"

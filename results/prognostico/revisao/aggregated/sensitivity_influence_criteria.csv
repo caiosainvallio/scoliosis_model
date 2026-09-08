@@ -1,0 +1,7 @@
+"model","criterion","rule","threshold","threshold_definition","n","parameters_including_intercept"
+"linear","distancia_de_cook","Cook > 4 / n",0.00650406504065041,"4 / 615",615,20
+"linear","leverage","leverage > 2 * p / n",0.0650406504065041,"2 * 20 / 615",615,20
+"linear","residuo_padronizado","abs(residuo padronizado) > 2",2,"|residuo| > 2",615,20
+"logistic","distancia_de_cook","Cook > 4 / n",0.00650406504065041,"4 / 615",615,20
+"logistic","leverage","leverage > 2 * p / n",0.0650406504065041,"2 * 20 / 615",615,20
+"logistic","residuo_padronizado","abs(residuo padronizado) > 2",2,"|residuo| > 2",615,20

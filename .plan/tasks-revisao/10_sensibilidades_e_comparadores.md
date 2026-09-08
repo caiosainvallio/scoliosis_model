@@ -4,7 +4,7 @@
 - **Complexidade:** Alta.
 - **Justificativa do modelo:** Requer comparações estatísticas justas e interpretação de cenários de exclusão e reparametrização do desfecho.
 - **Dependências:** [Task 02](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/02_definicoes_clinicas_e_racional.md), [Task 03](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/03_bibliografia_e_fontes.md), [Task 08](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/08_pressupostos_e_inferencia_robusta.md), [Task 09](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/09_validacao_incerteza_e_shrinkage.md)
-- **Status:** Pendente.
+- **Status:** Concluída em 2026-09-08.
 
 ## Contexto e regras
 

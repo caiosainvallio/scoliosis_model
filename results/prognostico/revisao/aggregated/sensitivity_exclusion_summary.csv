@@ -1,0 +1,6 @@
+"scenario","exclusion_basis","n_excluded"
+"principal","nenhuma exclusao",0
+"influential_linear","qualquer criterio no modelo linear",55
+"influential_logistic","qualquer criterio no modelo logistico",99
+"influential_union","uniao dos dois modelos",133
+"hypercorrection","IDs de hipercorrecao pre-especificados",3
