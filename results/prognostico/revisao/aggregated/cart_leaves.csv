@@ -1,0 +1,8 @@
+"folha","caminho_completo","n","eventos_melhora","proporcao_aparente_melhora","grupo_pequeno_n_menor_30"
+"Folha 4","Correção pelo colete (%) < 49.418604651162795 E Correção pelo colete (%) < 29.448961156278202",65,2,0.0307692307692308,"não"
+"Folha 40","Correção pelo colete (%) < 49.418604651162795 E Correção pelo colete (%) >= 29.448961156278202 E Risser in {0 | 2 | 3 | 4} E Classificação de Lenke in {2 | 3 | 4 | 6} E Sexo in {feminino}",195,46,0.235897435897436,"não"
+"Folha 41","Correção pelo colete (%) < 49.418604651162795 E Correção pelo colete (%) >= 29.448961156278202 E Risser in {0 | 2 | 3 | 4} E Classificação de Lenke in {2 | 3 | 4 | 6} E Sexo in {masculino}",25,16,0.64,"sim"
+"Folha 42","Correção pelo colete (%) < 49.418604651162795 E Correção pelo colete (%) >= 29.448961156278202 E Risser in {0 | 2 | 3 | 4} E Classificação de Lenke in {1 | 5} E Lordose lombar (°) < 46.5",13,3,0.230769230769231,"sim"
+"Folha 43","Correção pelo colete (%) < 49.418604651162795 E Correção pelo colete (%) >= 29.448961156278202 E Risser in {0 | 2 | 3 | 4} E Classificação de Lenke in {1 | 5} E Lordose lombar (°) >= 46.5",30,21,0.7,"não"
+"Folha 11","Correção pelo colete (%) < 49.418604651162795 E Correção pelo colete (%) >= 29.448961156278202 E Risser in {1}",44,28,0.636363636363636,"não"
+"Folha 3","Correção pelo colete (%) >= 49.418604651162795",243,201,0.82716049382716,"não"
