@@ -1,0 +1,11 @@
+"interaction","required_parents","parents_present"
+"correcao_colete_x_flexibilidade__rigido","correcao_colete__linear;flexibilidade",TRUE
+"correcao_colete_x_lenke__2","correcao_colete__linear;lenke",TRUE
+"correcao_colete_x_lenke__3","correcao_colete__linear;lenke",TRUE
+"correcao_colete_x_lenke__4","correcao_colete__linear;lenke",TRUE
+"correcao_colete_x_lenke__5","correcao_colete__linear;lenke",TRUE
+"correcao_colete_x_lenke__6","correcao_colete__linear;lenke",TRUE
+"idade_x_risser__1","idade__linear;risser",TRUE
+"idade_x_risser__2","idade__linear;risser",TRUE
+"idade_x_risser__3","idade__linear;risser",TRUE
+"idade_x_risser__4","idade__linear;risser",TRUE

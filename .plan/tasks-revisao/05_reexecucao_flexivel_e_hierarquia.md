@@ -4,7 +4,7 @@
 - **Complexidade:** Alta.
 - **Justificativa do modelo:** Coordena uma análise aninhada extensa, a avaliação de seleção e comparações com incerteza e interpretações limitadas.
 - **Dependências:** [Task 02](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/02_definicoes_clinicas_e_racional.md), [Task 03](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/03_bibliografia_e_fontes.md), [Task 04](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/04_correcao_solver_flexivel.md)
-- **Status:** Pendente.
+- **Status:** Concluída em 2026-09-07.
 
 ## Contexto e regras
 

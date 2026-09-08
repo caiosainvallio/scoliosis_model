@@ -1,0 +1,4 @@
+"check","approved","detail"
+"same_number_of_prediction_rows",TRUE,"6150/6150"
+"same_test_observations_and_keys",TRUE,"paired_rows 6150"
+"same_observed_outcomes",TRUE,"Flexible and frozen predictions use the identical held-out outcome rows."

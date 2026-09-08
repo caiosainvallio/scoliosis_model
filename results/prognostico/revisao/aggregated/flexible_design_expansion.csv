@@ -1,0 +1,9 @@
+"family","component","n_columns","total_candidate_columns"
+"continuous","linear",6,48
+"continuous","spline",18,48
+"continuous","dummy",14,48
+"continuous","interaction",10,48
+"logistic","linear",6,48
+"logistic","spline",18,48
+"logistic","dummy",14,48
+"logistic","interaction",10,48

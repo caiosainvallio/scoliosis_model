@@ -1,0 +1,7 @@
+"family","stage","n_evaluations","n_failed","max_kkt","failure_reasons"
+"continuous","inner_tuning_configuration_folds",5000,160,,"kkt_not_met"
+"logistic","inner_tuning_configuration_folds",5000,0,,"none"
+"continuous","selected_outer_fit",50,0,0.0000000099866550515304,"none"
+"logistic","selected_outer_fit",50,0,0.000000000186859021311658,"none"
+"continuous","global_illustrative_fit",1,0,0.00000000733450817788639,"none"
+"logistic","global_illustrative_fit",1,0,0.000000000107447759023493,"none"

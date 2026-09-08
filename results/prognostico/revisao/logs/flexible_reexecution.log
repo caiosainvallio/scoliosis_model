@@ -1,0 +1,16 @@
+Task 05 - reexecucao flexivel corrigida
+timestamp 2026-09-07 23:42:07 -03
+baseline_object /Users/caiosainvallio/consultoria/scoliosis_model/results/prognostico/reduced_objects/flexible_nested_internal.rds
+same_resampling_indices_before_after TRUE
+outer_folds 10
+repeats 5
+inner_folds 5
+external_selected_fit_failures 0
+maximum_outer_kkt 9.986655e-09
+preprocessing_audit_passed TRUE
+paired_flexible_frozen_audit_passed TRUE
+resampling_audit_passed TRUE
+candidate_hierarchy_passed TRUE
+active_interactions 1000
+strong_hierarchy_violations 0
+uncertainty_note five repeats reuse the same participants; between-repeat SD is not a confidence interval

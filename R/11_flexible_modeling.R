@@ -613,6 +613,27 @@ flexible_metric_distribution <- function(metrics) {
   }))
 }
 
+flexible_metrics_all_scopes <- function(predictions) {
+  fold <- do.call(rbind, lapply(
+    split(predictions, list(predictions$family, predictions$repeat_id,
+                            predictions$outer_fold), drop = TRUE),
+    function(x) flexible_metric_row(
+      x$observed, x$prediction, x$family[[1]], x$repeat_id[[1]],
+      x$outer_fold[[1]], "outer_fold")
+  ))
+  repeat_pooled <- do.call(rbind, lapply(
+    split(predictions, list(predictions$family, predictions$repeat_id), drop = TRUE),
+    function(x) flexible_metric_row(
+      x$observed, x$prediction, x$family[[1]], x$repeat_id[[1]],
+      NA_integer_, "repeat_pooled")
+  ))
+  pooled <- do.call(rbind, lapply(split(predictions, predictions$family), function(x) {
+    flexible_metric_row(x$observed, x$prediction, x$family[[1]],
+                        NA_integer_, NA_integer_, "pooled_external_repeated")
+  }))
+  rbind(fold, repeat_pooled, pooled)
+}
+
 flexible_tuning_one <- function(data, y, inner_splits, family, grid) {
   grid <- flexible_validate_grid(grid)
   rows <- vector("list", nrow(grid) * length(inner_splits)); counter <- 0L
@@ -659,11 +680,16 @@ flexible_tuning_one <- function(data, y, inner_splits, family, grid) {
   summary <- do.call(rbind, lapply(seq_len(nrow(grid)), function(i) {
     take <- fold_results$config_id == grid$config_id[[i]]
     value <- fold_results$metric[take]
+    failure_reasons <- unique(fold_results$failure_reason[
+      take & !fold_results$converged & !is.na(fold_results$failure_reason)])
     data.frame(config_id = grid$config_id[[i]], alpha = grid$alpha[[i]],
                lambda_fraction = grid$lambda_fraction[[i]],
                mean_metric = mean(value, na.rm = TRUE), sd_metric = stats::sd(value, na.rm = TRUE),
                se_metric = stats::sd(value, na.rm = TRUE) / sqrt(sum(is.finite(value))),
                n_valid = sum(is.finite(value)), n_converged = sum(fold_results$converged[take]),
+               failure_reasons = if (length(failure_reasons)) {
+                 paste(sort(failure_reasons), collapse = ";")
+               } else "none",
                stringsAsFactors = FALSE)
   }))
   summary$sd_metric[!is.finite(summary$sd_metric)] <- 0
@@ -822,10 +848,219 @@ flexible_compare_frozen <- function(flexible_metrics, frozen_metrics) {
       data.frame(family = merged$family[[i]], repeat_id = merged$repeat_id[[i]],
                  outer_fold = merged$outer_fold[[i]], metric = metric,
                  flexible = flexible_value, frozen = frozen_value,
+                 difference_flexible_minus_frozen = flexible_value - frozen_value,
                  absolute_difference = abs(flexible_value - frozen_value),
                  stringsAsFactors = FALSE)
     }))
   }))
+}
+
+flexible_comparison_summary <- function(flexible_metrics, reference_metrics,
+                                        reference_label = "frozen") {
+  keys <- c("family", "scope", "repeat_id")
+  left <- flexible_metrics[flexible_metrics$scope == "repeat_pooled", ]
+  right <- reference_metrics[reference_metrics$scope == "repeat_pooled", ]
+  merged <- merge(left, right, by = keys, suffixes = c("_flexible", "_reference"),
+                  sort = FALSE)
+  metric_names <- c("r2", "rmse", "mae", "auc", "brier_score", "log_loss",
+                    "calibration_intercept", "calibration_slope")
+  rows <- lapply(split(merged, merged$family), function(x) {
+    do.call(rbind, lapply(metric_names, function(metric) {
+      flexible_value <- x[[paste0(metric, "_flexible")]]
+      reference_value <- x[[paste0(metric, "_reference")]]
+      difference <- flexible_value - reference_value
+      valid <- is.finite(difference)
+      summarize <- function(value, fun) if (any(valid)) fun(value[valid]) else NA_real_
+      data.frame(
+        family = x$family[[1]], metric = metric, reference = reference_label,
+        n_repeats = sum(valid), mean_flexible = summarize(flexible_value, mean),
+        mean_reference = summarize(reference_value, mean),
+        mean_difference_flexible_minus_reference = summarize(difference, mean),
+        sd_difference_between_repeats = summarize(difference, stats::sd),
+        median_difference = summarize(difference, stats::median),
+        min_difference = summarize(difference, min),
+        max_difference = summarize(difference, max),
+        dependence_note = "As 5 repeticoes reutilizam os mesmos participantes; o DP entre repeticoes nao e IC.",
+        stringsAsFactors = FALSE
+      )
+    }))
+  })
+  result <- do.call(rbind, rows)
+  row.names(result) <- NULL
+  result
+}
+
+flexible_active_hierarchy_audit <- function(coefficients) {
+  interactions <- coefficients[coefficients$interaction, , drop = FALSE]
+  rows <- lapply(seq_len(nrow(interactions)), function(i) {
+    interaction <- interactions[i, , drop = FALSE]
+    base <- sub("__.*$", "", interaction$feature)
+    level <- sub("^[^_].*__", "", interaction$feature)
+    parts <- strsplit(base, "_x_", fixed = TRUE)[[1]]
+    left_parent <- paste0(parts[[1]], "__linear")
+    right_parent <- paste0(parts[[2]], "__dummy_", level)
+    same_fit <- coefficients$family == interaction$family &
+      coefficients$repeat_id == interaction$repeat_id &
+      coefficients$outer_fold == interaction$outer_fold
+    left_value <- coefficients$coefficient[same_fit & coefficients$feature == left_parent]
+    right_value <- coefficients$coefficient[same_fit & coefficients$feature == right_parent]
+    interaction_active <- abs(interaction$coefficient) > FLEXIBLE_ZERO_TOLERANCE
+    left_active <- length(left_value) == 1L && abs(left_value) > FLEXIBLE_ZERO_TOLERANCE
+    right_active <- length(right_value) == 1L && abs(right_value) > FLEXIBLE_ZERO_TOLERANCE
+    data.frame(
+      family = interaction$family, repeat_id = interaction$repeat_id,
+      outer_fold = interaction$outer_fold, interaction = interaction$feature,
+      interaction_active = interaction_active, left_parent = left_parent,
+      left_parent_active = left_active, right_parent = right_parent,
+      right_parent_active = right_active,
+      strong_hierarchy_satisfied = !interaction_active || (left_active && right_active),
+      formal_hierarchy_constraint = FALSE, stringsAsFactors = FALSE
+    )
+  })
+  do.call(rbind, rows)
+}
+
+flexible_spline_specification <- function(global_fits) {
+  do.call(rbind, lapply(names(global_fits), function(family) {
+    recipe <- global_fits[[family]]$recipe
+    do.call(rbind, lapply(names(recipe$splines), function(variable) {
+      specification <- recipe$splines[[variable]]
+      data.frame(
+        family = family, variable = variable, basis = "natural_spline",
+        degrees_of_freedom = specification$df,
+        n_internal_knots = length(specification$knots),
+        internal_knots = paste(format(specification$knots, digits = 10), collapse = ";"),
+        lower_boundary = specification$boundary[[1]],
+        upper_boundary = specification$boundary[[2]],
+        learned_on = "full_cohort_global_illustrative_fit_after_external_evaluation",
+        stringsAsFactors = FALSE
+      )
+    }))
+  }))
+}
+
+flexible_design_expansion <- function(global_fits) {
+  do.call(rbind, lapply(names(global_fits), function(family) {
+    metadata <- flexible_feature_metadata(global_fits[[family]]$recipe$feature_names)
+    counts <- table(factor(metadata$component,
+                           levels = c("linear", "spline", "dummy", "interaction")))
+    data.frame(
+      family = family, component = names(counts), n_columns = as.integer(counts),
+      total_candidate_columns = nrow(metadata), stringsAsFactors = FALSE
+    )
+  }))
+}
+
+flexible_resampling_audit <- function(indices, n) {
+  rows <- do.call(rbind, lapply(indices, function(split) {
+    inner_disjoint <- vapply(split$inner, function(inner_split) {
+      length(intersect(inner_split$train, inner_split$validation)) == 0L
+    }, logical(1))
+    inner_complete <- vapply(split$inner, function(inner_split) {
+      setequal(c(inner_split$train, inner_split$validation), split$train)
+    }, logical(1))
+    data.frame(
+      repeat_id = split$repeat_id, outer_fold = split$outer_fold,
+      n_train = length(split$train), n_test = length(split$test),
+      outer_disjoint = length(intersect(split$train, split$test)) == 0L,
+      outer_complete = setequal(c(split$train, split$test), seq_len(n)),
+      n_inner_folds = length(split$inner),
+      all_inner_disjoint = all(inner_disjoint),
+      all_inner_complete_within_outer_train = all(inner_complete),
+      stringsAsFactors = FALSE
+    )
+  }))
+  coverage <- table(factor(unlist(lapply(indices, `[[`, "test")), levels = seq_len(n)))
+  rows$minimum_test_coverage <- min(coverage)
+  rows$maximum_test_coverage <- max(coverage)
+  rows
+}
+
+flexible_paired_prediction_audit <- function(flexible_predictions, frozen_predictions) {
+  keys <- c("participant_index", "family", "repeat_id", "outer_fold")
+  paired <- merge(flexible_predictions, frozen_predictions, by = keys,
+                  suffixes = c("_flexible", "_frozen"), sort = FALSE)
+  data.frame(
+    check = c("same_number_of_prediction_rows", "same_test_observations_and_keys",
+              "same_observed_outcomes"),
+    approved = c(
+      nrow(flexible_predictions) == nrow(frozen_predictions),
+      nrow(paired) == nrow(flexible_predictions),
+      nrow(paired) == nrow(flexible_predictions) &&
+        isTRUE(all.equal(paired$observed_flexible, paired$observed_frozen))
+    ),
+    detail = c(
+      paste(nrow(flexible_predictions), nrow(frozen_predictions), sep = "/"),
+      paste("paired_rows", nrow(paired)),
+      "Flexible and frozen predictions use the identical held-out outcome rows."
+    ), stringsAsFactors = FALSE
+  )
+}
+
+flexible_failure_audit <- function(selected, tuning, global_fits) {
+  inner <- do.call(rbind, lapply(split(tuning, tuning$family), function(x) {
+    reasons <- unique(x$failure_reasons[x$failure_reasons != "none"])
+    data.frame(
+      family = x$family[[1]], stage = "inner_tuning_configuration_folds",
+      n_evaluations = sum(x$n_converged + x$n_failed),
+      n_failed = sum(x$n_failed), max_kkt = NA_real_,
+      failure_reasons = if (length(reasons)) paste(sort(reasons), collapse = ";") else "none",
+      stringsAsFactors = FALSE
+    )
+  }))
+  outer <- do.call(rbind, lapply(split(selected, selected$family), function(x) {
+    reasons <- unique(x$failure_reason[!is.na(x$failure_reason) & nzchar(x$failure_reason)])
+    data.frame(
+      family = x$family[[1]], stage = "selected_outer_fit",
+      n_evaluations = nrow(x), n_failed = sum(!x$converged),
+      max_kkt = max(x$kkt_max, na.rm = TRUE),
+      failure_reasons = if (length(reasons)) paste(reasons, collapse = ";") else "none",
+      stringsAsFactors = FALSE
+    )
+  }))
+  global <- do.call(rbind, lapply(names(global_fits), function(family) {
+    model <- global_fits[[family]]$model
+    data.frame(
+      family = family, stage = "global_illustrative_fit", n_evaluations = 1L,
+      n_failed = as.integer(!model$converged), max_kkt = model$kkt_max,
+      failure_reasons = if (isTRUE(model$converged)) "none" else model$failure_reason,
+      stringsAsFactors = FALSE
+    )
+  }))
+  rbind(inner, outer, global)
+}
+
+flexible_compare_solver_versions <- function(previous, corrected) {
+  if (!flexible_indices_content_equal(previous$indices, corrected$indices)) {
+    stop("A comparação antes/depois requer índices de reamostragem idênticos.", call. = FALSE)
+  }
+  keys <- c("participant_index", "family", "repeat_id", "outer_fold")
+  paired <- merge(previous$predictions, corrected$predictions, by = keys,
+                  suffixes = c("_previous", "_corrected"), sort = FALSE)
+  if (nrow(paired) != nrow(corrected$predictions) ||
+      !isTRUE(all.equal(paired$observed_previous, paired$observed_corrected))) {
+    stop("As previsões antes/depois não usam as mesmas observações externas.", call. = FALSE)
+  }
+  previous_metrics <- flexible_metrics_all_scopes(transform(
+    paired, observed = observed_previous, prediction = prediction_previous))
+  corrected_metrics <- flexible_metrics_all_scopes(transform(
+    paired, observed = observed_corrected, prediction = prediction_corrected))
+  prediction_change <- do.call(rbind, lapply(split(paired, paired$family), function(x) {
+    difference <- x$prediction_corrected - x$prediction_previous
+    data.frame(
+      family = x$family[[1]], n_predictions = length(difference),
+      mean_change = mean(difference), mean_absolute_change = mean(abs(difference)),
+      median_absolute_change = stats::median(abs(difference)),
+      maximum_absolute_change = max(abs(difference)), stringsAsFactors = FALSE
+    )
+  }))
+  list(
+    same_indices = TRUE, paired_predictions = paired,
+    previous_metrics = previous_metrics, corrected_metrics = corrected_metrics,
+    metric_summary = flexible_comparison_summary(
+      corrected_metrics, previous_metrics, "previous_solver"),
+    prediction_change = prediction_change
+  )
 }
 
 flexible_hierarchy_audit <- function(feature_names) {
@@ -940,7 +1175,8 @@ run_flexible_analysis <- function(
       )
       frozen <- flexible_fit_frozen_external(cohort, split$train, split$test, family)
       frozen_rows[[length(frozen_rows) + 1L]] <- data.frame(
-        family = family, repeat_id = split$repeat_id, outer_fold = split$outer_fold,
+        participant_index = split$test, family = family,
+        repeat_id = split$repeat_id, outer_fold = split$outer_fold,
         observed = frozen$observed, prediction = frozen$prediction, stringsAsFactors = FALSE
       )
       counter <- counter + 1L
@@ -951,23 +1187,17 @@ run_flexible_analysis <- function(
   tuning_table <- do.call(rbind, tuning_rows)
   coefficients <- do.call(rbind, coefficient_rows)
   frozen_predictions <- do.call(rbind, frozen_rows)
-  metrics <- do.call(rbind, lapply(split(predictions, list(predictions$family, predictions$repeat_id, predictions$outer_fold), drop = TRUE), function(x) {
-    flexible_metric_row(x$observed, x$prediction, x$family[[1]], x$repeat_id[[1]], x$outer_fold[[1]], "outer_fold")
-  }))
-  metrics <- rbind(metrics, do.call(rbind, lapply(split(predictions, list(predictions$family, predictions$repeat_id), drop = TRUE), function(x) {
-    flexible_metric_row(x$observed, x$prediction, x$family[[1]], x$repeat_id[[1]], NA_integer_, "repeat_pooled")
-  })))
-  metrics <- rbind(metrics, do.call(rbind, lapply(split(predictions, predictions$family), function(x) {
-    flexible_metric_row(x$observed, x$prediction, x$family[[1]], NA_integer_, NA_integer_, "pooled_external_repeated")
-  })))
-  frozen_metrics <- do.call(rbind, lapply(split(frozen_predictions, list(frozen_predictions$family, frozen_predictions$repeat_id, frozen_predictions$outer_fold), drop = TRUE), function(x) {
-    flexible_metric_row(x$observed, x$prediction, x$family[[1]], x$repeat_id[[1]], x$outer_fold[[1]], "outer_fold")
-  }))
+  metrics <- flexible_metrics_all_scopes(predictions)
+  frozen_metrics <- flexible_metrics_all_scopes(frozen_predictions)
   frozen_metrics$family <- as.character(frozen_metrics$family)
   stability <- flexible_prediction_stability(predictions)
   coefficient_stability <- flexible_coefficient_stability(coefficients)
   selection_frequency <- flexible_selection_tables(coefficients, length(indices))
   frozen_comparison <- flexible_compare_frozen(metrics, frozen_metrics)
+  frozen_comparison_summary <- flexible_comparison_summary(metrics, frozen_metrics, "frozen")
+  active_hierarchy <- flexible_active_hierarchy_audit(coefficients)
+  resampling_audit <- flexible_resampling_audit(indices, nrow(cohort))
+  paired_prediction_audit <- flexible_paired_prediction_audit(predictions, frozen_predictions)
 
   # Só depois da avaliação externa: tuning global e ajuste ilustrativo em toda a coorte.
   global_tuning <- list()
@@ -982,6 +1212,9 @@ run_flexible_analysis <- function(
     global_fits[[family]] <- flexible_fit_selected(cohort, y, family, global_tuning[[family]]$selected)
   }
   hierarchy <- flexible_hierarchy_audit(global_fits$continuous$recipe$feature_names)
+  spline_specification <- flexible_spline_specification(global_fits)
+  design_expansion <- flexible_design_expansion(global_fits)
+  failure_audit <- flexible_failure_audit(selected_table, tuning_table, global_fits)
   cart_indices_path <- file.path(RESULTS_DIRS[["reduced_objects"]], "cart_nested_internal.rds")
   cart_folds_available <- file.exists(cart_indices_path) &&
     length(tryCatch(readRDS(cart_indices_path)$indices, error = function(e) list())) == length(indices)
@@ -1012,7 +1245,14 @@ run_flexible_analysis <- function(
     write(coefficient_stability, "flexible_coefficient_stability.csv")
     write(flexible_prediction_stability_summary(stability), "flexible_prediction_stability.csv")
     write(frozen_comparison, "flexible_frozen_comparison.csv")
+    write(frozen_comparison_summary, "flexible_frozen_comparison_summary.csv")
     write(hierarchy, "flexible_hierarchy_audit.csv")
+    write(active_hierarchy, "flexible_active_hierarchy_audit.csv")
+    write(spline_specification, "flexible_spline_specification.csv")
+    write(design_expansion, "flexible_design_expansion.csv")
+    write(resampling_audit, "flexible_resampling_audit.csv")
+    write(paired_prediction_audit, "flexible_paired_prediction_audit.csv")
+    write(failure_audit, "flexible_failure_audit.csv")
     write(preprocessing_audit, "flexible_preprocessing_audit.csv")
     write(flexible_coefficient_rows(global_fits$continuous, "continuous", NA_integer_, NA_integer_), "flexible_global_coefficients_continuous.csv")
     write(flexible_coefficient_rows(global_fits$logistic, "logistic", NA_integer_, NA_integer_), "flexible_global_coefficients_logistic.csv")
@@ -1021,9 +1261,16 @@ run_flexible_analysis <- function(
     saveRDS(list(indices = indices, predictions = internal_predictions, frozen_predictions = frozen_predictions,
                  selected = selected_table, tuning = tuning_table, global_tuning = global_tuning,
                  metrics = metrics, frozen_metrics = frozen_metrics, frozen_comparison = frozen_comparison,
+                 frozen_comparison_summary = frozen_comparison_summary,
                  coefficients = coefficients, coefficient_stability = coefficient_stability,
                  selection_frequency = selection_frequency, prediction_stability = stability,
-                 hierarchy = hierarchy, preprocessing_audit = preprocessing_audit,
+                 hierarchy = hierarchy, active_hierarchy = active_hierarchy,
+                 spline_specification = spline_specification,
+                 design_expansion = design_expansion,
+                 resampling_audit = resampling_audit,
+                 paired_prediction_audit = paired_prediction_audit,
+                 failure_audit = failure_audit,
+                 preprocessing_audit = preprocessing_audit,
                  global_fits = global_fits), file.path(obj, "flexible_nested_internal.rds"))
     flexible_make_figure(predictions, coefficients, fig)
     methodology <- c(
@@ -1033,7 +1280,7 @@ run_flexible_analysis <- function(
       "Foram avaliadas versões contínua e logística por elastic net, com alpha em {0, 0,25, 0,50, 0,75, 1} e 4 valores de lambda em sequência logarítmica.",
       "A avaliação externa usou 10 folds estratificados em 5 repetições e tuning interno em 5 folds.",
       "Medianas, dummies, centros, escalas e nós das splines foram aprendidos somente no treino de cada split.",
-      "As interações usaram apenas componentes lineares e foram construídas junto com seus efeitos principais, preservando a hierarquia interpretativa.",
+      "As interações usaram apenas componentes lineares. Seus efeitos principais estavam na matriz candidata, mas nenhuma restrição formal de hierarquia forte foi imposta aos coeficientes ativos.",
       "A seleção one-SE minimizou RMSE contínuo ou log loss logístico e, em equivalência, favoreceu maior lambda.",
       "O ajuste em toda a coorte foi realizado somente após a avaliação externa e serve apenas para gráficos e hipóteses.",
       "A multiplicidade de componentes, a instabilidade de seleção, a variabilidade das previsões e o caráter pós-dados exigem cautela; nenhum resultado desta análise substitui validação externa ou conclusão clínica."
@@ -1048,8 +1295,15 @@ run_flexible_analysis <- function(
   list(indices = indices, selected = selected_table, tuning = tuning_table,
        predictions = predictions, frozen_predictions = frozen_predictions,
        metrics = metrics, frozen_metrics = frozen_metrics, frozen_comparison = frozen_comparison,
+       frozen_comparison_summary = frozen_comparison_summary,
        coefficients = coefficients, coefficient_stability = coefficient_stability,
        selection_frequency = selection_frequency, prediction_stability = stability,
        global_tuning = global_tuning, global_fits = global_fits,
-       hierarchy = hierarchy, preprocessing_audit = preprocessing_audit)
+       hierarchy = hierarchy, active_hierarchy = active_hierarchy,
+       spline_specification = spline_specification,
+       design_expansion = design_expansion,
+       resampling_audit = resampling_audit,
+       paired_prediction_audit = paired_prediction_audit,
+       failure_audit = failure_audit,
+       preprocessing_audit = preprocessing_audit)
 }
