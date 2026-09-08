@@ -1,0 +1,12 @@
+# Fontes oficiais dos checklists — Tarefa 03
+
+Consulta e conferência: 2026-09-07. Este arquivo identifica versões e orienta o preenchimento futuro; **não é uma avaliação formal de relato, qualidade, risco de viés ou aplicabilidade**.
+
+| Instrumento | Fonte oficial e versão identificada | Chave BibTeX | O que a Task 13 deve registrar | Limite desta task |
+|---|---|---|---|---|
+| TRIPOD+AI | Collins et al., *BMJ* 2024;385:e078378, DOI [10.1136/bmj-2023-078378](https://doi.org/10.1136/bmj-2023-078378). O suplemento oficial do checklist é a versão **7-Feb-2024**: [PDF](https://www.bmj.com/content/suppl/2024/04/25/bmj-2023-078378.DC8/colg078378.wt1.pdf). | `collins2024_tripod_ai` | Para cada um dos 27 itens principais: localização no QMD/HTML, evidência objetiva ou pendência. Cobrir título, resumo, objetivos, fonte/participantes, preditores, desfecho, tamanho amostral, dados faltantes, desenvolvimento, avaliação, resultados, discussão e práticas abertas; usar também o checklist de resumo se aplicável. | O instrumento é diretriz de **relato**. A presença de uma citação não demonstra aderência; a task 03 não marcou itens como atendidos. |
+| PROBAST+AI | Moons et al., *BMJ* 2025;388:e082505, DOI [10.1136/bmj-2024-082505](https://doi.org/10.1136/bmj-2024-082505), publicado em 24-mar-2025. As tabelas suplementares 3 e 4 do artigo oficial contêm a ferramenta e a explicação resumida: [artigo e suplementos](https://www.bmj.com/content/388/bmj-2024-082505). | `moons2025_probast_ai` | Documentar separadamente qualidade do desenvolvimento, risco de viés da avaliação de desempenho e aplicabilidade; manter respostas às perguntas de sinalização, justificativa e informação ausente. Usar a estrutura e a regra de julgamento da versão oficial, incluindo considerações de viés algorítmico/equidade quando pertinentes. | PROBAST+AI substitui/estende PROBAST-2019, mas não é um rótulo automático para ausência de validação externa. Nenhum julgamento de domínio, classificação global ou declaração de conformidade foi feito nesta task. |
+
+## Regra de integração
+
+A Task 13 deve inserir `bibliography: references_prognostico.bib` no YAML do Quarto e substituir a lista manual por citações narrativas ou parentéticas vinculadas à afirmação correspondente. Não editar o QMD nesta task preserva a integração global para a Task 13. A Task 15 deve auditar a matriz preenchida e distinguir claramente autoavaliação de revisão independente.
