@@ -1,0 +1,16 @@
+"model","record_type","key","n","denominator"
+"linear","failed_replicas_total","all_reasons_once",0,2000
+"linear","failed_replica_reason","none",0,2000
+"linear","metric_unavailable_among_valid_replicas","r2",0,2000
+"linear","metric_unavailable_among_valid_replicas","rmse",0,2000
+"linear","metric_unavailable_among_valid_replicas","mae",0,2000
+"linear","metric_unavailable_among_valid_replicas","mean_error",0,2000
+"linear","metric_unavailable_among_valid_replicas","calibration_intercept",0,2000
+"linear","metric_unavailable_among_valid_replicas","calibration_slope",0,2000
+"logistic","failed_replicas_total","all_reasons_once",0,2000
+"logistic","failed_replica_reason","none",0,2000
+"logistic","metric_unavailable_among_valid_replicas","auc",0,2000
+"logistic","metric_unavailable_among_valid_replicas","brier_score",0,2000
+"logistic","metric_unavailable_among_valid_replicas","log_loss",0,2000
+"logistic","metric_unavailable_among_valid_replicas","calibration_in_the_large",0,2000
+"logistic","metric_unavailable_among_valid_replicas","calibration_slope",0,2000

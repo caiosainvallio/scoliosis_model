@@ -1,0 +1,7 @@
+"object","model","fitted_on","target","validation_status","shrinkage_factor","intercept"
+"apparent_fit_linear","linear","full_development_cohort_n_615","apparent_association_and_fit","apparent_not_validated",,0.154000887786247
+"apparent_fit_logistic","logistic","full_development_cohort_n_615","apparent_association_and_fit","apparent_not_validated",,-3.23003250529996
+"optimism_corrected_fixed_specification_linear","linear","bootstrap_refits_of_fixed_specification_n_615","expected_performance_same_population_n_615","internally_validated_not_external",,
+"optimism_corrected_fixed_specification_logistic","logistic","bootstrap_refits_of_fixed_specification_n_615","expected_performance_same_population_n_615","internally_validated_not_external",,
+"post_shrinkage_equation_linear","linear","full_development_cohort_n_615","equation_for_future_external_validation","procedure_evaluated_internally_not_external",0.958050229513248,-0.0477475326535348
+"post_shrinkage_equation_logistic","logistic","full_development_cohort_n_615","equation_for_future_external_validation","procedure_evaluated_internally_not_external",0.883549380927767,-2.85706216267901

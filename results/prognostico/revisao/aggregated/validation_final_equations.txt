@@ -1,0 +1,12 @@
+Equações pós-shrinkage para futura validação externa
+
+Fator linear: 0.958050229513
+Fator logístico: 0.883549380928
+
+Equação linear: delta_previsto = -0.04774753265 + 0.06246232712 × idade + 0.005834665109 × IMC - 0.03364829087 × cifose torácica - 0.01105861504 × lordose lombar - 0.118729128 × correção pelo colete - 0.5865599701 × I(sexo = masculino) + 0.2352105684 × I(Lenke = 2) + 3.592071523 × I(Lenke = 3) + 4.010512351 × I(Lenke = 4) + 1.083060729 × I(Lenke = 5) + 2.217344358 × I(Lenke = 6) - 2.461148323 × I(Risser = 1) -  1.90980498 × I(Risser = 2) - 1.213955503 × I(Risser = 3) - 0.8750581267 × I(Risser = 4) + 0.7931395873 × I(flexibilidade = rígido) - 0.05029850463 × I(escoliômetro = torácica) - 0.3656441835 × I(escoliômetro = lombar) + 2.585821306 × I(escoliômetro = torácica+lombar) graus.
+Equação logística: eta = -2.857062163 - 0.0721830618 × idade + 0.04938854193 × IMC + 0.01836897228 × cifose torácica - 0.008694796593 × lordose lombar + 0.08446859287 × correção pelo colete + 0.9685717401 × I(sexo = masculino) - 0.7975125918 × I(Lenke = 2) - 1.597705326 × I(Lenke = 3) - 1.808579746 × I(Lenke = 4) - 0.871448277 × I(Lenke = 5) - 1.408893832 × I(Lenke = 6) + 1.619945792 × I(Risser = 1) + 0.7971804037 × I(Risser = 2) + 0.1652533154 × I(Risser = 3) + 0.6127643879 × I(Risser = 4) - 0.3859349883 × I(flexibilidade = rígido) - 0.002391388483 × I(escoliômetro = torácica) + 0.01617980924 × I(escoliômetro = lombar) - 1.036167104 × I(escoliômetro = torácica+lombar) ; p(melhora) = plogis(eta).
+Referências: sexo=feminino; Lenke=1; Risser=0; flexibilidade=flexível; escoliômetro=normal.
+Coeficientes não interceptais foram multiplicados pelo fator; o intercepto foi recalibrado nos 615 participantes de desenvolvimento.
+Avaliação do procedimento completo: validação cruzada interna repetida, com fator e intercepto estimados somente no treinamento de cada fold.
+Não houve validação externa.
+IC da média e intervalo individual para esta equação final estão indisponíveis: a fórmula histórica não cobre heteroscedasticidade nem incerteza do fator e não resta amostra independente para calibração conformal honesta.

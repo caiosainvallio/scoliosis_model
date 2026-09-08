@@ -130,6 +130,10 @@ predict.shrunk_linear_model <- function(object, newdata, interval = c("fit", "co
   design <- .newdata_design(object, newdata)
   fit <- as.numeric(design %*% object$coefficients)
   if (interval == "fit") return(fit)
+  warning(
+    "Intervalo legado não validado: usa sigma/informação do ajuste aparente, assume homoscedasticidade e omite a incerteza do fator de shrinkage.",
+    call. = FALSE
+  )
   information_inverse <- solve(crossprod(object$design))
   leverage <- rowSums((design %*% information_inverse) * design)
   multiplier <- if (interval == "prediction") 1 else 0

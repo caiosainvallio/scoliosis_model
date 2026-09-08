@@ -1,0 +1,6 @@
+"repeat_id","folds","denominator_predictions","nominal_coverage","observed_coverage","mean_width_degrees","interval_method","evaluation"
+1,10,615,0.95,0.946341463414634,17.3962961194373,"normalized_split_conformal_heteroscedastic_scale","internal_coverage_not_external"
+2,10,615,0.95,0.944715447154472,17.2439232835225,"normalized_split_conformal_heteroscedastic_scale","internal_coverage_not_external"
+3,10,615,0.95,0.952845528455285,17.6505680803188,"normalized_split_conformal_heteroscedastic_scale","internal_coverage_not_external"
+4,10,615,0.95,0.95609756097561,17.7483372748648,"normalized_split_conformal_heteroscedastic_scale","internal_coverage_not_external"
+5,10,615,0.95,0.943089430894309,17.1452142770997,"normalized_split_conformal_heteroscedastic_scale","internal_coverage_not_external"

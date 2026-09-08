@@ -1,0 +1,4 @@
+"estimand","status","reason","unit","external_validation"
+"conditional_mean_ci_final_shrunk_equation","unavailable","Historical formula assumes homoscedasticity and omits uncertainty of the estimated shrinkage factor; conformal assessment targets individuals, not the conditional mean.","degrees_delta",FALSE
+"individual_prediction_interval_final_shrunk_equation","unavailable","No observations independent of the all-data final fit remain for honest conformal calibration; historical intervals are not validated.","degrees_delta",FALSE
+"individual_prediction_interval_internal_procedure","estimated_for_internal_coverage_assessment","Normalized split conformal intervals calibrated without using the outer test; coverage and width reported only in unused outer-fold observations.","degrees_delta",FALSE

@@ -4,7 +4,7 @@
 - **Complexidade:** Muito alta.
 - **Justificativa do modelo:** A definição do alvo da validação, a dependência da reamostragem e a cobertura dos intervalos exigem raciocínio estatístico avançado.
 - **Dependências:** [Task 03](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/03_bibliografia_e_fontes.md), [Task 08](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/08_pressupostos_e_inferencia_robusta.md)
-- **Status:** Pendente.
+- **Status:** Concluída em 2026-09-08.
 
 ## Contexto e regras
 
@@ -61,4 +61,3 @@ Registre comandos, arquivos produzidos/alterados, verificações e limitações 
 ## Encerramento e passagem
 
 Atualize o status deste arquivo somente após verificar os critérios. Informe o que mudou, como foi verificado, quais saídas devem ser consumidas e se há dependências afetadas. Registre pendências sem inventar informação ou tratar uma limitação não resolvida como aprovação. Não execute automaticamente a próxima task.
-

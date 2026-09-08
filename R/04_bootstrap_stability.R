@@ -400,6 +400,7 @@ consolidate_optimism <- function(replicas, apparent_metrics, directions = NULL) 
     stop("directions não contém todas as métricas aparentes.", call. = FALSE)
   }
   valid <- replicas[vapply(replicas, function(x) identical(x$status, "valid"), logical(1))]
+  n_failed_replicas <- sum(vapply(replicas, function(x) identical(x$status, "failed"), logical(1)))
   rows <- lapply(names(apparent_metrics), function(metric) {
     values <- vapply(valid, function(x) {
       if (is.null(x$optimism) || is.null(x$optimism[[metric]])) NA_real_ else x$optimism[[metric]]
@@ -409,7 +410,9 @@ consolidate_optimism <- function(replicas, apparent_metrics, directions = NULL) 
     data.frame(
       metric = metric, direction = unname(directions[[metric]]),
       apparent = unname(apparent_metrics[[metric]]),
-      n_valid = length(values), n_failed = length(replicas) - length(values),
+      n_valid = length(values),
+      n_failed_replicas = n_failed_replicas,
+      n_metric_unavailable = length(valid) - length(values),
       mean_optimism = mean_optimism,
       corrected = if (is.finite(mean_optimism)) correct_optimism(apparent_metrics[[metric]], mean_optimism, directions[[metric]]) else NA_real_,
       stringsAsFactors = FALSE

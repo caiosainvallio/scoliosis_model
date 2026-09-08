@@ -1,0 +1,17 @@
+Task 09 — validacao interna, incerteza e shrinkage
+execution_datetime: 2026-09-08 17:35:06 -03
+source_sha256: f601adb42c299c2b0572f3e50ff26550b63a2f24dd7173f244a442b498965b71
+cohort_events_nonevents: 615 317 298
+performance_ci_method: Noma et al. 2021 location-shifted percentile bootstrap
+performance_ci_resamples: 2000 frozen verified participant-level bootstrap replicates
+primary_metrics: linear r2 0.363663 [0.321830,0.440978]; linear rmse 4.27635 [3.926723,4.472979]; linear mae 3.39444 [3.102842,3.555936]; logistic auc 0.848315 [0.829075,0.883905]; logistic brier_score 0.160049 [0.136346,0.170669]; logistic log_loss 0.489222 [0.429701,0.514275]
+full_shrinkage_evaluation: 5 repeats x 10 outer folds; 200 inner bootstraps/model/fold
+full_shrinkage_inner_valid_min_linear_logistic: 200 200
+test_reuse_for_factor_or_intercept: FALSE
+conformal_coverage_by_repeat: 0.94634 0.94472 0.95285 0.9561 0.94309
+conformal_mean_width_degrees_by_repeat: 17.396 17.244 17.651 17.748 17.145
+conditional_mean_ci_final_equation: unavailable; heteroscedasticity and shrinkage-factor uncertainty not handled by legacy formula
+individual_pi_final_all_data_equation: unavailable; no independent calibration sample remains
+external_validation: not performed
+elapsed_seconds: 259.8321
+R: R version 4.6.1 (2026-06-24)
