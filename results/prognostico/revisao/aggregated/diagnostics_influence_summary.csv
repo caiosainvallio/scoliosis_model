@@ -1,0 +1,3 @@
+"model","n","parameters_including_intercept","cook_threshold","leverage_threshold","standardized_residual_threshold","n_flag_cook","n_flag_leverage","n_flag_standardized_residual","n_flag_any","max_cooks_distance","max_leverage","max_abs_standardized_residual","action"
+"linear",615,20,0.00650406504065041,0.0650406504065041,2,40,11,27,55,0.0191762192311584,0.08930286034702,4.4574120640823,"investigar_em_sensibilidade_task_10_sem_excluir_da_principal"
+"logistic",615,20,0.00650406504065041,0.0650406504065041,2,49,51,36,99,0.0154872317478368,0.106542444059295,5.96506215645284,"investigar_em_sensibilidade_task_10_sem_excluir_da_principal"

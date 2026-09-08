@@ -1,0 +1,2 @@
+"n","residual_min","residual_p01","residual_p05","residual_p25","residual_median","residual_p75","residual_p95","residual_p99","residual_max","standardized_abs_gt_2","standardized_abs_gt_3","skewness_moment","excess_kurtosis_moment"
+615,-18.5617950834704,-9.28201862986337,-6.9614029548692,-2.53584043021481,0.200000471084138,2.94503981111475,6.34668908936286,8.9811630547864,10.235098003058,27,2,-0.400245234703611,0.680786452969784

@@ -1,0 +1,2 @@
+"test","statistic","df","p_value","n","auxiliary_r_squared","studentized"
+"Breusch-Pagan",36.0039018292154,19,0.0105438811666391,615,0.0585429298036023,TRUE

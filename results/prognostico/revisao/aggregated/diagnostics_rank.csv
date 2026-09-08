@@ -1,0 +1,3 @@
+"model","number_columns","rank","full_rank","condition_number"
+"linear",20,20,TRUE,1163.90740282657
+"logistic",20,20,TRUE,1163.90740282657

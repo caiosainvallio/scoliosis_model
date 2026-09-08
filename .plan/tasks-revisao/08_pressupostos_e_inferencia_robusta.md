@@ -4,7 +4,7 @@
 - **Complexidade:** Alta.
 - **Justificativa do modelo:** Exige interpretar diagnósticos e corrigir inferência sem alterar silenciosamente os modelos principais.
 - **Dependências:** [Task 02](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/02_definicoes_clinicas_e_racional.md), [Task 03](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/03_bibliografia_e_fontes.md)
-- **Status:** Pendente.
+- **Status:** Concluída em 2026-09-08.
 
 ## Contexto e regras
 
@@ -58,4 +58,3 @@ Registre comandos, arquivos produzidos/alterados, verificações e limitações 
 ## Encerramento e passagem
 
 Atualize o status deste arquivo somente após verificar os critérios. Informe o que mudou, como foi verificado, quais saídas devem ser consumidas e se há dependências afetadas. Registre pendências sem inventar informação ou tratar uma limitação não resolvida como aprovação. Não execute automaticamente a próxima task.
-

@@ -1,0 +1,17 @@
+Task 08 — pressupostos, diagnosticos e inferencia robusta
+data_execucao: 2026-09-08 00:24:13 -03
+fonte_sha256: f601adb42c299c2b0572f3e50ff26550b63a2f24dd7173f244a442b498965b71
+n_eventos_nao_eventos: 615 317 298
+matriz_colunas_posto: 20 20
+max_alteracao_coeficiente_pontual_vs_baseline: 4.662937e-15
+bp_estatistica_gl_p_r2aux: 36.0039018292154 19 0.0105438811666391 0.0585429298036023
+hc3_se_ratio_min_max: 0.927996155234461 1.15354198643577
+gvif_ajustado_min_max: 1.04733581989267 1.38076311416802
+separacao: nenhuma_separacao_completa_ou_quase-completa_detectada
+influencia_flags_linear_logistica: 55 99
+Convencao: inferencia linear classica e HC3 usam testes/IC t com gl residuais; logit usa Wald normal assintotico.
+HC3 nao corrige nao linearidade, calibracao, dependencia nem intervalos de predicao individuais.
+Observacoes sinalizadas permanecem na analise principal; IDs constam somente no log interno para a Task 10.
+Nenhum teste de normalidade de covariaveis ou autocorrelacao em ordem arbitraria foi executado.
+R: R version 4.6.1 (2026-06-24)
+pacotes: readxl 1.5.0; car 3.1.5; lmtest 0.9.40; sandwich 3.1.3; quadprog 1.5.8

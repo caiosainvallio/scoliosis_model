@@ -51,17 +51,73 @@ fit_frozen_models <- function(cohort) {
        formulas = specification$formulas)
 }
 
-wald_coefficient_table <- function(model, scale = c("linear", "logit")) {
+wald_coefficient_table <- function(model, scale = c("linear", "logit"), level = 0.95) {
   scale <- match.arg(scale)
   s <- summary(model)$coefficients
-  ci <- suppressWarnings(stats::confint.default(model))
+  alpha <- 1 - level
+  if (inherits(model, "lm")) {
+    # Para lm, summary() usa testes t. O IC deve usar a mesma distribuição e os
+    # mesmos graus de liberdade, em vez do IC normal de confint.default().
+    degrees_freedom <- stats::df.residual(model)
+    critical <- stats::qt(1 - alpha / 2, df = degrees_freedom)
+    reference_distribution <- "t"
+  } else {
+    degrees_freedom <- Inf
+    critical <- stats::qnorm(1 - alpha / 2)
+    reference_distribution <- "normal_assintotica"
+  }
+  conf_low <- unname(s[, 1] - critical * s[, 2])
+  conf_high <- unname(s[, 1] + critical * s[, 2])
   result <- data.frame(
     term = rownames(s), estimate = unname(s[, 1]), std_error = unname(s[, 2]),
     statistic = unname(s[, 3]), p_value = unname(s[, 4]),
-    conf_low = ci[, 1], conf_high = ci[, 2],
-    escala = scale, stringsAsFactors = FALSE, row.names = NULL
+    conf_low = conf_low, conf_high = conf_high,
+    escala = scale, covariance = "classica_modelo",
+    reference_distribution = reference_distribution,
+    degrees_freedom = degrees_freedom, confidence_level = level,
+    stringsAsFactors = FALSE, row.names = NULL
   )
   result
+}
+
+linear_hc3_coefficient_table <- function(model, level = 0.95) {
+  if (!inherits(model, "lm")) stop("HC3 desta rotina requer um modelo lm.")
+  if (!requireNamespace("sandwich", quietly = TRUE)) {
+    stop("O pacote sandwich é necessário para a sensibilidade HC3.")
+  }
+  covariance <- sandwich::vcovHC(model, type = "HC3")
+  estimates <- stats::coef(model)
+  standard_errors <- sqrt(diag(covariance))
+  degrees_freedom <- stats::df.residual(model)
+  statistic <- estimates / standard_errors
+  p_value <- 2 * stats::pt(abs(statistic), df = degrees_freedom, lower.tail = FALSE)
+  critical <- stats::qt(1 - (1 - level) / 2, df = degrees_freedom)
+  data.frame(
+    term = names(estimates), estimate = unname(estimates),
+    std_error = unname(standard_errors), statistic = unname(statistic),
+    p_value = unname(p_value),
+    conf_low = unname(estimates - critical * standard_errors),
+    conf_high = unname(estimates + critical * standard_errors),
+    escala = "linear", covariance = "HC3",
+    reference_distribution = "t", degrees_freedom = degrees_freedom,
+    confidence_level = level, stringsAsFactors = FALSE, row.names = NULL
+  )
+}
+
+compare_linear_inference <- function(classic, hc3) {
+  stopifnot(identical(classic$term, hc3$term),
+            max(abs(classic$estimate - hc3$estimate)) < 1e-12)
+  data.frame(
+    term = classic$term, estimate = classic$estimate,
+    std_error_classic = classic$std_error, std_error_hc3 = hc3$std_error,
+    se_ratio_hc3_to_classic = hc3$std_error / classic$std_error,
+    p_value_classic = classic$p_value, p_value_hc3 = hc3$p_value,
+    conf_low_classic = classic$conf_low, conf_high_classic = classic$conf_high,
+    conf_low_hc3 = hc3$conf_low, conf_high_hc3 = hc3$conf_high,
+    crosses_zero_classic = classic$conf_low <= 0 & classic$conf_high >= 0,
+    crosses_zero_hc3 = hc3$conf_low <= 0 & hc3$conf_high >= 0,
+    stringsAsFactors = FALSE
+  )
 }
 
 odds_ratio_table <- function(logistic) {
@@ -258,10 +314,154 @@ heteroscedasticity_diagnostic <- function(linear) {
     test <- lmtest::bptest(linear)
     return(data.frame(test = "Breusch-Pagan", statistic = unname(test$statistic),
                       df = unname(test$parameter), p_value = unname(test$p.value),
+                      n = stats::nobs(linear),
+                      auxiliary_r_squared = unname(test$statistic) / stats::nobs(linear),
+                      studentized = TRUE,
                       stringsAsFactors = FALSE))
   }
   data.frame(test = "Breusch-Pagan", statistic = NA_real_, df = NA_real_,
-             p_value = NA_real_, stringsAsFactors = FALSE)
+             p_value = NA_real_, n = stats::nobs(linear),
+             auxiliary_r_squared = NA_real_, studentized = TRUE,
+             stringsAsFactors = FALSE)
+}
+
+diagnostic_variance_pattern <- function(linear, groups = 5L) {
+  fitted <- as.numeric(stats::fitted(linear))
+  residual <- as.numeric(stats::residuals(linear))
+  breaks <- unique(stats::quantile(fitted, probs = seq(0, 1, length.out = groups + 1L),
+                                   names = FALSE))
+  band <- cut(fitted, breaks = breaks, include.lowest = TRUE, labels = FALSE)
+  do.call(rbind, lapply(sort(unique(band)), function(g) {
+    take <- band == g
+    data.frame(
+      fitted_band = as.integer(g), n = sum(take),
+      fitted_min = min(fitted[take]), fitted_max = max(fitted[take]),
+      fitted_mean = mean(fitted[take]), residual_mean = mean(residual[take]),
+      residual_sd = stats::sd(residual[take]),
+      residual_mean_absolute = mean(abs(residual[take])),
+      residual_rmse = sqrt(mean(residual[take]^2)), stringsAsFactors = FALSE
+    )
+  }))
+}
+
+diagnostic_residual_tail_summary <- function(linear) {
+  raw <- as.numeric(stats::residuals(linear))
+  standardized <- as.numeric(stats::rstandard(linear))
+  q <- stats::quantile(raw, c(0, .01, .05, .25, .5, .75, .95, .99, 1), names = FALSE)
+  data.frame(
+    n = length(raw), residual_min = q[[1]], residual_p01 = q[[2]],
+    residual_p05 = q[[3]], residual_p25 = q[[4]], residual_median = q[[5]],
+    residual_p75 = q[[6]], residual_p95 = q[[7]], residual_p99 = q[[8]],
+    residual_max = q[[9]], standardized_abs_gt_2 = sum(abs(standardized) > 2),
+    standardized_abs_gt_3 = sum(abs(standardized) > 3),
+    skewness_moment = mean((raw - mean(raw))^3) / stats::sd(raw)^3,
+    excess_kurtosis_moment = mean((raw - mean(raw))^4) / stats::var(raw)^2 - 3,
+    stringsAsFactors = FALSE
+  )
+}
+
+diagnostic_qq_data <- function(linear) {
+  standardized <- sort(as.numeric(stats::rstandard(linear)))
+  n <- length(standardized)
+  data.frame(
+    order = seq_len(n),
+    theoretical_quantile = stats::qnorm(stats::ppoints(n)),
+    standardized_residual_quantile = standardized,
+    stringsAsFactors = FALSE
+  )
+}
+
+diagnostic_smooth_data <- function(linear) {
+  fitted <- as.numeric(stats::fitted(linear))
+  residual <- as.numeric(stats::residuals(linear))
+  standardized <- as.numeric(stats::rstandard(linear))
+  make_lowess <- function(x, y, panel) {
+    sm <- stats::lowess(x, y, f = 2 / 3, iter = 3)
+    data.frame(panel = panel, x = sm$x, smooth = sm$y, stringsAsFactors = FALSE)
+  }
+  rbind(
+    make_lowess(fitted, residual, "residuo_vs_ajustado"),
+    make_lowess(fitted, sqrt(abs(standardized)), "escala_localizacao")
+  )
+}
+
+diagnostic_component_smooths <- function(model, cohort, model_name) {
+  numeric_terms <- intersect(c("idade", "imc", "cifose_toracica", "lordose_lombar",
+                               "correcao_colete"), names(stats::coef(model)))
+  if (model_name == "linear") {
+    base_residual <- as.numeric(stats::residuals(model))
+  } else {
+    probability <- pmin(pmax(as.numeric(stats::fitted(model)), 1e-8), 1 - 1e-8)
+    base_residual <- (as.numeric(cohort$delta_cat) - probability) /
+      (probability * (1 - probability))
+  }
+  do.call(rbind, lapply(numeric_terms, function(term) {
+    x <- as.numeric(cohort[[term]])
+    component_residual <- unname(stats::coef(model)[[term]]) * x + base_residual
+    sm <- stats::lowess(x, component_residual, f = 2 / 3, iter = 3)
+    data.frame(model = model_name, term = term, x = sm$x,
+               component_residual_smooth = sm$y, stringsAsFactors = FALSE)
+  }))
+}
+
+diagnostic_condition_indices <- function(design) {
+  predictors <- design[, colnames(design) != "(Intercept)", drop = FALSE]
+  scaled <- scale(predictors, center = TRUE, scale = TRUE)
+  singular_values <- svd(scaled, nu = 0, nv = 0)$d
+  data.frame(
+    dimension = seq_along(singular_values), singular_value = singular_values,
+    condition_index = max(singular_values) / singular_values,
+    design = "preditores_centrados_e_padronizados_sem_intercepto",
+    stringsAsFactors = FALSE
+  )
+}
+
+diagnostic_separation_qp <- function(design, outcome, tolerance = 1e-7) {
+  if (!requireNamespace("quadprog", quietly = TRUE)) {
+    return(data.frame(method = "programacao_quadratica_Albert-Anderson",
+      complete_separation = NA, quasi_complete_separation = NA,
+      status = "nao_avaliado: pacote quadprog ausente", tolerance = tolerance,
+      stringsAsFactors = FALSE))
+  }
+  signed_design <- design * (2 * as.numeric(outcome) - 1)
+  feasible <- function(constraint_matrix, bounds) {
+    p <- ncol(signed_design)
+    value <- tryCatch(
+      quadprog::solve.QP(diag(p), rep(0, p), t(constraint_matrix), bounds),
+      error = function(e) NULL
+    )
+    !is.null(value) && all(as.numeric(constraint_matrix %*% value$solution) >= bounds - tolerance)
+  }
+  complete <- feasible(signed_design, rep(1, nrow(signed_design)))
+  quasi_constraints <- rbind(signed_design, colSums(signed_design))
+  quasi <- feasible(quasi_constraints, c(rep(0, nrow(signed_design)), 1))
+  data.frame(
+    method = "programacao_quadratica_Albert-Anderson",
+    complete_separation = complete,
+    quasi_complete_separation = !complete && quasi,
+    status = if (complete) "separacao_completa_detectada" else if (quasi) {
+      "separacao_quase-completa_detectada"
+    } else "nenhuma_separacao_completa_ou_quase-completa_detectada",
+    tolerance = tolerance, stringsAsFactors = FALSE
+  )
+}
+
+diagnostic_influence_summary <- function(residual_table, model_name, n_parameters) {
+  n <- nrow(residual_table)
+  data.frame(
+    model = model_name, n = n, parameters_including_intercept = n_parameters,
+    cook_threshold = 4 / n, leverage_threshold = 2 * n_parameters / n,
+    standardized_residual_threshold = 2,
+    n_flag_cook = sum(residual_table$flag_cook),
+    n_flag_leverage = sum(residual_table$flag_leverage),
+    n_flag_standardized_residual = sum(residual_table$flag_standardized_residual),
+    n_flag_any = sum(residual_table$influential_any),
+    max_cooks_distance = max(residual_table$cooks_distance),
+    max_leverage = max(residual_table$leverage),
+    max_abs_standardized_residual = max(abs(residual_table$standardized_residual)),
+    action = "investigar_em_sensibilidade_task_10_sem_excluir_da_principal",
+    stringsAsFactors = FALSE
+  )
 }
 
 roc_curve_data <- function(y, p) {
@@ -470,4 +670,166 @@ write_frozen_outputs <- function(results, cohort) {
                calibration = results$calibration$summary, rank = results$rank, equivalence = results$equivalence),
           file.path(obj, "frozen_results_reduced.rds"))
   invisible(TRUE)
+}
+
+# Complemento da revisão: mantém a especificação e os coeficientes pontuais dos
+# modelos principais, mas torna coerente a inferência clássica e acrescenta HC3.
+run_review_inference <- function(cohort) {
+  results <- run_frozen_models(cohort)
+  linear <- results$models$linear
+  logistic <- results$models$logistic
+  classic <- wald_coefficient_table(linear, "linear")
+  hc3 <- linear_hc3_coefficient_table(linear)
+  comparison <- compare_linear_inference(classic, hc3)
+  variance_pattern <- diagnostic_variance_pattern(linear)
+  tails <- diagnostic_residual_tail_summary(linear)
+  smooth <- diagnostic_smooth_data(linear)
+  component_smooths <- rbind(
+    diagnostic_component_smooths(linear, cohort, "linear"),
+    diagnostic_component_smooths(logistic, cohort, "logistic")
+  )
+  condition_indices <- diagnostic_condition_indices(results$design)
+  separation_formal <- diagnostic_separation_qp(results$design, cohort$delta_cat)
+  categories <- results$categories
+  warnings <- attr(logistic, "fit_warnings")
+  separation <- data.frame(
+    method = separation_formal$method,
+    complete_separation = separation_formal$complete_separation,
+    quasi_complete_separation = separation_formal$quasi_complete_separation,
+    formal_status = separation_formal$status,
+    tolerance = separation_formal$tolerance,
+    glm_converged = isTRUE(logistic$converged),
+    coefficients_finite = all(is.finite(stats::coef(logistic))),
+    fit_warning_count = length(warnings),
+    factor_cells_with_single_outcome = sum(categories$celula_problematic),
+    minimum_category_n = min(categories$n),
+    minimum_category_events = min(categories$eventos),
+    minimum_category_nonevents = min(categories$nao_eventos),
+    interpretation = paste(
+      "A programação quadrática avalia separação completa/quase-completa no desenho multivariável;",
+      "convergência, estimabilidade e células marginais são evidências complementares, não substitutos."
+    ), stringsAsFactors = FALSE
+  )
+  influence <- rbind(
+    diagnostic_influence_summary(results$residual_linear, "linear", length(stats::coef(linear))),
+    diagnostic_influence_summary(results$residual_logistic, "logistic", length(stats::coef(logistic)))
+  )
+  max_gvif <- max(results$vif$gvif_adjusted)
+  max_condition <- max(condition_indices$condition_index)
+  bp <- results$heteroscedasticity
+  sd_ratio <- max(variance_pattern$residual_sd) / min(variance_pattern$residual_sd)
+  assumptions <- data.frame(
+    assumption = c(
+      "independencia", "media_condicional_linear", "linearidade_no_logit",
+      "variancia_constante", "caudas_dos_residuos", "colinearidade",
+      "influencia", "separacao_logistica"
+    ),
+    evidence = c(
+      paste0(nrow(cohort), " IDs unicos; duplicatas conhecidas removidas antes do ajuste"),
+      "suavizacao robusta de residuos versus ajustado e residuos componentes dos cinco termos numericos",
+      "suavizacao de residuos componentes na escala do preditor linear para os cinco termos numericos",
+      paste0("Breusch-Pagan = ", signif(bp$statistic, 5), ", gl = ", bp$df,
+             ", p = ", signif(bp$p_value, 5), ", R2 auxiliar = ",
+             signif(bp$auxiliary_r_squared, 4), "; razao entre DP por quintil = ", signif(sd_ratio, 4)),
+      paste0(sum(abs(results$residual_linear$standardized_residual) > 2),
+             " residuos padronizados com |r| > 2 e ",
+             sum(abs(results$residual_linear$standardized_residual) > 3), " com |r| > 3; dados Q-Q preparados"),
+      paste0("posto ", qr(results$design)$rank, "/", ncol(results$design),
+             "; maior GVIF^(1/(2*gl)) = ", signif(max_gvif, 4),
+             "; maior indice de condicao padronizado = ", signif(max_condition, 4)),
+      paste0(influence$n_flag_any[influence$model == "linear"], " sinais no linear e ",
+             influence$n_flag_any[influence$model == "logistic"], " no logistico pelos criterios de triagem"),
+      paste0(separation$formal_status, "; glm convergiu = ", separation$glm_converged,
+             "; coeficientes finitos = ", separation$coefficients_finite,
+             "; menor categoria n = ", separation$minimum_category_n)
+    ),
+    interpretation = c(
+      "Uma linha por participante sustenta a unidade analitica; centro, avaliador e outras estruturas de agrupamento nao existem na fonte e nao puderam ser testados.",
+      "Diagnostico grafico de forma, sem teste binario de aprovacao; desvios devem orientar as sensibilidades flexiveis, nao alterar silenciosamente o principal.",
+      "Diagnostico grafico do componente sistematico no logit; a forma nao e aprovada apenas por convergencia.",
+      "Ha evidencia contra homoscedasticidade, de magnitude auxiliar modesta; a variacao por faixa mostra o padrao observado.",
+      "Caudas e Q-Q informam a adequacao aproximada dos intervalos classicos; normalidade nao e exigida para covariaveis nem decidida por teste omnibus.",
+      "Posto, GVIF com gl e indices de condicao descrevem estimabilidade e redundancia; nenhum limiar isolado prova validade.",
+      "Flags sao sinais de investigacao, podem se sobrepor e nao constituem regra automatica de exclusao.",
+      "A avaliacao formal cobre separacao completa e quase-completa multivariavel; nao garante boa forma funcional, calibracao ou estabilidade."
+    ),
+    action = c(
+      "explicitar ausencia de variaveis de agrupamento; nao usar teste de autocorrelacao em ordem arbitraria",
+      "usar graficos na task 12 e confrontar com analise flexivel sem substituir o modelo congelado",
+      "usar graficos na task 12 e resultados de calibracao; manter logit principal congelado",
+      "relatar inferencia classica t e sensibilidade HC3 t; nao atribuir a HC3 correcao de nao linearidade ou previsao individual",
+      "usar Q-Q e resumo de caudas; interpretar em conjunto com influencia e HC3",
+      "relatar todos os componentes, sem corte arbitrario de aprovacao",
+      "vincular IDs internos e criterios as sensibilidades da task 10; manter todos os casos na principal",
+      "relatar metodo formal junto de convergencia, estimabilidade e categorias raras"
+    ),
+    limitation = c(
+      "independencia entre centros/avaliadores/medidas nao e identificavel com as colunas disponiveis",
+      "suavizacao e exploratoria e nao estima impacto externo na predicao",
+      "dados binarios limitam a leitura local, especialmente em extremos de probabilidade",
+      "HC3 corrige a matriz de covariancia dos coeficientes, nao a media, a calibracao nem intervalos individuais",
+      "a avaliacao visual nao demonstra normalidade exata nem cobertura em nova populacao",
+      "indices dependem da codificacao e escala; valores baixos nao validam a especificacao",
+      "a sensibilidade sem casos sera executada pela task 10 e nao redefine a coorte",
+      "o resultado e numerico para este desenho; categorias pequenas ainda podem gerar imprecisao"
+    ), stringsAsFactors = FALSE
+  )
+  list(
+    frozen = results, coefficients_linear_classic = classic,
+    coefficients_linear_hc3 = hc3, inference_comparison = comparison,
+    heteroscedasticity = bp, variance_pattern = variance_pattern,
+    residual_tails = tails, residual_smooth = smooth,
+    component_smooths = component_smooths, qq = diagnostic_qq_data(linear),
+    collinearity = results$vif, rank = results$rank,
+    condition_indices = condition_indices, categories = categories,
+    separation = separation, influence = influence, assumptions = assumptions,
+    cohort_identity = data.frame(
+      n = nrow(cohort), events = sum(cohort$delta_cat == 1L),
+      nonevents = sum(cohort$delta_cat == 0L), unique_ids = length(unique(cohort$id)),
+      design_columns = ncol(results$design), design_rank = qr(results$design)$rank,
+      source_sha256 = file_sha256(DATA_FILE), stringsAsFactors = FALSE
+    )
+  )
+}
+
+write_review_inference_outputs <- function(review, cohort, output_root) {
+  dirs <- c(
+    aggregated = file.path(output_root, "aggregated"),
+    logs = file.path(output_root, "logs"),
+    reduced_objects = file.path(output_root, "reduced_objects")
+  )
+  invisible(lapply(dirs, dir.create, recursive = TRUE, showWarnings = FALSE))
+  write <- function(x, filename, directory = dirs[["aggregated"]]) {
+    utils::write.csv(x, file.path(directory, filename), row.names = FALSE, na = "")
+  }
+  write(review$coefficients_linear_classic, "coefficients_linear_classic_corrected.csv")
+  write(review$coefficients_linear_hc3, "coefficients_linear_hc3.csv")
+  write(review$inference_comparison, "diagnostics_inference_comparison.csv")
+  write(review$heteroscedasticity, "diagnostics_heteroscedasticity.csv")
+  write(review$variance_pattern, "diagnostics_variance_pattern.csv")
+  write(review$residual_tails, "diagnostics_residual_tails.csv")
+  write(review$residual_smooth, "diagnostics_residual_smooth.csv")
+  write(review$component_smooths, "diagnostics_component_smooths.csv")
+  write(review$qq, "diagnostics_qq_linear.csv")
+  write(review$collinearity, "diagnostics_collinearity.csv")
+  write(review$rank, "diagnostics_rank.csv")
+  write(review$condition_indices, "diagnostics_condition_indices.csv")
+  write(review$categories, "diagnostics_logistic_categories.csv")
+  write(review$separation, "diagnostics_logistic_separation.csv")
+  write(review$influence, "diagnostics_influence_summary.csv")
+  write(review$assumptions, "diagnostics_assumption_evidence.csv")
+  write(review$cohort_identity, "diagnostics_cohort_model_identity.csv")
+  influence_internal <- rbind(
+    cbind(model = "linear", review$frozen$residual_linear),
+    cbind(model = "logistic", review$frozen$residual_logistic)
+  )
+  write(influence_internal, "diagnostics_influence_task10_internal.csv", dirs[["logs"]])
+  saveRDS(list(
+    residual_smooth = review$residual_smooth,
+    component_smooths = review$component_smooths,
+    qq = review$qq,
+    variance_pattern = review$variance_pattern,
+    influence = influence_internal[, setdiff(names(influence_internal), "id"), drop = FALSE]
+  ), file.path(dirs[["reduced_objects"]], "diagnostics_plot_data.rds"))
+  invisible(dirs)
 }
