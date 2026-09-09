@@ -1,0 +1,70 @@
+                               check passed
+ hash data/dataset_escoliose_01.xlsx   TRUE
+                   hash analisys.qmd   TRUE
+                  hash analisys.html   TRUE
+                    coorte e eventos   TRUE
+             definição dos desfechos   TRUE
+                       especificação   TRUE
+                  HC3-t independente   TRUE
+                    bootstrap linear   TRUE
+                        IC linear r2   TRUE
+                      IC linear rmse   TRUE
+                       IC linear mae   TRUE
+                  bootstrap logistic   TRUE
+                     IC logistic auc   TRUE
+             IC logistic brier_score   TRUE
+                IC logistic log_loss   TRUE
+       IC degenerados não publicados   TRUE
+          coeficientes finais linear   TRUE
+           previsão sintética linear   TRUE
+        coeficientes finais logistic   TRUE
+         previsão sintética logistic   TRUE
+         shrinkage somente no treino   TRUE
+                  conformal separado   TRUE
+                       CART primária   TRUE
+                           CART raiz   TRUE
+               CART folhas aparentes   TRUE
+         CART denominador calibração   TRUE
+     solver selecionado e hierarquia   TRUE
+                    falhas flexíveis   TRUE
+         comparação pareada flexível   TRUE
+            sensibilidade repetições   TRUE
+      sensibilidade testes completos   TRUE
+               Cobb reparametrização   TRUE
+                          checklists   TRUE
+                                                                                              evidence
+                                      f601adb42c299c2b0572f3e50ff26550b63a2f24dd7173f244a442b498965b71
+                                      3c94a887beb80ef9ee77b150ce36260da689a4a3e14b094120752597002ffed6
+                                      8a07621a60a5314c9b5f2a11b418c859bc4451cfe8157703f47164eb055336bc
+                         615 participantes; 317 eventos; 298 não eventos; 3 hipercorreções preservadas
+                                                          Delta entre máximos e limiar -5 reproduzidos
+                                                10 preditores, 19 parâmetros mais intercepto; posto 20
+                                                   20 termos; máximo desvio EP 4.54e-13; t595 coerente
+                         2000 tentativas válidas; falha contada por réplica, não somada sobre métricas
+             estimativa 0.363662848408; IC [0.321830426746; 0.440977717486]; recomposição das réplicas
+                estimativa 4.27634653621; IC [3.92672345296; 4.47297901773]; recomposição das réplicas
+                estimativa 3.39443868207; IC [3.10284196566; 3.55593578993]; recomposição das réplicas
+                         2000 tentativas válidas; falha contada por réplica, não somada sobre métricas
+             estimativa 0.848315306568; IC [0.829074511973; 0.883905415496]; recomposição das réplicas
+             estimativa 0.160048944764; IC [0.136345722343; 0.170669394524]; recomposição das réplicas
+             estimativa 0.489222060486; IC [0.429701221175; 0.514275301016]; recomposição das réplicas
+                                                                 5 métricas secundárias sem IC espúrio
+                                                                       CSV e objeto final correspondem
+                                                    soma manual=-6.45547306561; predict=-6.45547306561
+                                                                       CSV e objeto final correspondem
+                                                    soma manual=0.800728616389; predict=0.800728616389
+                                                      50 folds; 200 réplicas por modelo; 20000 válidos
+                        cobertura empírica 0.94861789; largura 17.43686781; sem garantia estratificada
+                            313 nós; 221 contínuos; 92 categóricos; concorrentes/substitutos separados
+                                                mediana 49.41860465; amplitude 45.34632035–54.85893417
+                                                                     7 folhas; n/eventos reconciliados
+                                                                    49 interceptos; 50 demais métricas
+                                     100 ajustes ridge; KKT <= 1e-6; hierarquia observada, não imposta
+                                                        160/5000 internas contínuas; zero selecionadas
+ chaves pareadas; diferenças finitas recomputadas; métricas de outra família indisponíveis; não são IC
+                 cinco repetições; exclusões apenas no treino confirmadas no R/14_review_sensitivity.R
+               50 testes completos; 615 previsões/repetição; exclusões e referências somente no treino
+                           identidade delta/Cobb final com mesmo desenho e conversão; tolerância 1e-10
+                           52 itens/subitens TRIPOD; 16+18 sinalizações PROBAST, evidências explícitas
+
+33/33 verificações aprovadas

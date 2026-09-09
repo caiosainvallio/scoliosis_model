@@ -1,0 +1,66 @@
+
+
+processing file: relatorio_prognostico.qmd
+1/37                   
+2/37 [setup]           
+3/37                   
+4/37 [unnamed-chunk-1] 
+5/37                   
+6/37 [unnamed-chunk-2] 
+7/37                   
+8/37 [unnamed-chunk-3] 
+9/37                   
+10/37 [unnamed-chunk-4] 
+11/37                   
+12/37 [unnamed-chunk-5] 
+13/37                   
+14/37 [unnamed-chunk-6] 
+15/37                   
+16/37 [unnamed-chunk-7] 
+17/37                   
+18/37 [unnamed-chunk-8] 
+19/37                   
+20/37 [unnamed-chunk-9] 
+21/37                   
+22/37 [unnamed-chunk-10]
+23/37                   
+24/37 [unnamed-chunk-11]
+25/37                   
+26/37 [unnamed-chunk-12]
+27/37                   
+28/37 [unnamed-chunk-13]
+29/37                   
+30/37 [unnamed-chunk-14]
+31/37                   
+32/37 [unnamed-chunk-15]
+33/37                   
+34/37 [unnamed-chunk-16]
+35/37                   
+36/37 [unnamed-chunk-17]
+37/37                   
+output file: relatorio_prognostico.knit.md
+
+pandoc 
+  to: html
+  output-file: relatorio_prognostico.html
+  standalone: true
+  self-contained: true
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  toc: true
+  number-sections: true
+  
+metadata
+  document-css: false
+  link-citations: true
+  date-format: long
+  lang: pt-BR
+  title: Desenvolvimento e avaliação interna de modelos de mudança radiográfica em seis meses na escoliose idiopática do adolescente
+  author: Caio Vallio
+  bibliography:
+    - references_prognostico.bib
+  
+Output created: relatorio_prognostico.html
+

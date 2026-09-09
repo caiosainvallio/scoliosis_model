@@ -1,0 +1,2862 @@
+[
+  {
+    "key": "collins2024_tripod_ai",
+    "doi": "10.1136/bmj-2023-078378",
+    "title": [
+      "TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-2772-2316",
+        "authenticated-orcid": false,
+        "given": "Gary S",
+        "family": "Collins",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Centre for Statistics in Medicine, UK EQUATOR Centre, Nuffield Department of Orthopaedics, Rheumatology, and Musculoskeletal Sciences, University of Oxford, Oxford OX3 7LD, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-2118-004X",
+        "authenticated-orcid": false,
+        "given": "Karel G M",
+        "family": "Moons",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-0989-0623",
+        "authenticated-orcid": false,
+        "given": "Paula",
+        "family": "Dhiman",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Statistics in Medicine, UK EQUATOR Centre, Nuffield Department of Orthopaedics, Rheumatology, and Musculoskeletal Sciences, University of Oxford, Oxford OX3 7LD, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8699-0735",
+        "authenticated-orcid": false,
+        "given": "Richard D",
+        "family": "Riley",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Institute of Applied Health Research, College of Medical and Dental Sciences, University of Birmingham, Birmingham, UK"
+          },
+          {
+            "name": "National Institute for Health and Care Research (NIHR) Birmingham Biomedical Research Centre, Birmingham, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-6657-2787",
+        "authenticated-orcid": false,
+        "given": "Andrew L",
+        "family": "Beam",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Epidemiology, Harvard T H Chan School of Public Health, Boston, MA, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1613-7450",
+        "authenticated-orcid": false,
+        "given": "Ben",
+        "family": "Van Calster",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Development and Regeneration, KU Leuven, Leuven, Belgium"
+          },
+          {
+            "name": "Department of Biomedical Data Science, Leiden University Medical Centre, Leiden, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-6349-7251",
+        "authenticated-orcid": false,
+        "given": "Marzyeh",
+        "family": "Ghassemi",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Electrical Engineering and Computer Science, Institute for Medical Engineering and Science, Massachusetts Institute of Technology, Cambridge, MA, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-1286-0038",
+        "authenticated-orcid": false,
+        "given": "Xiaoxuan",
+        "family": "Liu",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Institute of Inflammation and Ageing, College of Medical and Dental Sciences, University of Birmingham, Birmingham, UK"
+          },
+          {
+            "name": "University Hospitals Birmingham NHS Foundation Trust, Birmingham, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-4026-4345",
+        "authenticated-orcid": false,
+        "given": "Johannes B",
+        "family": "Reitsma",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-5529-1541",
+        "authenticated-orcid": false,
+        "given": "Maarten",
+        "family": "van Smeden",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-2729-0947",
+        "authenticated-orcid": false,
+        "given": "Anne-Laure",
+        "family": "Boulesteix",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Institute for Medical Information Processing, Biometry and Epidemiology, Faculty of Medicine, Ludwig-Maximilians-University of Munich and Munich Centre of Machine Learning, Germany"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-5742-2840",
+        "authenticated-orcid": false,
+        "given": "Jennifer Catherine",
+        "family": "Camaradou",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Patient representative, Health Data Research UK patient and public involvement and engagement group"
+          },
+          {
+            "name": "Patient representative, University of East Anglia, Faculty of Health Sciences, Norwich Research Park, Norwich, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-6712-6626",
+        "authenticated-orcid": false,
+        "given": "Leo Anthony",
+        "family": "Celi",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Beth Israel Deaconess Medical Center, Boston, MA, USA"
+          },
+          {
+            "name": "Laboratory for Computational Physiology, Massachusetts Institute of Technology, Cambridge, MA, USA"
+          },
+          {
+            "name": "Department of Biostatistics, Harvard T H Chan School of Public Health, Boston, MA, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-9612-7791",
+        "authenticated-orcid": false,
+        "given": "Spiros",
+        "family": "Denaxas",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Institute of Health Informatics, University College London, London, UK"
+          },
+          {
+            "name": "British Heart Foundation Data Science Centre, London, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-7849-0087",
+        "authenticated-orcid": false,
+        "given": "Alastair K",
+        "family": "Denniston",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "National Institute for Health and Care Research (NIHR) Birmingham Biomedical Research Centre, Birmingham, UK"
+          },
+          {
+            "name": "Institute of Inflammation and Ageing, College of Medical and Dental Sciences, University of Birmingham, Birmingham, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-4897-9356",
+        "authenticated-orcid": false,
+        "given": "Ben",
+        "family": "Glocker",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Computing, Imperial College London, London, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-7881-1207",
+        "authenticated-orcid": false,
+        "given": "Robert M",
+        "family": "Golub",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Northwestern University Feinberg School of Medicine, Chicago, IL, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-4528-1312",
+        "authenticated-orcid": false,
+        "given": "Hugh",
+        "family": "Harvey",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Hardian Health, Haywards Heath, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1147-8491",
+        "authenticated-orcid": false,
+        "given": "Georg",
+        "family": "Heinze",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Section for Clinical Biometrics, Centre for Medical Data Science, Medical University of Vienna, Vienna, Austria"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-4517-1562",
+        "authenticated-orcid": false,
+        "given": "Michael M",
+        "family": "Hoffman",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Princess Margaret Cancer Centre, University Health Network, Toronto, ON, Canada"
+          },
+          {
+            "name": "Department of Medical Biophysics, University of Toronto, Toronto, ON, Canada"
+          },
+          {
+            "name": "Department of Computer Science, University of Toronto, Toronto, ON, Canada"
+          },
+          {
+            "name": "Vector Institute for Artificial Intelligence, Toronto, ON, Canada"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-5183-131X",
+        "authenticated-orcid": false,
+        "given": "André Pascal",
+        "family": "Kengne",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Medicine, University of Cape Town, Cape Town, South Africa"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Emily",
+        "family": "Lam",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Patient representative, Health Data Research UK patient and public involvement and engagement group"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-0100-9659",
+        "authenticated-orcid": false,
+        "given": "Naomi",
+        "family": "Lee",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "National Institute for Health and Care Excellence, London, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1501-2947",
+        "authenticated-orcid": false,
+        "given": "Elizabeth W",
+        "family": "Loder",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "The BMJ, London, UK"
+          },
+          {
+            "name": "Department of Neurology, Brigham and Women’s Hospital, Harvard Medical School, Boston, MA, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-4910-9368",
+        "authenticated-orcid": false,
+        "given": "Lena",
+        "family": "Maier-Hein",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Intelligent Medical Systems, German Cancer Research Centre, Heidelberg, Germany"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-4423-6472",
+        "authenticated-orcid": false,
+        "given": "Bilal A",
+        "family": "Mateen",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Institute of Health Informatics, University College London, London, UK"
+          },
+          {
+            "name": "Wellcome Trust, London, UK"
+          },
+          {
+            "name": "Alan Turing Institute, London, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-6476-2165",
+        "authenticated-orcid": false,
+        "given": "Melissa D",
+        "family": "McCradden",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Bioethics, Hospital for Sick Children Toronto, ON, Canada"
+          },
+          {
+            "name": "Genetics and Genome Biology, SickKids Research Institute, Toronto, ON, Canada"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-5471-5202",
+        "authenticated-orcid": false,
+        "given": "Lauren",
+        "family": "Oakden-Rayner",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Australian Institute for Machine Learning, University of Adelaide, Adelaide, SA, Australia"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-6911-2367",
+        "authenticated-orcid": false,
+        "given": "Johan",
+        "family": "Ordish",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Medicines and Healthcare products Regulatory Agency, London, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-0044-3496",
+        "authenticated-orcid": false,
+        "given": "Richard",
+        "family": "Parnell",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Patient representative, Health Data Research UK patient and public involvement and engagement group"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-9076-8472",
+        "authenticated-orcid": false,
+        "given": "Sherri",
+        "family": "Rose",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Health Policy and Center for Health Policy, Stanford University, Stanford, CA, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8980-2330",
+        "authenticated-orcid": false,
+        "given": "Karandeep",
+        "family": "Singh",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Learning Health Sciences, University of Michigan Medical School, Ann Arbor, MI, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-3037-122X",
+        "authenticated-orcid": false,
+        "given": "Laure",
+        "family": "Wynants",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Epidemiology, CAPHRI Care and Public Health Research Institute, Maastricht University, Maastricht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8708-7003",
+        "authenticated-orcid": false,
+        "given": "Patricia",
+        "family": "Logullo",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Statistics in Medicine, UK EQUATOR Centre, Nuffield Department of Orthopaedics, Rheumatology, and Musculoskeletal Sciences, University of Oxford, Oxford OX3 7LD, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "BMJ"
+    ],
+    "published_print": null,
+    "published_online": {
+      "date-parts": [
+        [
+          2024,
+          4,
+          16
+        ]
+      ]
+    },
+    "volume": "385",
+    "issue": null,
+    "page": "e078378",
+    "url": "https://api.crossref.org/works/10.1136%2Fbmj-2023-078378",
+    "verified": true
+  },
+  {
+    "key": "moons2025_probast_ai",
+    "doi": "10.1136/bmj-2024-082505",
+    "title": [
+      "PROBAST+AI: an updated quality, risk of bias, and applicability assessment tool for prediction models using regression or artificial intelligence methods"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0003-2118-004X",
+        "authenticated-orcid": false,
+        "given": "Karel G M",
+        "family": "Moons",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, 3508 GA Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-7401-4593",
+        "authenticated-orcid": false,
+        "given": "Johanna A A",
+        "family": "Damen",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, 3508 GA Utrecht, Netherlands"
+          },
+          {
+            "name": "Cochrane Netherlands, University Medical Centre Utrecht, Utrecht University, Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-4402-5379",
+        "authenticated-orcid": false,
+        "given": "Tabea",
+        "family": "Kaul",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, 3508 GA Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-7950-2980",
+        "authenticated-orcid": false,
+        "given": "Lotty",
+        "family": "Hooft",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, 3508 GA Utrecht, Netherlands"
+          },
+          {
+            "name": "Cochrane Netherlands, University Medical Centre Utrecht, Utrecht University, Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-7745-2887",
+        "authenticated-orcid": false,
+        "given": "Constanza",
+        "family": "Andaur Navarro",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, 3508 GA Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-0989-0623",
+        "authenticated-orcid": false,
+        "given": "Paula",
+        "family": "Dhiman",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Statistics in Medicine, UK EQUATOR Centre, Nuffield Department of Orthopaedics, Rheumatology and Musculoskeletal Sciences, University of Oxford, Oxford, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-6657-2787",
+        "authenticated-orcid": false,
+        "given": "Andrew L",
+        "family": "Beam",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Epidemiology, Harvard T H Chan School of Public Health, Boston, MA, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1613-7450",
+        "authenticated-orcid": false,
+        "given": "Ben",
+        "family": "Van Calster",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Development and Regeneration, KU Leuven, Leuven, Belgium"
+          },
+          {
+            "name": "Leuven Unit for Health Technology Assessment Research (LUHTAR), KU Leuven, Leuven, Belgium"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-6712-6626",
+        "authenticated-orcid": false,
+        "given": "Leo Anthony",
+        "family": "Celi",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Biostatistics, Harvard T H Chan School of Public Health, Boston, MA, USA"
+          },
+          {
+            "name": "Laboratory for Computational Physiology, Massachusetts Institute of Technology, Cambridge, MA, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-9612-7791",
+        "authenticated-orcid": false,
+        "given": "Spiros",
+        "family": "Denaxas",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Institute of Health Informatics, University College London, London, UK"
+          },
+          {
+            "name": "British Heart Foundation Data Science Centre, Health Data Research Centre UK, London, United Kingdom"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-7849-0087",
+        "authenticated-orcid": false,
+        "given": "Alastair K",
+        "family": "Denniston",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "College of Medicine and Health, University of Birmingham, Birmingham, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-6349-7251",
+        "authenticated-orcid": false,
+        "given": "Marzyeh",
+        "family": "Ghassemi",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Electrical Engineering and Computer Science, Institute for Medical Engineering and Science, Massachusetts Institute of Technology, Cambridge, MA, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1147-8491",
+        "authenticated-orcid": false,
+        "given": "Georg",
+        "family": "Heinze",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Institute of Clinical Biometrics, Centre for Medical Data Science, Medical University of Vienna, Vienna, Austria"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-5183-131X",
+        "authenticated-orcid": false,
+        "given": "André Pascal",
+        "family": "Kengne",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Medicine, University of Cape Town, Cape Town, South Africa"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-4910-9368",
+        "authenticated-orcid": false,
+        "given": "Lena",
+        "family": "Maier-Hein",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Division of Intelligent Medical Systems, German Cancer Research Centre (DKFZ), Heidelberg, Germany"
+          },
+          {
+            "name": "National Centre for Tumour Diseases (NCT) Heidelberg, Heidelberg, Germany"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-1286-0038",
+        "authenticated-orcid": false,
+        "given": "Xiaoxuan",
+        "family": "Liu",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "College of Medicine and Health, University of Birmingham, Birmingham, UK"
+          },
+          {
+            "name": "University Hospitals Birmingham NHS Foundation Trust, Birmingham, UK"
+          },
+          {
+            "name": "School of Health Sciences, College of Medicine and Health, University of Birmingham, Birmingham, UK"
+          },
+          {
+            "name": "NIHR Birmingham Biomedical Research Centre, Birmingham, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8708-7003",
+        "authenticated-orcid": false,
+        "given": "Patricia",
+        "family": "Logullo",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Statistics in Medicine, UK EQUATOR Centre, Nuffield Department of Orthopaedics, Rheumatology and Musculoskeletal Sciences, University of Oxford, Oxford, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-6476-2165",
+        "authenticated-orcid": false,
+        "given": "Melissa D",
+        "family": "McCradden",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Bioethics, The Hospital for Sick Children, Toronto, ON, Canada"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-3610-4883",
+        "authenticated-orcid": false,
+        "given": "Nan",
+        "family": "Liu",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Quantitative Medicine, Duke-NUS Medical School, Singapore, Singapore"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-5471-5202",
+        "authenticated-orcid": false,
+        "given": "Lauren",
+        "family": "Oakden-Rayner",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Australian Institute for Machine Learning, University of Adelaide, Adelaide, SA, Australia"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8980-2330",
+        "authenticated-orcid": false,
+        "given": "Karandeep",
+        "family": "Singh",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Learning Health Sciences, University of Michigan Medical School, Ann Arbor, MI, USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-2264-7174",
+        "authenticated-orcid": false,
+        "given": "Daniel S",
+        "family": "Ting",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Quantitative Medicine, Duke-NUS Medical School, Singapore, Singapore"
+          },
+          {
+            "name": "AI Office, Singapore Health Service, Duke-NUS Medical School, Singapore, Singapore"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-3037-122X",
+        "authenticated-orcid": false,
+        "given": "Laure",
+        "family": "Wynants",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Development and Regeneration, KU Leuven, Leuven, Belgium"
+          },
+          {
+            "name": "Department of Epidemiology, CAPHRI Care and Public Health Research Institute, Maastricht University, Maastricht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-9317-4995",
+        "authenticated-orcid": false,
+        "given": "Bada",
+        "family": "Yang",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, 3508 GA Utrecht, Netherlands"
+          },
+          {
+            "name": "Cochrane Netherlands, University Medical Centre Utrecht, Utrecht University, Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-4026-4345",
+        "authenticated-orcid": false,
+        "given": "Johannes B",
+        "family": "Reitsma",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, 3508 GA Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8699-0735",
+        "authenticated-orcid": false,
+        "given": "Richard D",
+        "family": "Riley",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "School of Health Sciences, College of Medicine and Health, University of Birmingham, Birmingham, UK"
+          },
+          {
+            "name": "NIHR Birmingham Biomedical Research Centre, Birmingham, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-2772-2316",
+        "authenticated-orcid": false,
+        "given": "Gary S",
+        "family": "Collins",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Statistics in Medicine, UK EQUATOR Centre, Nuffield Department of Orthopaedics, Rheumatology and Musculoskeletal Sciences, University of Oxford, Oxford, UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-5529-1541",
+        "authenticated-orcid": false,
+        "given": "Maarten",
+        "family": "van Smeden",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care, University Medical Centre Utrecht, Utrecht University, 3508 GA Utrecht, Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "BMJ"
+    ],
+    "published_print": null,
+    "published_online": {
+      "date-parts": [
+        [
+          2025,
+          3,
+          24
+        ]
+      ]
+    },
+    "volume": "388",
+    "issue": null,
+    "page": "e082505",
+    "url": "https://api.crossref.org/works/10.1136%2Fbmj-2024-082505",
+    "verified": true
+  },
+  {
+    "key": "riley2019_continuous_sample_size",
+    "doi": "10.1002/sim.7993",
+    "title": [
+      "Minimum sample size for developing a multivariable prediction model: Part I – Continuous outcomes"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0001-8699-0735",
+        "authenticated-orcid": false,
+        "given": "Richard D.",
+        "family": "Riley",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Centre for Prognosis Research, Research Institute for Primary Care and Health Sciences Keele University Keele UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Kym I.E.",
+        "family": "Snell",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Prognosis Research, Research Institute for Primary Care and Health Sciences Keele University Keele UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-7481-0282",
+        "authenticated-orcid": false,
+        "given": "Joie",
+        "family": "Ensor",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Prognosis Research, Research Institute for Primary Care and Health Sciences Keele University Keele UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-2803-1151",
+        "authenticated-orcid": false,
+        "given": "Danielle L.",
+        "family": "Burke",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Prognosis Research, Research Institute for Primary Care and Health Sciences Keele University Keele UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "suffix": "Jr",
+        "given": "Frank E.",
+        "family": "Harrell",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Biostatistics Vanderbilt University School of Medicine Nashville TN"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Karel G.M.",
+        "family": "Moons",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Center for Health Sciences and Primary Care University Medical Center Utrecht Utrecht The Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-2772-2316",
+        "authenticated-orcid": false,
+        "given": "Gary S.",
+        "family": "Collins",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Statistics in Medicine, Nuffield Department of Orthopaedics, Rheumatology and Musculoskeletal Sciences University of Oxford Oxford UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Statistics in Medicine"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2019,
+          3,
+          30
+        ]
+      ]
+    },
+    "published_online": {
+      "date-parts": [
+        [
+          2018,
+          10,
+          22
+        ]
+      ]
+    },
+    "volume": "38",
+    "issue": "7",
+    "page": "1262-1275",
+    "url": "https://api.crossref.org/works/10.1002%2Fsim.7993",
+    "verified": true
+  },
+  {
+    "key": "riley2019_binary_sample_size",
+    "doi": "10.1002/sim.7992",
+    "title": [
+      "Minimum sample size for developing a multivariable prediction model: PART II ‐ binary and time‐to‐event outcomes"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0001-8699-0735",
+        "authenticated-orcid": false,
+        "given": "Richard D",
+        "family": "Riley",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Centre for Prognosis Research, Research Institute for Primary Care and Health Sciences Keele University Staffordshire UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Kym IE",
+        "family": "Snell",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Prognosis Research, Research Institute for Primary Care and Health Sciences Keele University Staffordshire UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-7481-0282",
+        "authenticated-orcid": false,
+        "given": "Joie",
+        "family": "Ensor",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Prognosis Research, Research Institute for Primary Care and Health Sciences Keele University Staffordshire UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-2803-1151",
+        "authenticated-orcid": false,
+        "given": "Danielle L",
+        "family": "Burke",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Prognosis Research, Research Institute for Primary Care and Health Sciences Keele University Staffordshire UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Frank E",
+        "family": "Harrell Jr",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Biostatistics Vanderbilt University School of Medicine Nashville Tennessee"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Karel GM",
+        "family": "Moons",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Julius Centre for Health Sciences and Primary Care University Medical Centre Utrecht Utrecht The Netherlands"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-2772-2316",
+        "authenticated-orcid": false,
+        "given": "Gary S",
+        "family": "Collins",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Centre for Statistics in Medicine, Nuffield Department of Orthopaedics, Rheumatology and Musculoskeletal Sciences University of Oxford Oxford UK"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Statistics in Medicine"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2019,
+          3,
+          30
+        ]
+      ]
+    },
+    "published_online": {
+      "date-parts": [
+        [
+          2018,
+          10,
+          24
+        ]
+      ]
+    },
+    "volume": "38",
+    "issue": "7",
+    "page": "1276-1296",
+    "url": "https://api.crossref.org/works/10.1002%2Fsim.7992",
+    "verified": true
+  },
+  {
+    "key": "riley2020_sample_size_framework",
+    "doi": "10.1136/bmj.m441",
+    "title": [
+      "Calculating the sample size required for developing a clinical prediction model"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0001-8699-0735",
+        "authenticated-orcid": false,
+        "given": "Richard D",
+        "family": "Riley",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Joie",
+        "family": "Ensor",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-9373-6591",
+        "authenticated-orcid": false,
+        "given": "Kym I E",
+        "family": "Snell",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "suffix": "Jr",
+        "given": "Frank E",
+        "family": "Harrell",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-3410-9472",
+        "authenticated-orcid": false,
+        "given": "Glen P",
+        "family": "Martin",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Johannes B",
+        "family": "Reitsma",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Karel G M",
+        "family": "Moons",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-2772-2316",
+        "authenticated-orcid": false,
+        "given": "Gary",
+        "family": "Collins",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Maarten",
+        "family": "van Smeden",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "BMJ"
+    ],
+    "published_print": null,
+    "published_online": {
+      "date-parts": [
+        [
+          2020,
+          3,
+          18
+        ]
+      ]
+    },
+    "volume": null,
+    "issue": null,
+    "page": "m441",
+    "url": "https://api.crossref.org/works/10.1136%2Fbmj.m441",
+    "verified": true
+  },
+  {
+    "key": "steyerberg2001_bootstrap",
+    "doi": "10.1016/S0895-4356(01)00341-9",
+    "title": [
+      "Internal validation of predictive models"
+    ],
+    "authors": [
+      {
+        "given": "Ewout W",
+        "family": "Steyerberg",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "suffix": "Jr",
+        "given": "Frank E",
+        "family": "Harrell",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Gerard J.J.M",
+        "family": "Borsboom",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "M.J.C",
+        "family": "Eijkemans",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Yvonne",
+        "family": "Vergouwe",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "J.Dik F",
+        "family": "Habbema",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Journal of Clinical Epidemiology"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2001,
+          8
+        ]
+      ]
+    },
+    "published_online": null,
+    "volume": "54",
+    "issue": "8",
+    "page": "774-781",
+    "url": "https://api.crossref.org/works/10.1016%2FS0895-4356%2801%2900341-9",
+    "verified": true
+  },
+  {
+    "key": "vancalster2019_calibration",
+    "doi": "10.1186/s12916-019-1466-7",
+    "title": [
+      "Calibration: the Achilles heel of predictive analytics"
+    ],
+    "authors": [
+      {
+        "name": "On behalf of Topic Group ‘Evaluating diagnostic tests and prediction models’ of the STRATOS initiative",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0003-1613-7450",
+        "authenticated-orcid": false,
+        "given": "Ben",
+        "family": "Van Calster",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0001-8905-2429",
+        "authenticated-orcid": false,
+        "given": "David J.",
+        "family": "McLernon",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-5529-1541",
+        "authenticated-orcid": false,
+        "given": "Maarten",
+        "family": "van Smeden",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Laure",
+        "family": "Wynants",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-7787-0122",
+        "authenticated-orcid": false,
+        "given": "Ewout W.",
+        "family": "Steyerberg",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "BMC Medicine"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2019,
+          12
+        ]
+      ]
+    },
+    "published_online": {
+      "date-parts": [
+        [
+          2019,
+          12,
+          16
+        ]
+      ]
+    },
+    "volume": "17",
+    "issue": "1",
+    "page": null,
+    "url": "https://api.crossref.org/works/10.1186%2Fs12916-019-1466-7",
+    "verified": true
+  },
+  {
+    "key": "friedman2010_glmnet",
+    "doi": "10.18637/jss.v033.i01",
+    "title": [
+      "Regularization Paths for Generalized Linear Models via Coordinate Descent"
+    ],
+    "authors": [
+      {
+        "given": "Jerome",
+        "family": "Friedman",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Trevor",
+        "family": "Hastie",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Robert",
+        "family": "Tibshirani",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Journal of Statistical Software"
+    ],
+    "published_print": null,
+    "published_online": {
+      "date-parts": [
+        [
+          2010
+        ]
+      ]
+    },
+    "volume": "33",
+    "issue": "1",
+    "page": null,
+    "url": "https://api.crossref.org/works/10.18637%2Fjss.v033.i01",
+    "verified": true
+  },
+  {
+    "key": "zou2005_elastic_net",
+    "doi": "10.1111/j.1467-9868.2005.00503.x",
+    "title": [
+      "Regularization and Variable Selection Via the Elastic Net"
+    ],
+    "authors": [
+      {
+        "given": "Hui",
+        "family": "Zou",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Stanford University , USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Trevor",
+        "family": "Hastie",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Stanford University , USA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Journal of the Royal Statistical Society Series B: Statistical Methodology"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2005,
+          4,
+          1
+        ]
+      ]
+    },
+    "published_online": {
+      "date-parts": [
+        [
+          2005,
+          3,
+          9
+        ]
+      ]
+    },
+    "volume": "67",
+    "issue": "2",
+    "page": "301-320",
+    "url": "https://api.crossref.org/works/10.1111%2Fj.1467-9868.2005.00503.x",
+    "verified": true
+  },
+  {
+    "key": "white1980_robust_covariance",
+    "doi": "10.2307/1912934",
+    "title": [
+      "A Heteroskedasticity-Consistent Covariance Matrix Estimator and a Direct Test for Heteroskedasticity"
+    ],
+    "authors": [
+      {
+        "given": "Halbert",
+        "family": "White",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Econometrica"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          1980,
+          5
+        ]
+      ]
+    },
+    "published_online": null,
+    "volume": "48",
+    "issue": "4",
+    "page": "817",
+    "url": "https://api.crossref.org/works/10.2307%2F1912934",
+    "verified": true
+  },
+  {
+    "key": "mackinnon1985_hc3",
+    "doi": "10.1016/0304-4076(85)90158-7",
+    "title": [
+      "Some heteroskedasticity-consistent covariance matrix estimators with improved finite sample properties"
+    ],
+    "authors": [
+      {
+        "given": "James G",
+        "family": "MacKinnon",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Halbert",
+        "family": "White",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Journal of Econometrics"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          1985,
+          9
+        ]
+      ]
+    },
+    "published_online": null,
+    "volume": "29",
+    "issue": "3",
+    "page": "305-325",
+    "url": "https://api.crossref.org/works/10.1016%2F0304-4076%2885%2990158-7",
+    "verified": true
+  },
+  {
+    "key": "albert1984_logistic_separation",
+    "doi": "10.1093/biomet/71.1.1",
+    "title": [
+      "On the existence of maximum likelihood estimates in logistic regression models"
+    ],
+    "authors": [
+      {
+        "given": "A.",
+        "family": "ALBERT",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "J. A.",
+        "family": "ANDERSON",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Biometrika"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          1984
+        ]
+      ]
+    },
+    "published_online": null,
+    "volume": "71",
+    "issue": "1",
+    "page": "1-10",
+    "url": "https://api.crossref.org/works/10.1093%2Fbiomet%2F71.1.1",
+    "verified": true
+  },
+  {
+    "key": "ohrt_nissen2016_brace_flexibility",
+    "doi": "10.1097/BRS.0000000000001519",
+    "title": [
+      "Supine Lateral Bending Radiographs Predict the Initial In-brace Correction of the Providence Brace in Patients With Adolescent Idiopathic Scoliosis"
+    ],
+    "authors": [
+      {
+        "given": "Søren",
+        "family": "Ohrt-Nissen",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Dennis W.",
+        "family": "Hallager",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Martin",
+        "family": "Gehrchen",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Benny",
+        "family": "Dahl",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "SPINE"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2016,
+          5
+        ]
+      ]
+    },
+    "published_online": null,
+    "volume": "41",
+    "issue": "9",
+    "page": "798-802",
+    "url": "https://api.crossref.org/works/10.1097%2FBRS.0000000000001519",
+    "verified": true
+  },
+  {
+    "key": "negrini2018_sosort",
+    "doi": "10.1186/s13013-017-0145-8",
+    "title": [
+      "2016 SOSORT guidelines: orthopaedic and rehabilitation treatment of idiopathic scoliosis during growth"
+    ],
+    "authors": [
+      {
+        "given": "Stefano",
+        "family": "Negrini",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Sabrina",
+        "family": "Donzelli",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Angelo Gabriele",
+        "family": "Aulisa",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Dariusz",
+        "family": "Czaprowski",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Sanja",
+        "family": "Schreiber",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Jean Claude",
+        "family": "de Mauroy",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Helmut",
+        "family": "Diers",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Theodoros B.",
+        "family": "Grivas",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Patrick",
+        "family": "Knott",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Tomasz",
+        "family": "Kotwicki",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Andrea",
+        "family": "Lebel",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Cindy",
+        "family": "Marti",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Toru",
+        "family": "Maruyama",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Joe",
+        "family": "O’Brien",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Nigel",
+        "family": "Price",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Eric",
+        "family": "Parent",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Manuel",
+        "family": "Rigo",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Michele",
+        "family": "Romano",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Luke",
+        "family": "Stikeleather",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "James",
+        "family": "Wynne",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Fabio",
+        "family": "Zaina",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Scoliosis and Spinal Disorders"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2018,
+          12
+        ]
+      ]
+    },
+    "published_online": {
+      "date-parts": [
+        [
+          2018,
+          1,
+          10
+        ]
+      ]
+    },
+    "volume": "13",
+    "issue": "1",
+    "page": null,
+    "url": "https://api.crossref.org/works/10.1186%2Fs13013-017-0145-8",
+    "verified": true
+  },
+  {
+    "key": "noma2021_optimism_ci",
+    "doi": "10.1002/sim.9148",
+    "title": [
+      "Confidence intervals of prediction accuracy measures for multivariable prediction models based on the bootstrap‐based optimism correction methods"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0002-2520-9949",
+        "authenticated-orcid": false,
+        "given": "Hisashi",
+        "family": "Noma",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Department of Data Science The Institute of Statistical Mathematics Tokyo Japan"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Tomohiro",
+        "family": "Shinozaki",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Information and Computer Technology, Faculty of Engineering Tokyo University of Science Tokyo Japan"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Katsuhiro",
+        "family": "Iba",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Statistical Science, School of Multidisciplinary Sciences The Graduate University for Advanced Studies Tokyo Japan"
+          },
+          {
+            "name": "Office of Biostatistics, Department of Biometrics, Headquarters of Clinical Development Otsuka Pharmaceutical Co., Ltd. Tokyo Japan"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Satoshi",
+        "family": "Teramukai",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Biostatistics, Graduate School of Medical Science Kyoto Prefectural University of Medicine Kyoto Japan"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Toshi A.",
+        "family": "Furukawa",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Health Promotion and Human Behavior Kyoto University Graduate School of Public Health Kyoto Japan"
+          },
+          {
+            "name": "Department of Clinical Epidemiology Kyoto University Graduate School of Medicine Kyoto Japan"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Statistics in Medicine"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2021,
+          11,
+          20
+        ]
+      ]
+    },
+    "published_online": {
+      "date-parts": [
+        [
+          2021,
+          7,
+          24
+        ]
+      ]
+    },
+    "volume": "40",
+    "issue": "26",
+    "page": "5691-5701",
+    "url": "https://api.crossref.org/works/10.1002%2Fsim.9148",
+    "verified": true
+  },
+  {
+    "key": "lei2018_conformal_regression",
+    "doi": "10.1080/01621459.2017.1307116",
+    "title": [
+      "Distribution-Free Predictive Inference for Regression"
+    ],
+    "authors": [
+      {
+        "ORCID": "https://orcid.org/0000-0003-3104-9387",
+        "authenticated-orcid": false,
+        "given": "Jing",
+        "family": "Lei",
+        "sequence": "first",
+        "affiliation": [
+          {
+            "name": "Department of Statistics, Carnegie Mellon University, Pittsburgh, PA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Max",
+        "family": "G’Sell",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Statistics, Carnegie Mellon University, Pittsburgh, PA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Alessandro",
+        "family": "Rinaldo",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Statistics, Carnegie Mellon University, Pittsburgh, PA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "ORCID": "https://orcid.org/0000-0002-2158-8304",
+        "authenticated-orcid": false,
+        "given": "Ryan J.",
+        "family": "Tibshirani",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Statistics, Carnegie Mellon University, Pittsburgh, PA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Larry",
+        "family": "Wasserman",
+        "sequence": "additional",
+        "affiliation": [
+          {
+            "name": "Department of Statistics, Carnegie Mellon University, Pittsburgh, PA"
+          }
+        ],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Journal of the American Statistical Association"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2018,
+          7,
+          3
+        ]
+      ]
+    },
+    "published_online": {
+      "date-parts": [
+        [
+          2018,
+          6,
+          8
+        ]
+      ]
+    },
+    "volume": "113",
+    "issue": "523",
+    "page": "1094-1111",
+    "url": "https://api.crossref.org/works/10.1080%2F01621459.2017.1307116",
+    "verified": true
+  },
+  {
+    "key": "xu2017_initial_correction",
+    "doi": "10.1097/BSD.0000000000000343",
+    "title": [
+      "Initial Correction Rate Can be Predictive of the Outcome of Brace Treatment in Patients With Adolescent Idiopathic Scoliosis"
+    ],
+    "authors": [
+      {
+        "given": "Leilei",
+        "family": "Xu",
+        "sequence": "first",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Xiaodong",
+        "family": "Qin",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Yong",
+        "family": "Qiu",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "given": "Zezhang",
+        "family": "Zhu",
+        "sequence": "additional",
+        "affiliation": [],
+        "role": [
+          {
+            "vocabulary": "crossref",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "journal": [
+      "Clinical Spine Surgery: A Spine Publication"
+    ],
+    "published_print": {
+      "date-parts": [
+        [
+          2017,
+          5
+        ]
+      ]
+    },
+    "published_online": null,
+    "volume": "30",
+    "issue": "4",
+    "page": "E475-E479",
+    "url": "https://api.crossref.org/works/10.1097%2FBSD.0000000000000343",
+    "verified": true
+  }
+]

@@ -1,5 +1,5 @@
 ---
-title: "Relatório prognóstico — desenvolvimento e avaliação interna"
+title: "Desenvolvimento e avaliação interna de modelos de mudança radiográfica em seis meses na escoliose idiopática do adolescente"
 author: "Caio Vallio"
 lang: pt-BR
 bibliography: references_prognostico.bib
@@ -8,6 +8,17 @@ format:
     self-contained: true
     toc: true
     number-sections: true
+    include-in-header:
+      text: |
+        <style>
+        main, .cell, .cell-output-display { min-width: 0; max-width: 100%; }
+        .cell-output-display { overflow-x: auto; }
+        .cell-output-display table { min-width: 640px; }
+        .math.display { display: block; min-width: 0; max-width: 100%; }
+        mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; text-align: left !important; padding-bottom: 0.5em; }
+        table { font-size: 0.9em; }
+        p, li { overflow-wrap: anywhere; }
+        </style>
 execute:
   echo: false
   warning: false
@@ -105,7 +116,9 @@ sr <- function(scenario, model, metric) sens_metrics[sens_metrics$scenario == sc
 n_raw <- missing$n_bruto[missing$componente == "fluxo" & missing$variavel == "registros brutos"]
 n_dedup <- missing$n_deduplicados[missing$componente == "fluxo" & missing$variavel == "após deduplicação"]
 n_final <- missing$n_analitico[missing$componente == "fluxo" & missing$variavel == "coorte analítica"]
-events <- 317L; non_events <- n_final - events; prevalence <- events / n_final
+events <- cohort$contagem[cohort$variavel == "delta_cat" & cohort$nivel == "melhora"]
+stopifnot(length(events) == 1L, events == 317L, n_final == 615L)
+non_events <- n_final - events; prevalence <- events / n_final
 delta <- cohort[cohort$variavel == "delta" & cohort$tipo == "numerica", ]
 linear_10pp <- 10 * cf("linear", "correcao_colete")$coefficient_shrunk
 or_10pp <- exp(10 * cf("logistic", "correcao_colete")$coefficient_shrunk)
@@ -135,7 +148,7 @@ latex_rhs <- function(model) {
   z <- z[z$term != "(Intercept)", ]
   pieces <- paste0(ifelse(z$coefficient_shrunk >= 0, "+", "-"), " ",
                    vapply(z$coefficient_shrunk, latex_number, character(1)), "\\,", latex_symbol[z$term])
-  groups <- split(pieces, ceiling(seq_along(pieces)/5))
+  groups <- split(pieces, ceiling(seq_along(pieces)/2))
   lines <- c(paste0(intercept, " ", paste(groups[[1]], collapse=" ")),
              vapply(groups[-1], paste, character(1), collapse=" "))
   paste(lines, collapse=" \\\\\n&\\quad ")
@@ -149,7 +162,7 @@ Este relatório documenta desenvolvimento e **avaliação interna**, não valida
 - Modelo linear principal: R² corrigido por otimismo `r fmt(pr("linear", "r2")$estimate, 3)` (IC95% `r fmt(pr("linear", "r2")$ci_lower, 3)`–`r fmt(pr("linear", "r2")$ci_upper, 3)`) e RMSE `r fmt(pr("linear", "rmse")$estimate)`° (IC95% `r fmt(pr("linear", "rmse")$ci_lower)`–`r fmt(pr("linear", "rmse")$ci_upper)`°).
 - Modelo logístico secundário: AUC corrigida `r fmt(pr("logistic", "auc")$estimate, 3)` (IC95% `r fmt(pr("logistic", "auc")$ci_lower, 3)`–`r fmt(pr("logistic", "auc")$ci_upper, 3)`) e Brier `r fmt(pr("logistic", "brier_score")$estimate, 3)`. AUC mede discriminação, não acurácia.
 - Na CV interna do procedimento pós-*shrinkage*, o RMSE linear médio foi `r fmt(cv("linear", "rmse")$mean_across_repeats)`° e a inclinação logística `r fmt(cv("logistic", "calibration_slope")$mean_across_repeats, 3)`.
-- Dez pontos percentuais adicionais de correção transversal pelo colete corresponderam a `r fmt(linear_10pp)`° em `delta` e OR `r fmt(or_10pp, 2)` para melhora, mantidos os demais preditores. OR não é risco relativo e associação prognóstica não é efeito causal.
+- Nas equações pós-*shrinkage*, dez pontos percentuais adicionais de correção transversal pelo colete corresponderam a `r fmt(linear_10pp)`° em `delta` e OR `r fmt(or_10pp, 2)` para melhora, mantidos os demais preditores. São contrastes pontuais sem IC pós-*shrinkage*. OR não é risco relativo e associação prognóstica não é efeito causal.
 - O cenário com Cobb basal reduziu o RMSE interno em `r fmt(sr("primary", "linear", "rmse")$mean_across_repeats - sr("cobb_baseline_augmented", "linear", "rmse")$mean_across_repeats, 3)`°. A coorte e a especificação principal foram preservadas.
 
 O RMSE é erro agregado, não margem individual. A avaliação conformal obteve cobertura interna de `r fmt_pct(coverage, 2)` e largura média de `r fmt(width)`°; isso evidencia incerteza individual substancial, sem constituir intervalo final validado externamente.
@@ -209,6 +222,8 @@ $$\Delta = \max(\mathrm{Cobb}_{6\ meses}) - \max(\mathrm{Cobb}_{basal}).$$
 
 O máximo basal usa três regiões e preserva dez empates; o dado final contém só a maior magnitude, sem identificar a região. O evento secundário é `delta <= -5°`. É **melhora radiográfica**, não necessariamente clínica; 5° está na ordem da variabilidade de mensuração manual discutida pela SOSORT, sem estabelecer benefício funcional [@negrini2018_sosort].
 
+Nos empates, conservam-se todas as regiões empatadas; somente o valor máximo entra em `delta`. A comparação entre máximos, mesmo de regiões distintas, foi aprovada pela equipe. O plano registra a mesma condição radiográfica no basal e no seguimento; faltam os detalhes dessa condição, dos avaliadores e da confiabilidade. A correção pelo colete permanece uma medida transversal basal confirmada. Sua fórmula percentual de aquisição não pode ser reconstruída integralmente da planilha; o valor percentual fornecido é utilizado sem truncar as hipercorreções verdadeiras.
+
 ```{r}
 x <- dictionary[,c("rotulo","definicao_operacional","unidade","codificacao_forma","referencia","graus_liberdade","aquisicao_momento")]
 names(x) <- c("Preditor","Definição","Unidade","Forma","Referência","gl","Momento")
@@ -237,7 +252,7 @@ A especificação, portanto, foi congelada **após** exploração histórica e n
 
 No modelo linear, cada coeficiente é a mudança esperada em `delta` para uma unidade adicional do preditor, mantendo os demais constantes. Os termos são somados ao intercepto. Para uma categoria, o coeficiente compara aquele nível com a referência. Um coeficiente negativo é favorável neste estudo porque `delta` mais negativo significa maior redução radiográfica.
 
-No modelo logístico, a mesma soma é feita na escala de *log-odds*. A transformação $p=1/(1+e^{-\\eta})$ converte o resultado em probabilidade entre 0 e 1. Exponenciar um coeficiente produz uma *odds ratio*; ela compara chances, não riscos, e pode parecer numericamente maior que o risco relativo quando o evento é frequente.
+No modelo logístico, a mesma soma é feita na escala de *log-odds*. A transformação $p=1/(1+e^{-\eta})$ converte o resultado em probabilidade entre 0 e 1. Exponenciar um coeficiente produz uma *odds ratio*; ela compara chances, não riscos, e pode parecer numericamente maior que o risco relativo quando o evento é frequente.
 
 ```{r}
 x <- sample_size[,c("modelo","classe","cenario","valor_desempenho","parametros","n_minimo","participantes_disponiveis","margem_n","suficiente")]
@@ -253,6 +268,10 @@ O cálculo de tamanho amostral não é um teste aprovado/reprovado. Ele pergunta
 
 ```{r}
 x <- assumptions[,c("assumption","evidence","interpretation","action","limitation")]
+x$action[x$assumption == "media_condicional_linear"] <- "Confrontar os diagnósticos apresentados com a análise flexível exploratória, preservando o principal."
+x$action[x$assumption == "linearidade_no_logit"] <- "Interpretar os diagnósticos de forma e a calibração; preservar a especificação logística principal."
+x$action[x$assumption == "influencia"] <- "Sensibilidades executadas com exclusões somente no treinamento; todos os participantes permanecem no principal."
+x$limitation[x$assumption == "influencia"] <- "As sensibilidades relatadas não redefinem a coorte nem justificam exclusões automáticas."
 names(x) <- c("Pressuposto","Evidência","Interpretação","Ação","Limite")
 knitr::kable(x, caption="Diagnósticos e consequências práticas.", row.names=FALSE)
 ```
@@ -271,13 +290,19 @@ Cada uma das 2.000 réplicas bootstrap sorteou 615 participantes **com reposiç�
 
 Para R²/AUC, maior é melhor e a correção reduz o valor aparente; para RMSE/MAE/Brier/*log loss*, menor é melhor e a correção aumenta o erro aparente. Houve 2.000 réplicas válidas e zero falhas por modelo. Os IC principais usam percentis deslocados pela correção de otimismo [@noma2021_optimism_ci]; IC de calibração ficaram indisponíveis porque a estatística aparente é fixa por construção e produziria intervalo artificialmente degenerado.
 
+Esses IC são aproximações para o desempenho da especificação fixa reajustada na população representada, condicionais às decisões já congeladas. O deslocamento não reestima toda a variabilidade do otimismo em uma segunda camada bootstrap e sua cobertura nesta coorte não foi demonstrada por simulação. A exploração histórica que precedeu o congelamento não foi repetida: a correção não cobre o otimismo de toda a estratégia histórica de escolha de desfechos e preditores. Os IC não se referem à equação pós-*shrinkage* nem a previsões individuais.
+
 ### *Shrinkage*, calibração e validação cruzada
 
 *Shrinkage* reduz todos os coeficientes não interceptais na direção de zero quando há sinal de sobreajuste. Aqui, o multiplicador foi a inclinação de calibração corrigida: `r fmt(shrink$shrinkage_factor[shrink$model=="linear"],4)` no linear e `r fmt(shrink$shrinkage_factor[shrink$model=="logistic"],4)` no logístico. Depois, o intercepto foi recalibrado para preservar a média de `delta` ou a prevalência. A operação tende a moderar previsões extremas; não cria informação nova e não substitui teste externo.
 
 A validação cruzada estratificada dividiu a coorte em dez partes: nove treinaram e uma avaliou. Isso se repetiu até cada parte servir como teste e todo o ciclo foi repetido cinco vezes. Para avaliar honestamente o procedimento pós-*shrinkage*, o fator e o intercepto foram estimados apenas dentro do treinamento. As amplitudes entre cinco repetições mostram dependência da partição, não IC.
 
+Cada treinamento estimou o fator com 200 réplicas bootstrap por modelo: 20.000 ajustes internos válidos nos 50 folds. A avaliação representa o procedimento com amostras de treinamento menores que 615 e 200 réplicas internas, enquanto a equação final usa 615 participantes e fator obtido com 2.000 réplicas. Não é teste independente da equação final fixada. Não houve balanceamento artificial de classes.
+
 Calibração perfeita teria intercepto 0 e inclinação 1. Intercepto diferente de 0 indica previsões globalmente altas/baixas; inclinação abaixo de 1 costuma indicar previsões extremas demais, e acima de 1, pouco extremas. Intervalos conformais separados foram calibrados sem o teste externo e avaliados somente nele [@lei2018_conformal_regression]; sua cobertura continua interna.
+
+No procedimento conformal, 80% do treinamento externo estimou modelo, fator e escala residual; 20% calibrou o quantil dos resíduos absolutos normalizados. As partições foram estratificadas pelo evento. A cobertura apresentada é empírica e interna: não se afirma garantia exata de 95% para esse desenho estratificado, por subgrupo ou fora da população observada. Permanecem indisponíveis tanto o IC da média quanto o intervalo individual da equação final ajustada nos 615 participantes.
 
 # Modelo contínuo principal
 
@@ -293,7 +318,7 @@ Na CV do procedimento pós-*shrinkage*, o intercepto de calibração médio foi 
 
 ![Coeficientes lineares aparentes com IC95% HC3-t (595 gl), não coeficientes pós-shrinkage.](results/prognostico/revisao/figures/linear_coefficients_hc3.png){fig-alt="Coeficientes lineares e intervalos robustos." width="100%"}
 
-Dez pontos percentuais adicionais de correção pelo colete correspondem a `r fmt(linear_10pp)`° em `delta`, mantidos os demais preditores. O sinal favorável não prova que aumentar a correção cause melhor desfecho nem garante manutenção.
+Na equação pós-*shrinkage*, dez pontos percentuais adicionais de correção pelo colete correspondem a `r fmt(linear_10pp)`° em `delta`, mantidos os demais preditores. Esse contraste não usa os coeficientes aparentes da figura HC3 acima. O sinal favorável não prova que aumentar a correção cause melhor desfecho nem garante manutenção.
 
 # Modelo logístico secundário
 
@@ -303,13 +328,13 @@ x$metric <- c(auc="AUC",brier_score="Brier",log_loss="Log loss")[x$metric]; name
 tab(x, "Desempenho logístico da especificação fixa.", 3)
 ```
 
-AUC é ordenação/discriminação, não acurácia. Brier, *log loss* e calibração são lidos conjuntamente [@vancalster2019_calibration]. Na CV pós-*shrinkage*, calibração no grande média=`r fmt(cv("logistic","calibration_in_the_large")$mean_across_repeats,3)` log-odds e inclinação=`r fmt(cv("logistic","calibration_slope")$mean_across_repeats,3)`. Dez pontos percentuais de correção correspondem a OR `r fmt(or_10pp,2)`; OR não é risco relativo.
+AUC é ordenação/discriminação, não acurácia. Brier, *log loss* e calibração são lidos conjuntamente [@vancalster2019_calibration]. Na CV pós-*shrinkage*, calibração global média=`r fmt(cv("logistic","calibration_in_the_large")$mean_across_repeats,3)` log-odds e inclinação=`r fmt(cv("logistic","calibration_slope")$mean_across_repeats,3)`. Na equação pós-*shrinkage*, dez pontos percentuais de correção correspondem a OR `r fmt(or_10pp,2)`; OR não é risco relativo e não recebe IC dos coeficientes aparentes.
 
 ![ROC e calibração aparente do logístico (n=615; 317 eventos). Sem bandas não validadas.](results/prognostico/revisao/figures/logistic_roc_calibration.png){fig-alt="ROC e calibração aparente." width="100%"}
 
 ![OR da equação logística pós-shrinkage; contrastes contínuos de +10 unidades. Sem IC pós-shrinkage não validados.](results/prognostico/revisao/figures/logistic_coefficients_shrunk.png){fig-alt="Odds ratios pós-shrinkage." width="100%"}
 
-A amplitude bootstrap mediana foi `r fmt(median(boot_stability$instability_index_95[boot_stability$model=="linear"]))`° no linear e `r fmt_pct(median(boot_stability$instability_index_95[boot_stability$model=="logistic"]),1)` na probabilidade. É instabilidade entre modelos reamostrados, não intervalo de predição.
+A amplitude bootstrap mediana foi `r fmt(median(boot_stability$instability_index_95[boot_stability$model=="linear"]))`° no linear e `r fmt(100*median(boot_stability$instability_index_95[boot_stability$model=="logistic"]),1)` pontos percentuais na probabilidade. É instabilidade entre modelos reamostrados, não intervalo de predição.
 
 ![Amplitude das cinco previsões internas por participante do flexível; cinco previsões por pessoa não são independentes.](results/prognostico/revisao/figures/stability_repeated_predictions.png){fig-alt="Estabilidade de previsões lineares e logísticas." width="100%"}
 
@@ -339,6 +364,8 @@ tab(x, "Folhas ilustrativas; proporções aparentes.", 1)
 ```
 
 Correção pelo colete foi raiz em 50/50 árvores. O corte mediano foi `r fmt(root_cut$median,2)`%, com amplitude `r fmt(root_cut$min,2)`–`r fmt(root_cut$max,2)`%. Estabilidade da variável não valida um corte fixo, causalidade ou manutenção.
+
+A extração percorre os nós de `rpart`, separando a divisão primária das concorrentes e substitutas [@therneau2026_rpart_object]. Foram auditados 313 cortes primários (221 contínuos e 92 categóricos), correspondentes aos 313 nós internos; concorrentes e substitutos não entram nas frequências de cortes primários.
 
 ![Estabilidade estrutural nas 50 árvores dos treinamentos externos, usando apenas cortes primários.](results/prognostico/revisao/figures/cart_stability.png){fig-alt="Frequências de variáveis e cortes da raiz." width="100%"}
 
@@ -376,9 +403,15 @@ O principal reduziu RMSE em `r fmt(comparators$improvement_error_reduction[compa
 
 O sinal mais consistente foi maior correção transversal pelo colete associada a evolução radiográfica mais favorável, compatível com componente redutível, sem inferência causal. A árvore repete essa variável na raiz, mas nenhum corte é uma regra clínica. O desempenho supera referências simples, enquanto RMSE próximo de 4,3° e largura conformal média de 17,4° mostram incerteza individual relevante.
 
+O estudo transversal de Ohrt-Nissen et al. relaciona flexibilidade radiográfica à correção inicial no colete Providence [@ohrt_nissen2016_brace_flexibility]. Já Xu et al. avaliaram retrospectivamente 488 pacientes com pelo menos dois anos de seguimento, usando como sucesso aumento da curva de no máximo 5°, desfecho diferente de redução de pelo menos 5° aos seis meses [@xu2017_initial_correction]. Essas fontes contextualizam corrigibilidade imediata e possível associação longitudinal; não validam os limiares, coeficientes ou a manutenção nesta coorte. Os resultados locais não são extrapolados além de seis meses.
+
 Limitações centrais: fonte única e representatividade desconhecida; informações clínicas/protocolos ausentes; caso completo; erro radiográfico; possível troca da região máxima; especificação posterior à exploração; IC de coeficientes pós-*shrinkage* indisponíveis; equidade e utilidade não avaliadas; nenhuma avaliação externa. A ausência de avaliação externa limita transportabilidade, mas não é por si um julgamento automático do risco de viés da avaliação interna.
 
 Antes de uso, é necessário congelar equação/código, documentar o protocolo, avaliar dados independentes, calibração e equidade, definir manejo de entradas ausentes/fora do domínio e estudar utilidade sob limiares clínicos. PROBAST+AI deve ser aplicado com pergunta explícita e revisão independente [@moons2025_probast_ai].
+
+## Pendências para submissão
+
+O pacote computacional não constitui manuscrito pronto para envio. Os investigadores ainda precisam documentar recrutamento, elegibilidade, centros, período, perdas, marco/janela de seguimento, protocolos de mensuração e tratamento; informar comitê e aprovação ética e consentimento ou dispensa; e declarar financiamento, conflitos, protocolo/registro, disponibilidade de dados/código e envolvimento de pacientes. A ausência dessas informações não demonstra ausência de aprovação ou de procedimentos. O resumo deve ser adaptado à revista, e a comparação com modelos clínicos existentes e as lacunas de equidade devem ser desenvolvidas. Os checklists abaixo discriminam o que está relatado e o que permanece pendente.
 
 > **Texto para o manuscrito — conclusão.** Em 615 adolescentes, o RMSE linear corrigido foi `r fmt(pr("linear","rmse")$estimate)`° e a AUC logística corrigida `r fmt(pr("logistic","auc")$estimate,3)`. Maior correção transversal pelo colete associou-se a maior redução radiográfica, sem causalidade ou garantia de manutenção. Incerteza individual e ausência de avaliação externa impedem uso clínico; CART e flexível permanecem exploratórios.
 
@@ -391,7 +424,7 @@ As equações usam os coeficientes finais do artefato pós-*shrinkage* e são ge
 ```{r}
 #| results: asis
 cat("$$\\begin{aligned}\n\\widehat{\\Delta} ={}& ", latex_rhs("linear"), "\n\\end{aligned}$$\n\n", sep="")
-cat("$$\\begin{aligned}\n\\eta ={}& ", latex_rhs("logistic"), "\\\\\n+p(\\mathrm{melhora}) ={}& \\frac{1}{1+e^{-\\eta}}\n\\end{aligned}$$\n", sep="")
+cat("$$\\begin{aligned}\n\\eta ={}& ", latex_rhs("logistic"), "\\\\\np(\\mathrm{melhora}) ={}& \\frac{1}{1+e^{-\\eta}}\n\\end{aligned}$$\n", sep="")
 ```
 
 Na equação linear, a saída é `delta` previsto em graus. Na logística, $\eta$ é o preditor linear em *log-odds* e a segunda linha o converte na probabilidade de melhora radiográfica. Os fatores de *shrinkage* foram `r fmt(shrink$shrinkage_factor[shrink$model=="linear"],6)` e `r fmt(shrink$shrinkage_factor[shrink$model=="logistic"],6)`, respectivamente.
@@ -425,7 +458,7 @@ tab(x, "Cobertura interna; 615 previsões por repetição.", 3)
 
 ## Checklist TRIPOD+AI
 
-Rascunho dos itens oficiais, com localização/evidência/pendência. É checklist de relato, não avaliação de qualidade [@collins2024_tripod_ai].
+Auditoria local dos itens e subitens oficiais, com localização, evidência e pendência. Os tópicos são rótulos abreviados, não tradução oficial. “Reportado” descreve presença de informação, não validade científica ou conformidade integral [@collins2024_tripod_ai].
 
 ```{r}
 x <- tripod[,c("item","section","topic","scope","status","location_qmd","evidence_or_pending")]
@@ -433,9 +466,9 @@ names(x) <- c("Item","Seção","Tópico","Escopo","Status","Localização","Evid
 knitr::kable(x, caption="TRIPOD+AI, versão 7-Feb-2024.", row.names=FALSE)
 ```
 
-## Rascunho PROBAST+AI
+## Auditoria local PROBAST+AI
 
-Separa qualidade do desenvolvimento, risco de viés da avaliação interna e aplicabilidade. Não é avaliação independente nem julgamento formal definitivo [@moons2025_probast_ai].
+Pergunta da auditoria: o estudo sustenta desenvolver e avaliar internamente previsões de mudança radiográfica nominal em seis meses, em adolescentes tratados com colete e S4D, para pesquisa? A avaliação separa qualidade do desenvolvimento, risco de viés do desempenho e aplicabilidade. As justificativas e respostas de sinalização são locais e não constituem revisão externa independente [@moons2025_probast_ai]. O risco ligado à exploração histórica não repetida na reamostragem permanece; a ausência de validação externa, isoladamente, não determina alto risco interno.
 
 ```{r}
 x <- probast[,c("component","domain","assessment_target","draft_judgement","location_qmd","evidence","pending_or_limitation")]

@@ -1,0 +1,48 @@
+[1] "/tmp/task15_chunks.R"
+$$\begin{aligned}
+\widehat{\Delta} ={}& -0.0477475326535 + 0.0624623271221\,\mathrm{idade} + 0.00583466510939\,\mathrm{IMC} \\
+&\quad - 0.0336482908678\,\mathrm{cifose} - 0.0110586150407\,\mathrm{lordose} \\
+&\quad - 0.118729127978\,\mathrm{correcao\ do\ colete} - 0.586559970083\,I(\mathrm{sexo=masculino}) \\
+&\quad + 0.235210568375\,I(\mathrm{Lenke}=2) + 3.59207152308\,I(\mathrm{Lenke}=3) \\
+&\quad + 4.01051235087\,I(\mathrm{Lenke}=4) + 1.08306072932\,I(\mathrm{Lenke}=5) \\
+&\quad + 2.21734435791\,I(\mathrm{Lenke}=6) - 2.46114832274\,I(\mathrm{Risser}=1) \\
+&\quad - 1.90980498014\,I(\mathrm{Risser}=2) - 1.21395550262\,I(\mathrm{Risser}=3) \\
+&\quad - 0.875058126730\,I(\mathrm{Risser}=4) + 0.793139587307\,I(\mathrm{flexibilidade=rigido}) \\
+&\quad - 0.0502985046314\,I(\mathrm{escoliometro=toracica}) - 0.365644183526\,I(\mathrm{escoliometro=lombar}) \\
+&\quad + 2.58582130564\,I(\mathrm{escoliometro=toracica+lombar})
+\end{aligned}$$
+
+$$\begin{aligned}
+\eta ={}& -2.85706216268 - 0.0721830618044\,\mathrm{idade} + 0.0493885419286\,\mathrm{IMC} \\
+&\quad + 0.0183689722786\,\mathrm{cifose} - 0.00869479659297\,\mathrm{lordose} \\
+&\quad + 0.0844685928682\,\mathrm{correcao\ do\ colete} + 0.968571740075\,I(\mathrm{sexo=masculino}) \\
+&\quad - 0.797512591779\,I(\mathrm{Lenke}=2) - 1.59770532574\,I(\mathrm{Lenke}=3) \\
+&\quad - 1.80857974585\,I(\mathrm{Lenke}=4) - 0.871448276954\,I(\mathrm{Lenke}=5) \\
+&\quad - 1.40889383160\,I(\mathrm{Lenke}=6) + 1.61994579165\,I(\mathrm{Risser}=1) \\
+&\quad + 0.797180403702\,I(\mathrm{Risser}=2) + 0.165253315435\,I(\mathrm{Risser}=3) \\
+&\quad + 0.612764387910\,I(\mathrm{Risser}=4) - 0.385934988326\,I(\mathrm{flexibilidade=rigido}) \\
+&\quad - 0.00239138848310\,I(\mathrm{escoliometro=toracica}) + 0.0161798092428\,I(\mathrm{escoliometro=lombar}) \\
+&\quad - 1.03616710428\,I(\mathrm{escoliometro=toracica+lombar})\\
+p(\mathrm{melhora}) ={}& \frac{1}{1+e^{-\eta}}
+\end{aligned}$$
+R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.6.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] C.UTF-8/C.UTF-8/C.UTF-8/C/C.UTF-8/C.UTF-8
+
+time zone: America/Sao_Paulo
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+loaded via a namespace (and not attached):
+ [1] compiler_4.6.1 cli_3.6.6      tools_4.6.1    otel_0.2.0     yaml_2.3.12   
+ [6] knitr_1.51     digest_0.6.39  xfun_0.60      rlang_1.3.0    evaluate_1.0.5
+WARNINGS_CAPTURADOS: 0 

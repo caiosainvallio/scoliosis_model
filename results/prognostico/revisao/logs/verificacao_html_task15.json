@@ -1,0 +1,21 @@
+{
+  "internal_links": 50,
+  "missing_targets": [],
+  "images": 12,
+  "embedded_images": 12,
+  "missing_alt": 0,
+  "bibliography_entries": 20,
+  "uncited_references": [],
+  "unresolved_citations": [],
+  "browser": {
+    "1440x900": {
+      "scrollWidth": 1425
+    },
+    "390x844": {
+      "scrollWidth": 375
+    },
+    "broken_images": 0,
+    "math_errors": 0,
+    "observations": "Equações com rolagem horizontal local; sem invasão do índice ou transbordamento da página. Capturas inspecionadas nas ferramentas CUA, não arquivadas em disco."
+  }
+}

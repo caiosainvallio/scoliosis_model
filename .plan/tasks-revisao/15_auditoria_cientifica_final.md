@@ -4,7 +4,7 @@
 - **Complexidade:** Muito alta.
 - **Justificativa do modelo:** Exige avaliação crítica transversal de validade, evidência clínica, implementação e força das conclusões.
 - **Dependências:** [Task 14](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/14_renderizacao_e_reprodutibilidade.md)
-- **Status:** Pendente.
+- **Status:** Concluída.
 
 ## Contexto e regras
 
@@ -39,6 +39,7 @@ As entregas de tasks anteriores só estarão disponíveis após sua conclusão. 
 7. Conferir a cobertura do parecer atualizado e das decisões prévias. Classificar pendências como crítica, relevante ou editorial, com arquivo/trecho, impacto e tarefa de origem.
 8. Corrigir problemas locais de redação que não alterem análise. Para falhas analíticas, registrar retorno à task de origem com verificação exigida; não declarar auditoria concluída sem resolução das falhas críticas.
 9. Após qualquer correção, repetir os checks e a renderização afetados da task 14. Emitir recomendação fundamentada de prontidão ou lista objetiva do que ainda impede a submissão.
+10. Revisar as referências bibliográficas e garantir que elas existam e sejam relevantes para o relatório.
 
 ## Entregáveis
 
