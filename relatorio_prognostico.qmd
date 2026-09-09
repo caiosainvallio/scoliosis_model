@@ -16,8 +16,9 @@ format:
         .cell-output-display table { min-width: 640px; }
         .math.display { display: block; min-width: 0; max-width: 100%; }
         mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; text-align: left !important; padding-bottom: 0.5em; }
-        table { font-size: 0.9em; }
+        table { font-size: 0.9em; display: block; max-width: 100%; overflow-x: auto; }
         p, li { overflow-wrap: anywhere; }
+        p code, li code { white-space: normal; overflow-wrap: anywhere; }
         </style>
 execute:
   echo: false
@@ -34,16 +35,10 @@ rev_root <- file.path(root, "results", "prognostico", "revisao")
 rev_agg <- file.path(rev_root, "aggregated")
 rev_fig <- file.path(rev_root, "figures")
 rev_logs <- file.path(rev_root, "logs")
-frozen_agg <- file.path(root, "results", "prognostico", "aggregated")
 
 read_rev <- function(x) {
   p <- file.path(rev_agg, x)
   if (!file.exists(p)) stop("Saída obrigatória da revisão ausente: ", p)
-  read.csv(p, check.names = FALSE, stringsAsFactors = FALSE)
-}
-read_frozen <- function(x) {
-  p <- file.path(frozen_agg, x)
-  if (!file.exists(p)) stop("Resultado congelado obrigatório ausente: ", p)
   read.csv(p, check.names = FALSE, stringsAsFactors = FALSE)
 }
 fmt <- function(x, d = 2L) formatC(as.numeric(x), digits = d, format = "f", decimal.mark = ",", big.mark = ".")
@@ -68,14 +63,15 @@ required_rev <- c(
   "flexible_failure_audit.csv", "flexible_prediction_stability.csv",
   "tripod_ai_checklist.csv", "probast_ai_assessment.csv", "figures_task12_manifest.csv"
 )
-required_frozen <- c("cart_external_metric_distribution.csv", "frozen_prediction_stability_summary.csv")
+required_rev <- c(required_rev, "cart_external_metric_distribution.csv", "frozen_prediction_stability_summary.csv",
+                  "article_coefficients_linear.csv", "article_coefficients_logistic.csv")
 required_fig <- c(
   "linear_delta_distribution.png", "linear_observed_predicted.png", "linear_diagnostics.png",
-  "linear_coefficients_hc3.png", "logistic_roc_calibration.png", "logistic_coefficients_shrunk.png",
+  "linear_coefficients_hc3.png", "logistic_roc_calibration.png",
   "stability_repeated_predictions.png", "cart_illustrative_tree.png", "cart_stability.png",
-  "sensitivity_comparisons.png", "flexible_clinical_relations.png", "flexible_selection_stability.png"
+  "sensitivity_comparisons.png", "flexible_clinical_relations.png"
 )
-paths <- c(file.path(rev_agg, required_rev), file.path(frozen_agg, required_frozen), file.path(rev_fig, required_fig))
+paths <- c(file.path(rev_agg, required_rev), file.path(rev_fig, required_fig))
 bad <- paths[!file.exists(paths) | file.info(paths)$size <= 0]
 if (length(bad)) stop("Artefatos obrigatórios ausentes/vazios: ", paste(bad, collapse = ", "))
 
@@ -85,6 +81,8 @@ if (nrow(src) != 1L || !requireNamespace("digest", quietly = TRUE)) stop("Fonte/
 source_sha <- digest::digest(file = file.path(root, src$artefato), algo = "sha256")
 if (!identical(source_sha, src$sha256)) stop("Hash da fonte diverge do manifesto.")
 
+article_linear <- read_rev("article_coefficients_linear.csv")
+article_logistic <- read_rev("article_coefficients_logistic.csv")
 cohort <- read_rev("cohort_descriptive.csv")
 missing <- read_rev("missing_before_after.csv")
 dictionary <- read_rev("dicionario_preditores.csv")
@@ -98,8 +96,8 @@ assumptions <- read_rev("diagnostics_assumption_evidence.csv")
 cart_leaves <- read_rev("cart_leaves.csv")
 cart_cuts <- read_rev("cart_cutpoint_summary.csv")
 cart_validity <- read_rev("cart_calibration_validity_summary.csv")
-cart_metrics <- read_frozen("cart_external_metric_distribution.csv")
-boot_stability <- read_frozen("frozen_prediction_stability_summary.csv")
+cart_metrics <- read_rev("cart_external_metric_distribution.csv")
+boot_stability <- read_rev("frozen_prediction_stability_summary.csv")
 sens_metrics <- read_rev("sensitivity_resampling_metrics_summary.csv")
 comparators <- read_rev("baseline_comparisons.csv")
 sens_conclusions <- read_rev("sensitivity_scenario_conclusions.csv")
@@ -177,6 +175,16 @@ O relatório responde a três perguntas diferentes, que não devem ser confundid
 
 Ao longo do texto, **desenvolvimento** significa construir a equação; **avaliação interna** significa testar o processo por reamostragem da mesma fonte; **avaliação externa** exigiria outra amostra. Calibração pergunta se previsões e observações concordam em nível e escala; discriminação pergunta se o modelo ordena pessoas com resultados diferentes; erro em graus pergunta quão distante a previsão contínua fica do observado.
 
+## Como usar este documento na escrita do artigo
+
+Este é o relato completo da análise prognóstica: apresenta população, definições, especificação, coeficientes, avaliação interna e sensibilidades sem exigir leitura de `analisys.qmd`. As decisões tomadas antes do congelamento são descritas aqui porque fazem parte da história metodológica e limitam a interpretação; não são um pré-requisito de leitura.
+
+Para escrever **Métodos**, use as seções de coorte, desfechos/preditores e especificação, seguidas dos procedimentos de avaliação interna. Para **Resultados**, use as tabelas completas de coeficientes e desempenho dos dois modelos e depois as sensibilidades. Para **Discussão**, diferencie associação, capacidade preditiva e incerteza individual. A modelagem flexível tem seção própria e permanece exploratória. Os apêndices reúnem equações finais, interpretações por termo e auditoria.
+
+Há dois produtos distintos: as tabelas de **beta e IC95% do ajuste sem shrinkage** documentam as associações condicionais estimadas; as **equações pós-shrinkage** documentam a versão final para futuras avaliações preditivas. O IC do primeiro produto não pertence ao segundo. Nenhum deles constitui autorização de uso clínico.
+
+O HTML incorpora figuras e tabelas e pode ser lido isoladamente. Reproduzir os cálculos requer a planilha, os scripts e o pacote de resultados identificado no apêndice; não requer executar ou ler o documento histórico. As lacunas de coleta e ética ainda precisam ser preenchidas pelos investigadores, mesmo em um relato autônomo.
+
 # Pergunta, cenário e cronologia
 
 A pergunta é: **com informações da avaliação basal, qual mudança na maior magnitude do Cobb e qual probabilidade de melhora radiográfica de pelo menos 5° são esperadas aos seis meses?** O linear em graus é principal; o logístico é secundário; CART e modelagem flexível são exploratórias. Não há limiar de decisão, análise de utilidade ou indicação terapêutica. O relato segue TRIPOD+AI [@collins2024_tripod_ai].
@@ -212,7 +220,11 @@ names(x) <- c("Variável","Nível","n","%")
 tab(x, "Preditores categóricos e desfecho binário.", 1)
 ```
 
+**Pergunta da figura:** como a mudança radiográfica se distribui na coorte? O eixo horizontal é delta em graus; o vertical conta participantes. Valores à esquerda de −5° atendem ao evento de melhora, incluindo o limite de −5°.
+
 ![Distribuição de delta (graus; n=615). As linhas em −5°, 0° e +5° são referências descritivas; −5° define melhora radiográfica. Não é análise de progressão e o máximo final não confirma a mesma região.](results/prognostico/revisao/figures/linear_delta_distribution.png){fig-alt="Histograma de delta com marcas em menos cinco, zero e mais cinco graus." width="100%"}
+
+**Leitura:** a média de −4,66° e o intervalo observado de −23° a +13° mostram mudanças de sinais e magnitudes diferentes. A distribuição motiva preservar delta contínuo como principal; o corte binário resume parte dessa informação. Este histograma descreve pessoas, não desempenho de um modelo.
 
 Permanecem ausentes recrutamento, elegibilidade, perdas antes da planilha, centro(s), período, protocolo radiográfico, avaliadores, confiabilidade, adesão, detalhes do colete e intervalo real.
 
@@ -248,6 +260,23 @@ A sequência decisória foi deliberadamente conservadora:
 
 A especificação, portanto, foi congelada **após** exploração histórica e não é chamada de “a priori”. Não foram reintroduzidos progressão, seleção por p-valor ou divisão treino–teste simples.
 
+### Especificação completa dos modelos
+
+Os dois modelos principais incluem simultaneamente idade, IMC, cifose torácica, lordose lombar, correção transversal pelo colete, sexo, Lenke, Risser, flexibilidade categórica e classe do escoliômetro. Não houve seleção por significância nesta etapa. Os cinco primeiros são numéricos; os cinco restantes são fatores. O dicionário anterior define unidades, categorias e aquisição.
+
+Seja $X$ esse vetor, codificado em 19 colunas: cinco valores numéricos e 14 indicadores de categoria. Cada indicador vale 1 quando a pessoa pertence à categoria e 0 caso contrário. As referências são feminino, Lenke 1, Risser 0, flexível e escoliômetro normal. O intercepto é um vigésimo parâmetro. Os coeficientes das duas regressões são diferentes, embora usem o mesmo $X$.
+
+| Modelo | Especificação e estimação | Saída e finalidade |
+|---|---|---|
+| Linear principal | $E(\Delta\mid X)=\beta_0+\sum_{j=1}^{19}\beta_jX_j$; mínimos quadrados ordinários | Mudança média prevista em graus; preserva a quantidade de mudança |
+| Logístico secundário | $\log[p/(1-p)]=\gamma_0+\sum_{j=1}^{19}\gamma_jX_j$; máxima verossimilhança binomial | Probabilidade de $\Delta\leq-5°$; não é probabilidade de melhora clínica |
+| CART exploratória | Mesmos dez preditores, desfecho binário; divisões recursivas e escolha de complexidade no treino | Grupos de probabilidade; avaliação de regras e estabilidade |
+| Flexíveis exploratórios | Duas famílias, contínua e binária; acrescentam Cobb basal, curvas e interações com penalização | Investigar se maior complexidade acrescenta desempenho interno |
+
+Nos modelos principais, cada preditor numérico tem associação linear **na escala do respectivo modelo**: graus no linear e log-odds no logístico. Portanto, o logístico já produz uma curva de probabilidade mesmo sem splines; “linear no logit” não significa probabilidade linear. Não há interações nem splines nas especificações principais. O erro do linear representa a diferença entre o delta observado e sua média condicional; não se exige normalidade das variáveis preditoras.
+
+A escolha de dez preditores não é justificada por um resultado prévio que o leitor precise consultar: corresponde à lista histórica aqui explicitada, congelada após exploração para esta avaliação. Não existe justificativa prospectiva documentada capaz de transformar esse processo em escolha a priori. Cobb basal foi preservado fora do principal por essa decisão procedimental e estudado explicitamente como sensibilidade.
+
 ### Como as regressões produzem uma previsão
 
 No modelo linear, cada coeficiente é a mudança esperada em `delta` para uma unidade adicional do preditor, mantendo os demais constantes. Os termos são somados ao intercepto. Para uma categoria, o coeficiente compara aquele nível com a referência. Um coeficiente negativo é favorável neste estudo porque `delta` mais negativo significa maior redução radiográfica.
@@ -263,6 +292,22 @@ tab(x, "Tamanho amostral, condicional às premissas.", 3)
 Os cenários usam *shrinkage* desejado 0,90 [@riley2019_continuous_sample_size; @riley2019_binary_sample_size; @riley2020_sample_size_framework]. R² esperado 0,20 exigiria 676; 60% do Cox–Snell aparente, 654. Portanto, n=615 não é declarado universalmente suficiente nem justifica o flexível.
 
 O cálculo de tamanho amostral não é um teste aprovado/reprovado. Ele pergunta quantas pessoas seriam necessárias sob determinada força de sinal esperada para limitar sobreajuste, manter pequeno o otimismo e estimar o nível médio do desfecho com precisão. Como a força de sinal verdadeira era incerta, foram mostrados cenários; alguns cabem em 615 e outros não.
+
+## Vocabulário para ler os resultados
+
+| Termo | Significado neste relatório | Como usar na escrita |
+|---|---|---|
+| Ajuste aparente | Estimar e avaliar nos mesmos dados | Descrição do ajuste, com possível otimismo |
+| Beta | Peso de um preditor, condicionado aos demais | Informar unidade, referência, escala e IC |
+| IC95% | Intervalo de incerteza do parâmetro/estatística, sob o método e suas premissas | Não é faixa contendo 95% das pessoas nem prova de causalidade |
+| R² | Fração da variação de delta explicada pelo modelo | Maior é melhor; não é porcentagem de previsões corretas |
+| RMSE / MAE | Raiz da média dos erros ao quadrado / média dos erros absolutos | Ambos em graus; RMSE dá mais peso a erros grandes |
+| AUC | Capacidade de ordenar uma pessoa com evento acima de outra sem evento | Discriminação; não indica calibração ou benefício de uma decisão |
+| Brier | Média de (probabilidade prevista − evento 0/1)² | Menor é melhor; resume erro de probabilidade |
+| Log loss | Perda logarítmica, que penaliza fortemente previsões confiantes erradas | Menor é melhor; não se mede em graus |
+| Calibração | Concordância entre previsão e observação | Intercepto ideal 0 e inclinação ideal 1; complementar à discriminação |
+| Fold / repetição | Uma parte dos dados / novo particionamento de toda a coorte | As pessoas são reutilizadas; não são novas amostras independentes |
+| Conformal | Calibração de uma faixa preditiva pelos erros de um conjunto reservado | Aqui, cobertura empírica interna do procedimento; não faixa final para uso clínico |
 
 ## Pressupostos e inferência
 
@@ -280,7 +325,11 @@ Breusch–Pagan=36,004 (19 gl; p=0,0105), R² auxiliar=0,0585 e razão de DP por
 
 Heteroscedasticidade significa que a dispersão dos erros não é igual em toda a faixa prevista. Isso pode tornar erros-padrão clássicos inadequados, razão para usar HC3 como sensibilidade. Colinearidade significa que preditores carregam informação sobreposta e pode deixar coeficientes instáveis; posto, GVIF e índices de condição não mostraram sinal numérico forte, mas também não provam validade clínica. Separação ocorre quando uma combinação de preditores distingue perfeitamente o evento e pode fazer coeficientes logísticos divergir; ela não foi detectada aqui.
 
+**Pergunta da figura:** que padrões do erro merecem cautela? Os quatro painéis examinam resíduos, caudas, influência e variação da dispersão.
+
 ![Diagnósticos aparentes do linear (n=615). HC3 é sensibilidade inferencial, não correção de previsão.](results/prognostico/revisao/figures/linear_diagnostics.png){fig-alt="Resíduos, Q-Q, influência e dispersão residual." width="100%"}
+
+**Leitura dos painéis:** resíduos são observado menos previsto; tendência da linha suavizada longe de zero sugere forma média incompleta. No Q–Q, afastamentos da diagonal descrevem diferenças em relação à referência normal, sobretudo nas caudas. No painel de influência, alavancagem indica combinações incomuns de entradas; pontos destacados são sinais de investigação. O último painel compara o DP do erro entre quintis de previsão. A variação de dispersão, junto ao diagnóstico numérico, motivou HC3; os destaques motivaram a sensibilidade de influência, sem exclusão automática.
 
 ## Avaliação interna, *shrinkage* e incerteza
 
@@ -292,9 +341,19 @@ Para R²/AUC, maior é melhor e a correção reduz o valor aparente; para RMSE/M
 
 Esses IC são aproximações para o desempenho da especificação fixa reajustada na população representada, condicionais às decisões já congeladas. O deslocamento não reestima toda a variabilidade do otimismo em uma segunda camada bootstrap e sua cobertura nesta coorte não foi demonstrada por simulação. A exploração histórica que precedeu o congelamento não foi repetida: a correção não cobre o otimismo de toda a estratégia histórica de escolha de desfechos e preditores. Os IC não se referem à equação pós-*shrinkage* nem a previsões individuais.
 
+### Por que usar *shrinkage* e como interpretá-lo
+
+*Shrinkage* significa redução dos coeficientes em direção a zero. O motivo é o **sobreajuste**: o modelo pode atribuir pesos excessivos a padrões particulares da amostra e produzir previsões mais extremas do que se sustentam em outras pessoas. Ajustar bem os dados disponíveis não basta para demonstrar que esses pesos se repetirão. A redução busca moderar esse problema e pode introduzir algum viés nos coeficientes para reduzir a variabilidade das previsões; não garante desempenho melhor em toda amostra futura [@riley2020_sample_size_framework].
+
+Nesta análise foi usado **shrinkage uniforme após o ajuste**: um mesmo fator $s$ multiplica cada coeficiente que não é intercepto, $\beta_j^*=s\beta_j$. O fator foi estimado pela inclinação de calibração corrigida por otimismo, obtida no bootstrap. Se $s=1$, nada é reduzido; se $s=0,90$, cada peso retém 90% da magnitude. O intercepto é então recalibrado separadamente para manter o nível médio das previsões; ele não deve ser simplesmente multiplicado pelo fator.
+
+Os fatores encontrados retêm `r fmt(100*shrink$shrinkage_factor[shrink$model=="linear"],2)`% da magnitude dos pesos lineares e `r fmt(100*shrink$shrinkage_factor[shrink$model=="logistic"],2)`% dos pesos logísticos. Isso é redução de `r fmt(100*(1-shrink$shrinkage_factor[shrink$model=="linear"]),2)`% e `r fmt(100*(1-shrink$shrinkage_factor[shrink$model=="logistic"]),2)`% **dos coeficientes**, não da dor, do Cobb observado, do risco de cada participante ou da proporção de erros. No logístico, a OR pós-shrinkage é $\exp(s\gamma)$: a multiplicação ocorre no log-odds, não diretamente na OR.
+
+O sinal e a interpretação por unidade permanecem: beta linear negativo aponta menor delta; OR abaixo de 1 aponta menores chances do evento, mantidos os demais preditores. Os contrastes são atenuados. O procedimento não remove preditores, não prova causalidade e não corrige erros de coleta, seleção histórica ou falta de representatividade. Também não produz automaticamente novos IC95%; por isso as tabelas inferenciais e as equações finais são separadas.
+
 ### *Shrinkage*, calibração e validação cruzada
 
-*Shrinkage* reduz todos os coeficientes não interceptais na direção de zero quando há sinal de sobreajuste. Aqui, o multiplicador foi a inclinação de calibração corrigida: `r fmt(shrink$shrinkage_factor[shrink$model=="linear"],4)` no linear e `r fmt(shrink$shrinkage_factor[shrink$model=="logistic"],4)` no logístico. Depois, o intercepto foi recalibrado para preservar a média de `delta` ou a prevalência. A operação tende a moderar previsões extremas; não cria informação nova e não substitui teste externo.
+A avaliação seguinte verifica o procedimento de estimar o fator e recalibrar o intercepto dentro do treinamento. Isso evita apresentar como teste uma avaliação que já utilizou as mesmas pessoas para definir esses pesos finais.
 
 A validação cruzada estratificada dividiu a coorte em dez partes: nove treinaram e uma avaliou. Isso se repetiu até cada parte servir como teste e todo o ciclo foi repetido cinco vezes. Para avaliar honestamente o procedimento pós-*shrinkage*, o fator e o intercepto foram estimados apenas dentro do treinamento. As amplitudes entre cinco repetições mostram dependência da partição, não IC.
 
@@ -306,6 +365,24 @@ No procedimento conformal, 80% do treinamento externo estimou modelo, fator e es
 
 # Modelo contínuo principal
 
+## Coeficientes ajustados e IC95% para o artigo
+
+A tabela apresenta todos os termos do ajuste por mínimos quadrados nos 615 participantes, antes do shrinkage. Os IC95% usam covariância HC3 e distribuição t com 595 graus de liberdade, em resposta à heteroscedasticidade diagnosticada. São associações ajustadas simultaneamente por todos os outros preditores, condicionais à especificação congelada; não incorporam a escolha histórica dos preditores.
+
+```{r article-linear}
+x <- article_linear
+x <- data.frame(Preditor=x$preditor, Contraste=x$contraste, `Beta (°)`=fmt(x$beta,3),
+                `IC95% HC3`=paste0("[",fmt(x$ic95_inf,3),"; ",fmt(x$ic95_sup,3),"]"), check.names=FALSE)
+knitr::kable(x,caption="Tabela para artigo — coeficientes lineares ajustados sem shrinkage, n=615. Ângulos e colete por incrementos explícitos; categorias versus referência.",row.names=FALSE)
+```
+
+**Como interpretar.** Beta negativo significa delta menor, portanto maior redução radiográfica média; beta positivo significa delta maior, portanto menor redução ou maior aumento. O IC mostra a incerteza do contraste, não onde estarão 95% dos deltas individuais. Um IC que inclui zero não prova ausência de associação nem justifica retirar a variável. Comparações de categorias são com a referência indicada e não com a categoria anterior.
+
+Para +10 pontos percentuais de correção pelo colete, beta sem shrinkage é `r fmt(article_linear$beta[article_linear$term=="correcao_colete"],2)`° (IC95% `r fmt(article_linear$ic95_inf[article_linear$term=="correcao_colete"],2)` a `r fmt(article_linear$ic95_sup[article_linear$term=="correcao_colete"],2)`°). Isso compara pessoas com os demais preditores iguais; não representa o efeito de aumentar terapeuticamente a correção. O intercepto usa numéricos iguais a zero, fora do domínio observado, e não descreve uma adolescente típica. O apêndice fornece a leitura de cada termo.
+
+## Desempenho e leitura das figuras
+
+
 ```{r}
 x <- perf[perf$model=="linear" & perf$metric %in% c("r2","rmse","mae"),c("metric","apparent","estimate","ci_lower","ci_upper","unit")]
 x$metric <- c(r2="R²",rmse="RMSE",mae="MAE")[x$metric]; names(x) <- c("Métrica","Aparente","Corrigida","IC95% inf.","IC95% sup.","Unidade")
@@ -314,13 +391,41 @@ tab(x, "Desempenho linear da especificação fixa.", 3)
 
 Na CV do procedimento pós-*shrinkage*, o intercepto de calibração médio foi `r fmt(cv("linear","calibration_intercept")$mean_across_repeats,3)`° e a inclinação `r fmt(cv("linear","calibration_slope")$mean_across_repeats,3)`. O RMSE corrigido de `r fmt(pr("linear","rmse")$estimate)`° é agregado e não classifica previsões individuais.
 
+**Pergunta da figura:** quanto os valores observados se afastam das previsões do ajuste? Cada ponto é uma pessoa; previsão no eixo horizontal e observação no vertical.
+
 ![Delta observado versus previsto pelo linear aparente (n=615); identidade e calibração no mesmo ajuste, sem validação externa.](results/prognostico/revisao/figures/linear_observed_predicted.png){fig-alt="Delta observado versus previsto." width="100%"}
 
+**Leitura:** a distância vertical à diagonal representa o erro em graus. A linha de calibração aparente pode coincidir com a identidade por construção no ajuste linear com intercepto; isso não prova validade preditiva. A dispersão dos pontos permanece mesmo quando a média é calibrada. Para desempenho fora do treino, use as estimativas internas corrigidas e a CV, não a aparência dessa reta.
+
+**Pergunta da figura:** quais associações ajustadas têm direção e precisão mais claras? É uma leitura visual da tabela de coeficientes.
+
 ![Coeficientes lineares aparentes com IC95% HC3-t (595 gl), não coeficientes pós-shrinkage.](results/prognostico/revisao/figures/linear_coefficients_hc3.png){fig-alt="Coeficientes lineares e intervalos robustos." width="100%"}
+
+**Leitura:** pontos são betas e segmentos são IC95% HC3; a linha em zero é ausência de contraste na média de delta. A figura usa a unidade original de cada variável numérica, enquanto a tabela apresenta ângulos e colete por +10 unidades. Por isso não se devem comparar diretamente os tamanhos dos segmentos para ordenar importância clínica. A tabela é a fonte preferencial para o artigo; a figura oferece uma visão dos sinais e da incerteza.
 
 Na equação pós-*shrinkage*, dez pontos percentuais adicionais de correção pelo colete correspondem a `r fmt(linear_10pp)`° em `delta`, mantidos os demais preditores. Esse contraste não usa os coeficientes aparentes da figura HC3 acima. O sinal favorável não prova que aumentar a correção cause melhor desfecho nem garante manutenção.
 
 # Modelo logístico secundário
+
+## Coeficientes ajustados, OR e IC95% para o artigo
+
+A tabela apresenta o ajuste binomial por máxima verossimilhança nos mesmos 615 participantes, antes do shrinkage. Beta está na escala de log-odds; OR é sua exponencial. Os IC95% são Wald normais, obtidos de beta ± 1,96 erro-padrão e depois exponenciados para OR. Não são IC HC3, não são intervalos pós-shrinkage e não incorporam a seleção histórica. Os coeficientes, erros-padrão e limites foram reproduzidos diretamente a partir da especificação completa.
+
+```{r article-logistic}
+x <- article_logistic
+x <- data.frame(Preditor=x$preditor,Contraste=x$contraste, Beta=fmt(x$beta,3),
+                `IC95% beta`=paste0("[",fmt(x$ic95_inf,3),"; ",fmt(x$ic95_sup,3),"]"),
+                OR=ifelse(is.na(x$or),"—",fmt(x$or,3)),
+                `IC95% OR`=ifelse(is.na(x$or),"—",paste0("[",fmt(x$or_ic95_inf,3),"; ",fmt(x$or_ic95_sup,3),"]")),check.names=FALSE)
+knitr::kable(x,caption="Tabela para artigo — coeficientes logísticos e OR ajustadas sem shrinkage, n=615, 317 eventos; IC95% Wald.",row.names=FALSE)
+```
+
+**Como interpretar.** Beta positivo ou OR maior que 1 aponta maiores chances de melhora radiográfica; beta negativo ou OR menor que 1 aponta menores chances. Beta zero corresponde a OR=1. Um IC da OR que inclui 1 expressa incerteza compatível com ausência de associação naquela escala, sem provar equivalência. Não há uma única mudança de probabilidade associada a uma OR: ela depende da probabilidade de partida e dos demais preditores.
+
+Para +10 pontos percentuais de correção pelo colete, a OR ajustada sem shrinkage é `r fmt(article_logistic$or[article_logistic$term=="correcao_colete"],2)` (IC95% `r fmt(article_logistic$or_ic95_inf[article_logistic$term=="correcao_colete"],2)` a `r fmt(article_logistic$or_ic95_sup[article_logistic$term=="correcao_colete"],2)`). A OR final pós-shrinkage é `r fmt(or_10pp,2)`, sem IC validado. Como ilustração puramente matemática, OR=2 transformaria uma probabilidade inicial de 20% em 33,3%, mas uma de 50% em 66,7%; não dobraria ambas as probabilidades. Esse exemplo não é resultado clínico da coorte.
+
+## Desempenho e leitura das figuras
+
 
 ```{r}
 x <- perf[perf$model=="logistic" & perf$metric %in% c("auc","brier_score","log_loss"),c("metric","apparent","estimate","ci_lower","ci_upper","unit")]
@@ -330,13 +435,15 @@ tab(x, "Desempenho logístico da especificação fixa.", 3)
 
 AUC é ordenação/discriminação, não acurácia. Brier, *log loss* e calibração são lidos conjuntamente [@vancalster2019_calibration]. Na CV pós-*shrinkage*, calibração global média=`r fmt(cv("logistic","calibration_in_the_large")$mean_across_repeats,3)` log-odds e inclinação=`r fmt(cv("logistic","calibration_slope")$mean_across_repeats,3)`. Na equação pós-*shrinkage*, dez pontos percentuais de correção correspondem a OR `r fmt(or_10pp,2)`; OR não é risco relativo e não recebe IC dos coeficientes aparentes.
 
+**Pergunta da figura:** o modelo ordena os desfechos e atribui probabilidades compatíveis com as frequências observadas? A ROC e a calibração respondem a perguntas diferentes.
+
 ![ROC e calibração aparente do logístico (n=615; 317 eventos). Sem bandas não validadas.](results/prognostico/revisao/figures/logistic_roc_calibration.png){fig-alt="ROC e calibração aparente." width="100%"}
 
-![OR da equação logística pós-shrinkage; contrastes contínuos de +10 unidades. Sem IC pós-shrinkage não validados.](results/prognostico/revisao/figures/logistic_coefficients_shrunk.png){fig-alt="Odds ratios pós-shrinkage." width="100%"}
+**Leitura:** na ROC, curvas mais próximas do canto superior esquerdo discriminam melhor, mas não escolhem um limiar clínico por si. Na calibração, o eixo horizontal é probabilidade prevista e o vertical é frequência de melhora; pontos acima da diagonal indicam subestimação e abaixo indicam superestimação naquela faixa. Os pontos resumem grupos de previsões; a linha é uma suavização, sem banda de incerteza. Ambos os painéis são aparentes e não substituem AUC e calibração avaliadas fora do treino.
+
 
 A amplitude bootstrap mediana foi `r fmt(median(boot_stability$instability_index_95[boot_stability$model=="linear"]))`° no linear e `r fmt(100*median(boot_stability$instability_index_95[boot_stability$model=="logistic"]),1)` pontos percentuais na probabilidade. É instabilidade entre modelos reamostrados, não intervalo de predição.
 
-![Amplitude das cinco previsões internas por participante do flexível; cinco previsões por pessoa não são independentes.](results/prognostico/revisao/figures/stability_repeated_predictions.png){fig-alt="Estabilidade de previsões lineares e logísticas." width="100%"}
 
 # CART exploratória
 
@@ -355,7 +462,11 @@ tab(x, "CART nos folds externos da avaliação interna aninhada; folds não são
 
 O intercepto de calibração teve 49/50 folds válidos; um ajuste numericamente inválido foi excluído somente dessa métrica. Cada repetição contém 615 previsões; 3.075 linhas combinadas são cinco previsões por pessoa, não 3.075 pessoas.
 
+**Pergunta da figura:** como uma árvore transforma as entradas em grupos? Comece na raiz, siga a condição de cada ramo e termine em uma folha; todas as condições do caminho precisam ser satisfeitas.
+
 ![Árvore CART ilustrativa ajustada na coorte completa (n=615). Probabilidades/contagens são aparentes; asterisco marca n<30. Não é regra clínica.](results/prognostico/revisao/figures/cart_illustrative_tree.png){fig-alt="Árvore CART com sete folhas." width="100%"}
+
+**Leitura:** cada folha apresenta participantes, eventos e proporção observada do grupo formado no ajuste completo. O primeiro corte é próximo de 49,42% de correção transversal; ele descreve essa árvore ilustrativa. Folhas pequenas podem ter proporções imprecisas e são destacadas. Nem a proporção da folha nem esse corte são uma regra validada para decidir o tratamento. A tabela seguinte reproduz os caminhos completos.
 
 ```{r}
 x <- cart_leaves[,c("folha","caminho_completo","n","eventos_melhora","proporcao_aparente_melhora","grupo_pequeno_n_menor_30")]; x$proporcao_aparente_melhora <- 100*x$proporcao_aparente_melhora
@@ -367,11 +478,30 @@ Correção pelo colete foi raiz em 50/50 árvores. O corte mediano foi `r fmt(ro
 
 A extração percorre os nós de `rpart`, separando a divisão primária das concorrentes e substitutas [@therneau2026_rpart_object]. Foram auditados 313 cortes primários (221 contínuos e 92 categóricos), correspondentes aos 313 nós internos; concorrentes e substitutos não entram nas frequências de cortes primários.
 
+**Pergunta da figura:** a árvore repetiria as mesmas divisões em outras partições da amostra? A figura usa os ajustes dos treinamentos externos da CV interna.
+
 ![Estabilidade estrutural nas 50 árvores dos treinamentos externos, usando apenas cortes primários.](results/prognostico/revisao/figures/cart_stability.png){fig-alt="Frequências de variáveis e cortes da raiz." width="100%"}
+
+**Leitura:** a frequência da variável e a distribuição dos cortes são dimensões diferentes. Colete apareceu na raiz em 50/50 árvores, mas o corte variou de aproximadamente 45,35% a 54,86%. Portanto, estabilidade da escolha do preditor não implica precisão de um ponto de corte único. Frequências contabilizam apenas divisões primárias, não alternativas concorrentes ou substitutas.
 
 # Sensibilidades e comparadores
 
+## Qual decisão está sendo colocada à prova?
+
 Uma análise de sensibilidade pergunta se a conclusão depende de uma escolha discutível. Ela não serve para escolher retrospectivamente o cenário com melhor resultado. Aqui, cada alternativa foi reajustada no treinamento e avaliada nos mesmos folds completos do principal, tornando as diferenças diretamente comparáveis.
+
+As sensibilidades não redefinem quem pertence à população. Em cada partição, o cenário é construído no treinamento e depois aplicado a **todas** as pessoas do teste, inclusive as que teriam sido sinalizadas como influentes ou com hipercorreção. Excluir também pessoas difíceis do teste produziria uma comparação com outra população e poderia melhorar artificialmente o erro.
+
+| Cenário | Pergunta específica | O que mudou e o que permanece |
+|---|---|---|
+| Influência | A associação/desempenho depende muito de observações com influência diagnóstica? | Sinais de distância de Cook, alavancagem e resíduos são calculados no treino; somente ali se excluem observações. Não se assume erro de registro. |
+| Hipercorreção | Os três valores verdadeiros acima de 100% dominam o resultado? | Retirada temporária no treino; permanecem válidos na fonte, no teste e na análise principal. |
+| Cobb basal | Conhecer a magnitude inicial acrescenta informação além dos dez preditores? | Acrescenta-se Cobb basal como termo linear; não se seleciona retrospectivamente uma nova fórmula principal. |
+| Média/prevalência do treino | O modelo faz melhor que dar a mesma previsão a todos? | Média de delta ou proporção de melhora calculada só no treino; referência sem preditores. |
+
+São regressões reajustadas sem o passo final de shrinkage uniforme; portanto seus erros não devem ser confundidos com os da avaliação específica desse procedimento. O pareamento garante que uma diferença de erro compare previsões para as mesmas pessoas em cada repetição. A média das diferenças descreve o contraste observado; não demonstra superioridade estatística ou relevância clínica.
+
+## Resultados e interpretação
 
 ```{r}
 x <- data.frame(
@@ -393,11 +523,91 @@ x <- data.frame(
 knitr::kable(x, caption="Sensibilidades pareadas nos mesmos testes completos.", row.names=FALSE)
 ```
 
+**Pergunta da figura:** o erro muda quando alteramos uma decisão analítica? O ponto é a média das cinco repetições e o segmento vai do menor ao maior resultado. RMSE e Brier menores são melhores.
+
 ![RMSE e Brier em sensibilidades/referências. Barras são amplitudes entre cinco repetições, não IC.](results/prognostico/revisao/figures/sensitivity_comparisons.png){fig-alt="Comparação interna de sensibilidades." width="100%"}
+
+**Leitura:** compare cada alternativa com o principal no mesmo painel. A referência simples testa se combinar preditores acrescenta informação; as exclusões testam dependência de observações específicas; Cobb basal testa uma covariável plausível. A amplitude dos segmentos não é IC, e sobreposição não é teste de ausência de diferença. As conclusões quantitativas vêm das diferenças pareadas nos mesmos testes.
 
 O principal reduziu RMSE em `r fmt(comparators$improvement_error_reduction[comparators$model=="linear" & comparators$model_scenario=="primary"])`° contra a média do treino e Brier em `r fmt(comparators$improvement_error_reduction[comparators$model=="logistic"],3)` contra a prevalência do treino. Excluir sinais influentes piorou desempenho nos testes completos. Retirar temporariamente três hipercorreções verdadeiras mudou RMSE em +0,0019° e Brier em menos de 0,000001; elas permanecem na coorte.
 
 `delta ~ Cobb basal + X` e `Cobb final ~ Cobb basal + X`, reconvertido a `delta`, foram equivalentes (diferenças <1,6e-13). O ganho interno de 0,069° não redefine a especificação e deve ser discutido com acoplamento matemático, regressão à média e erro de mensuração.
+
+## Por que comparar delta e Cobb final com ajuste basal?
+
+Como $\Delta=Cobb_{final}-Cobb_{basal}$, usar a mesma matriz com Cobb basal torna as duas regressões lineares algebricamente equivalentes: ao converter a previsão de Cobb final para delta, subtrai-se Cobb basal, deslocando seu coeficiente em uma unidade. Portanto, concordância entre elas verifica implementação e definição do alvo; não é uma segunda evidência independente de validade.
+
+Cobb basal também está dentro da definição de delta. **Acoplamento matemático** significa essa presença da mesma medida nos dois lados; **regressão à média** significa que medidas inicialmente extremas podem ser menos extremas numa nova aferição por variação aleatória. Essas razões exigem cautela ao interpretar seu coeficiente causalmente. O pequeno ganho de erro ao acrescentá-lo é uma observação preditiva interna, não prova de que maior Cobb cause maior melhora.
+
+# Modelagem flexível corrigida
+
+## A pergunta e o que muda em relação ao principal
+
+A pergunta é: **obrigar cada medida numérica a ter uma associação reta e aditiva perde informação preditiva?** “Aditiva” significa que as contribuições se somam sem que o peso de um preditor dependa de outro. O flexível relaxa essas restrições. Ele não significa um novo diagnóstico de “flexibilidade” da coluna: é flexibilidade **matemática da relação entre entradas e desfecho**.
+
+Considere a correção pelo colete. No linear principal, passar de 30% para 40% tem o mesmo contraste em delta que passar de 60% para 70%. Uma spline permite que esses contrastes sejam diferentes, por exemplo uma relação que se atenua nos valores altos. Isso é uma possibilidade que a forma matemática permite, não um achado clínico automaticamente demonstrado. Uma interação permite, por exemplo, que a associação da correção dependa da categoria de flexibilidade ou de Lenke.
+
+| Parte da especificação | O que foi implementado | Como interpretar |
+|---|---|---|
+| Medidas numéricas | Idade, IMC, cifose, lordose, correção pelo colete e Cobb basal | As mesmas cinco do principal, mais Cobb basal |
+| Curvas | Componente linear e spline natural de 3 graus de liberdade para cada uma das seis medidas | Vários pesos descrevem conjuntamente uma curva; um beta isolado de spline não é um efeito clínico |
+| Fatores | Sexo, Lenke, Risser, flexibilidade e escoliômetro, nas referências já descritas | 14 indicadores, sem presumir distância entre categorias |
+| Interações | Colete × flexibilidade; colete × Lenke; idade × Risser | 1 + 5 + 4 = 10 termos; a associação pode variar conforme a categoria |
+| Total | 6 lineares + 18 bases spline + 14 indicadores + 10 interações = 48 colunas, mais intercepto | Maior complexidade candidata; colunas de bases não equivalem a 48 associações independentes |
+
+Uma spline divide a descrição da relação em trechos suaves que se encontram em pontos chamados **nós**. “Natural” significa que a função fica linear além dos nós de fronteira. Nesta implementação os nós internos correspondem aos quantis 1/3 e 2/3 aprendidos no treinamento, e as fronteiras são seus limites observados. Centros, escalas e codificação também são aprendidos no treino; assim a construção da curva não consulta o desfecho das pessoas usadas para avaliação. As colunas são padronizadas no procedimento de penalização, diferentemente dos contrastes em unidades clínicas das tabelas principais.
+
+## Como a complexidade foi controlada e escolhida
+
+**Penalização** acrescenta ao erro de ajuste um custo para pesos grandes. O parâmetro lambda determina a intensidade desse custo. Ridge distribui a redução entre os termos; lasso pode zerar termos; elastic net combina os dois. Isso é diferente de multiplicar depois todos os pesos principais por um fator uniforme: aqui a redução participa da própria estimação e depende da matriz de preditores. O intercepto não é penalizado.
+
+A grade avaliou alpha em 0, 0,25, 0,50, 0,75 e 1 e frações de lambda em 1, 0,1, 0,01 e 0,001, totalizando 20 configurações por família. Alpha=0 é ridge; alpha=1 é lasso. As frações são relativas ao lambda máximo calculado no treinamento, não valores absolutos universais.
+
+O caminho de uma avaliação foi:
+
+1. Separar um fold de teste externo; ele fica reservado dentro desta avaliação interna da mesma coorte.
+2. Dividir apenas o treinamento em cinco folds internos. Estimar preparação e ajustes nesses treinos internos e medir RMSE, para delta, ou log loss, para melhora, nas respectivas validações internas.
+3. Aplicar a regra de **um erro-padrão (one-SE)**: aceitar configurações até um erro-padrão acima do menor erro interno, preferindo maior fração de lambda; desempatar por menor alpha e identificador da configuração. É uma regra para escolher regularização, não teste de equivalência entre modelos.
+4. Reajustar a configuração escolhida no treinamento externo e prever somente o teste reservado. Repetir para os dez folds e cinco repetições.
+
+Dessa forma, “externo” aqui significa a camada de fora da **validação cruzada aninhada**, não um hospital ou coorte independente. Tuning é simplesmente a escolha desses parâmetros de complexidade. O mesmo participante tem uma previsão fora do treino em cada repetição, cinco no total, e continua sendo uma pessoa.
+
+## O que foi selecionado e o que os resultados permitem concluir
+
+
+A análise flexível permite que variáveis numéricas tenham curvas, em vez de obrigá-las a seguir uma reta, e acrescenta interações, nas quais a associação de um preditor pode variar conforme outro. Essa liberdade aumenta capacidade de ajuste, mas também risco de aprender flutuações da amostra.
+
+A candidata teve 48 colunas (6 lineares, 18 bases spline, 14 indicadoras e 10 interações), incluindo Cobb basal. Splines são segmentos polinomiais unidos suavemente que representam curvatura sem impor uma única forma quadrática. A penalização reduz coeficientes para controlar complexidade: `alpha=0` corresponde a ridge, que reduz todos sem zerá-los; `alpha=1` corresponde a lasso, que pode zerar componentes; valores intermediários formam elastic net [@friedman2010_glmnet; @zou2005_elastic_net].
+
+Pré-processamento e tuning ficaram no treino. A regra one-SE minimizou RMSE/*log loss*. Todos os 100 ajustes externos selecionaram ridge. Houve 160/5.000 falhas KKT internas contínuas, tornadas inelegíveis, e nenhuma nos ajustes externos escolhidos. As condições KKT verificam numericamente se a solução satisfaz as condições do ótimo penalizado. Efeitos principais estavam candidatos para todas as interações; a hierarquia forte foi observada nas soluções ridge, não imposta.
+
+```{r}
+x <- flex_compare[flex_compare$n_repeats>0 & flex_compare$metric %in% c("rmse","auc","brier_score","log_loss"),c("family","metric","mean_flexible","mean_reference","mean_difference_flexible_minus_reference","min_difference","max_difference")]
+names(x) <- c("Família","Métrica","Flexível","Principal","Diferença","Mínimo","Máximo")
+tab(x, "Comparação pareada do flexível corrigido; amplitudes não são IC.", 4)
+```
+
+O RMSE passou de aproximadamente 4,292° para 4,202°, redução média de 0,090°. A AUC aumentou cerca de 0,0065 e o Brier diminuiu 0,0042. São diferenças pontuais internas pequenas; o benefício clínico não foi estabelecido. Pontos médios favoreceram modestamente o flexível, sem demonstração formal de superioridade; o ganho não isola splines de Cobb basal, interações e penalização. Somente o solver corrigido é consumido.
+
+**Pergunta da figura:** que forma o modelo flexível atribui à correção pelo colete e ao Cobb basal? Cada curva varia uma entrada e mantém as outras numéricas nas médias e os fatores nas categorias modais do ajuste global.
+
+![Relações flexíveis globais ilustrativas após a CV; sem causalidade, IC ou desempenho externo.](results/prognostico/revisao/figures/flexible_clinical_relations.png){fig-alt="Curvas exploratórias de relações clínicas." width="100%"}
+
+**Leitura:** nos painéis contínuos, descer significa delta mais negativo; nos binários, subir significa maior probabilidade prevista. São perfis condicionais de um exemplo padronizado, não médias de efeitos individuais nem trajetórias de tratamento. Uma curva de probabilidade também pode decorrer da transformação logística, não só de uma spline. Os extremos podem ter pouco suporte, e combinar médias/modos não garante um perfil frequente. Sem bandas e sem contraste formal, a figura não demonstra platô, limiar ou interação clínica. Ela ilustra a equação global ajustada após a CV; não estima desempenho externo.
+
+
+
+A frequência de permanência dos componentes não é apresentada como figura de importância: todos os 100 ajustes externos selecionaram ridge, que tende a manter todos os coeficientes não nulos. Portanto, uma frequência de 100% não demonstra que cada spline ou interação seja necessária. O resultado de hierarquia descreve a solução observada; não constitui evidência de interação clínica.
+
+As duas regressões flexíveis foram comparadas a regressões principais **reajustadas nos mesmos folds**, antes da aplicação do shrinkage uniforme final. Essa comparação não substitui a avaliação do procedimento pós-shrinkage. As médias da tabela de bootstrap, da CV pós-shrinkage e desta comparação respondem a procedimentos diferentes e não devem ser misturadas para escolher o menor erro.
+
+## Estabilidade das previsões do flexível
+
+**Pergunta da figura:** quanto a previsão flexível da mesma pessoa muda quando mudamos a partição de treinamento? Para cada participante calcula-se máximo menos mínimo das cinco previsões fora do treino.
+
+![Amplitude das cinco previsões internas por participante do flexível; cinco previsões por pessoa não são independentes.](results/prognostico/revisao/figures/stability_repeated_predictions.png){fig-alt="Estabilidade de previsões lineares e logísticas." width="100%"}
+
+**Leitura:** o eixo horizontal é amplitude em graus no contínuo e pontos percentuais no binário; o vertical conta pessoas. Valores próximos de zero indicam menor sensibilidade às partições usadas, não maior acurácia necessariamente. Estes histogramas pertencem ao flexível, apesar dos rótulos de família contínua/logística, e não ao bootstrap das regressões principais. Cinco previsões não definem IC95% nem cinco participantes independentes.
 
 # Discussão e conclusão
 
@@ -429,25 +639,25 @@ cat("$$\\begin{aligned}\n\\eta ={}& ", latex_rhs("logistic"), "\\\\\np(\\mathrm{
 
 Na equação linear, a saída é `delta` previsto em graus. Na logística, $\eta$ é o preditor linear em *log-odds* e a segunda linha o converte na probabilidade de melhora radiográfica. Os fatores de *shrinkage* foram `r fmt(shrink$shrinkage_factor[shrink$model=="linear"],6)` e `r fmt(shrink$shrinkage_factor[shrink$model=="logistic"],6)`, respectivamente.
 
-## Modelagem flexível corrigida
+## Coeficientes finais e interpretações por termo
 
-A análise flexível permite que variáveis numéricas tenham curvas, em vez de obrigá-las a seguir uma reta, e acrescenta interações, nas quais a associação de um preditor pode variar conforme outro. Essa liberdade aumenta capacidade de ajuste, mas também risco de aprender flutuações da amostra.
+A tabela seguinte permite confrontar as duas escalas finais. Os contrastes são os mesmos das tabelas para artigo; para reconstruir a equação, use os coeficientes por unidade do apêndice anterior. Não se atribuem IC às colunas pós-shrinkage.
 
-A candidata teve 48 colunas (6 lineares, 18 bases spline, 14 indicadoras e 10 interações), incluindo Cobb basal. Splines são segmentos polinomiais unidos suavemente que representam curvatura sem impor uma única forma quadrática. A penalização reduz coeficientes para controlar complexidade: `alpha=0` corresponde a ridge, que reduz todos sem zerá-los; `alpha=1` corresponde a lasso, que pode zerar componentes; valores intermediários formam elastic net [@friedman2010_glmnet; @zou2005_elastic_net].
-
-Pré-processamento e tuning ficaram no treino. A regra one-SE minimizou RMSE/*log loss*. Todos os 100 ajustes externos selecionaram ridge. Houve 160/5.000 falhas KKT internas contínuas, tornadas inelegíveis, e nenhuma nos ajustes externos escolhidos. As condições KKT verificam numericamente se a solução satisfaz as condições do ótimo penalizado. Efeitos principais estavam candidatos para todas as interações; a hierarquia forte foi observada nas soluções ridge, não imposta.
-
-```{r}
-x <- flex_compare[flex_compare$n_repeats>0 & flex_compare$metric %in% c("rmse","auc","brier_score","log_loss"),c("family","metric","mean_flexible","mean_reference","mean_difference_flexible_minus_reference","min_difference","max_difference")]
-names(x) <- c("Família","Métrica","Flexível","Principal","Diferença","Mínimo","Máximo")
-tab(x, "Comparação pareada do flexível corrigido; amplitudes não são IC.", 4)
+```{r final-coef-table}
+x <- data.frame(Preditor=article_linear$preditor,Contraste=article_linear$contraste,
+                `Beta linear pós-shrinkage (°)`=fmt(article_linear$beta_pos_shrinkage,3),
+                `Beta logístico pós-shrinkage`=fmt(article_logistic$beta_pos_shrinkage,3),
+                `OR pós-shrinkage`=ifelse(is.na(article_logistic$or_pos_shrinkage),"—",fmt(article_logistic$or_pos_shrinkage,3)),check.names=FALSE)
+knitr::kable(x,caption="Pesos finais para avaliação preditiva futura; sem IC95% pós-shrinkage.",row.names=FALSE)
 ```
 
-Pontos médios favoreceram modestamente o flexível, sem demonstração formal de superioridade; o ganho não isola splines de Cobb basal, interações e penalização. Somente o solver corrigido é consumido.
+As leituras abaixo referem-se aos ajustes **sem shrinkage**, cujos IC foram estimados. As frases descrevem contrastes condicionais, não importância isolada nem critérios de seleção. O sentido clínico e a precisão devem ser discutidos conjuntamente; as categorias de referência estão no contraste.
 
-![Relações flexíveis globais ilustrativas após a CV; sem causalidade, IC ou desempenho externo.](results/prognostico/revisao/figures/flexible_clinical_relations.png){fig-alt="Curvas exploratórias de relações clínicas." width="100%"}
-
-![Seleção de componentes nos 50 ajustes externos internos; estabilidade de seleção, não efeito clínico.](results/prognostico/revisao/figures/flexible_selection_stability.png){fig-alt="Frequência de componentes flexíveis." width="100%"}
+```{r interpretation-table}
+x <- data.frame(Preditor=article_linear$preditor,Linear=article_linear$interpretacao,
+                Logístico=article_logistic$interpretacao,check.names=FALSE)
+knitr::kable(x,caption="Guia de interpretação de todos os coeficientes ajustados e seus IC95%.",row.names=FALSE)
+```
 
 ## Cobertura conformal interna
 
@@ -480,7 +690,8 @@ knitr::kable(x, caption="Rascunho PROBAST+AI 2025.", row.names=FALSE)
 
 - Fonte congelada `data/dataset_escoliose_01.xlsx`; SHA-256 verificado: `r source_sha`.
 - Coorte, diagnósticos, validação adicional, CART estrutural, flexível, sensibilidades e figuras: somente `results/prognostico/revisao/`.
-- Baseline explicitamente preservado: desempenho CART e estabilidade bootstrap, ainda válidos em `results/prognostico/aggregated/`.
+- Desempenho CART e estabilidade bootstrap foram empacotados em `results/prognostico/revisao/aggregated/` como cópias fiéis dos agregados auditados, com origem e SHA-256 em `standalone_inputs_manifest.csv`. O QMD não lê `analisys.qmd` nem agrega resultados a partir dele.
+- As tabelas para artigo são produzidas por `scripts/prepare_standalone_report.R`; os scripts R documentam a reprodução analítica. O HTML não depende de abrir arquivos externos para ler figuras, tabelas ou referências.
 - Ausência de artefato obrigatório encerra a execução; não há fallback silencioso.
 
 ```{r}

@@ -1,0 +1,23 @@
+{
+  "numerical_checks": [
+    "linear: 20 termos; escala e IC reconciliados; transformação OR quando aplicável",
+    "logistic: 20 termos; escala e IC reconciliados; transformação OR quando aplicável"
+  ],
+  "terms_checked": 40,
+  "internal_links": 67,
+  "missing_targets": 0,
+  "embedded_images_with_alt": 10,
+  "figures_with_question_and_interpretation": 10,
+  "bibliography_entries": 20,
+  "qmd_reads_only_review_aggregates": true,
+  "browser_final": {
+    "desktop_width": 1280,
+    "desktop_scroll_width": 1265,
+    "mobile_width": 390,
+    "mobile_scroll_width": 375,
+    "math_errors": 0,
+    "broken_images": 0,
+    "temporary_loopback_server": "stopped"
+  },
+  "html_sha256": "a54abdd8e176c72c5ce21389c1e72d97346b661e95a0c6de82e8c9a9c774be40"
+}

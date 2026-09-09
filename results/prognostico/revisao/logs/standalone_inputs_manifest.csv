@@ -1,0 +1,3 @@
+"origem","destino","sha256","operacao"
+"results/prognostico/aggregated/cart_external_metric_distribution.csv","results/prognostico/revisao/aggregated/cart_external_metric_distribution.csv","fb584a9512c4bcd88aeffaf1cf1fc63e6a610999d5e3afebfd307d37e203cbc6","cópia fiel de agregado auditado; nenhuma reestimação"
+"results/prognostico/aggregated/frozen_prediction_stability_summary.csv","results/prognostico/revisao/aggregated/frozen_prediction_stability_summary.csv","7b42b0ff5847c08d31eb35780e672ecc5e738dbeffbd1f137780bc0925ce5a51","cópia fiel de agregado auditado; nenhuma reestimação"
