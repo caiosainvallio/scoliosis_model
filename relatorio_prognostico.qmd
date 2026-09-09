@@ -2,6 +2,7 @@
 title: "Relatório prognóstico — desenvolvimento e avaliação interna"
 author: "Caio Vallio"
 lang: pt-BR
+bibliography: references_prognostico.bib
 format:
   html:
     self-contained: true
@@ -13,286 +14,444 @@ execute:
   message: false
   error: false
   freeze: false
-knitr:
-  opts_chunk:
-    echo: false
-    warning: false
-    message: false
-    comment: "#>"
-    R.options:
-      save: "no"
-      repos:
-        CRAN: "https://cloud.r-project.org"
 ---
 
-```{r setup, echo=FALSE}
-source("R/00_config.R")
-source("R/02_import_prepare.R")
-source("R/06_report_helpers.R")
-knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE, error=FALSE)
-read_agg <- function(f) read.csv(file.path(RESULTS_DIRS[["aggregated"]], f), check.names=FALSE)
-read_red <- function(f) readRDS(file.path(RESULTS_DIRS[["reduced_objects"]], f))
-fmt <- function(x, d=2L) format_number_pt(as.numeric(x), d)
-fmt_pct <- function(x, d=1L) paste0(fmt(100*as.numeric(x), d), "%")
-fmt_p <- function(x) ifelse(as.numeric(x) < .001, "<0,001", fmt(x, 3L))
-raw_data <- import_prognostic_data()
-cohort <- prepare_prognostic_data(raw_data)
-flow <- cohort_flow_table(cohort)
-missing <- missing_report(raw_data, cohort)
-factors <- factor_levels_table(cohort)
-frozen_results <- read_red("frozen_results_reduced.rds")
-frozen_models <- read_red("frozen_models_reduced.rds")
-shrinkage <- read_red("frozen_shrinkage_models.rds")
-bootstrap <- read_agg("frozen_bootstrap_optimism_summary.csv")
-cal_logistic <- read_agg("frozen_calibration_logistic_groups.csv")
-stability <- read_agg("frozen_prediction_stability_summary.csv")
-coef_linear <- read_agg("frozen_coefficients_linear.csv")
-coef_logistic <- read_agg("frozen_coefficients_logit.csv")
-coef_linear_shrunk <- read_agg("frozen_coefficients_linear_shrinkage.csv")
-coef_logistic_shrunk <- read_agg("frozen_coefficients_logit_shrinkage.csv")
-hetero <- read_agg("frozen_heteroscedasticity.csv")
-separation <- read_agg("frozen_separation_diagnostics.csv")
-sample_size <- read_agg("sample_size_scenarios.csv")
-cart_dist <- read_agg("cart_external_metric_distribution.csv")
-cart_cal <- read_agg("cart_external_calibration.csv")
-flex_dist <- read_agg("flexible_external_metric_distribution.csv")
-flex_stab <- read_agg("flexible_prediction_stability.csv")
-cohort_summary <- read_agg("cohort_summary.csv")
-if (!identical(file_sha256(DATA_FILE), frozen_models$source_sha256)) stop("Hash da fonte divergente.")
-param_n <- ncol(model.matrix(frozen_models$formula_linear, cohort)) - 1L
-boot_n <- max(bootstrap$n_valid, na.rm=TRUE)
-boot_fail <- sum(bootstrap$n_failed, na.rm=TRUE)
-threshold_degrees <- 5L
-horizon_months <- 6L
-fmt_table <- function(x, d=4L) { z <- x; ok <- vapply(z, is.numeric, logical(1)); z[ok] <- lapply(z[ok], fmt, d=d); z }
-metric_row <- function(model_name, metric_name, apparent, label) {
-  z <- subset(bootstrap, model == model_name & metric == metric_name)
-  data.frame(Modelo=model_name, Métrica=label, Aparente=apparent, Otimismo=z$mean_optimism, Corrigida=z$corrected)
+```{r setup}
+#| include: false
+root <- normalizePath(getwd(), mustWork = TRUE)
+rev_root <- file.path(root, "results", "prognostico", "revisao")
+rev_agg <- file.path(rev_root, "aggregated")
+rev_fig <- file.path(rev_root, "figures")
+rev_logs <- file.path(rev_root, "logs")
+frozen_agg <- file.path(root, "results", "prognostico", "aggregated")
+
+read_rev <- function(x) {
+  p <- file.path(rev_agg, x)
+  if (!file.exists(p)) stop("Saída obrigatória da revisão ausente: ", p)
+  read.csv(p, check.names = FALSE, stringsAsFactors = FALSE)
 }
-performance <- rbind(
-  metric_row("linear", "r2", frozen_results$metrics_linear$r2, "R²"),
-  metric_row("linear", "rmse", frozen_results$metrics_linear$rmse, "RMSE (graus)"),
-  metric_row("linear", "mae", frozen_results$metrics_linear$mae, "MAE (graus)"),
-  metric_row("logistic", "auc", frozen_results$metrics_logistic$auc, "AUC"),
-  metric_row("logistic", "brier_score", frozen_results$metrics_logistic$brier_score, "Brier"),
-  metric_row("logistic", "log_loss", frozen_results$metrics_logistic$log_loss, "Log loss")
+read_frozen <- function(x) {
+  p <- file.path(frozen_agg, x)
+  if (!file.exists(p)) stop("Resultado congelado obrigatório ausente: ", p)
+  read.csv(p, check.names = FALSE, stringsAsFactors = FALSE)
+}
+fmt <- function(x, d = 2L) formatC(as.numeric(x), digits = d, format = "f", decimal.mark = ",", big.mark = ".")
+fmt_pct <- function(x, d = 1L) paste0(fmt(100 * as.numeric(x), d), "%")
+tab <- function(x, cap, d = 3L) {
+  z <- x
+  num <- vapply(z, is.numeric, logical(1))
+  z[num] <- lapply(z[num], function(v) ifelse(is.na(v), "—", fmt(v, d)))
+  knitr::kable(z, caption = cap, row.names = FALSE)
+}
+
+required_rev <- c(
+  "cohort_descriptive.csv", "missing_before_after.csv", "sample_size_display.csv",
+  "dicionario_preditores.csv", "validation_performance_ci.csv",
+  "validation_failure_audit.csv", "validation_final_shrinkage_summary.csv",
+  "validation_final_shrinkage_coefficients.csv", "validation_final_equations.txt",
+  "validation_shrinkage_metrics_summary.csv", "prediction_intervals_coverage_by_repeat.csv",
+  "coefficients_linear_hc3.csv", "diagnostics_assumption_evidence.csv", "cart_leaves.csv",
+  "cart_cutpoint_summary.csv", "cart_calibration_validity_summary.csv",
+  "sensitivity_resampling_metrics_summary.csv", "baseline_comparisons.csv",
+  "sensitivity_scenario_conclusions.csv", "flexible_frozen_comparison_summary.csv",
+  "flexible_failure_audit.csv", "flexible_prediction_stability.csv",
+  "tripod_ai_checklist.csv", "probast_ai_assessment.csv", "figures_task12_manifest.csv"
 )
-cal_corr <- bootstrap[bootstrap$metric %in% c("calibration_intercept", "calibration_slope", "calibration_in_the_large"), ]
-cal_corr$Métrica <- c("Intercepto linear", "Inclinação linear", "Calibração no grande", "Inclinação logística")[match(paste(cal_corr$model, cal_corr$metric), c("linear calibration_intercept", "linear calibration_slope", "logistic calibration_in_the_large", "logistic calibration_slope"))]
-cal_corr <- cal_corr[, c("model", "Métrica", "apparent", "mean_optimism", "corrected")]
-names(cal_corr) <- c("Modelo", "Métrica", "Aparente", "Otimismo", "Corrigida")
-labels <- c("(Intercept)"="Intercepto", idade="idade (anos)", imc="IMC (kg/m²)", cifose_toracica="cifose torácica (graus)", lordose_lombar="lordose lombar (graus)", correcao_colete="correção pelo colete (%)", sexomasculino="I(sexo = masculino)", lenke2="I(Lenke = 2)", lenke3="I(Lenke = 3)", lenke4="I(Lenke = 4)", lenke5="I(Lenke = 5)", lenke6="I(Lenke = 6)", risser1="I(Risser = 1)", risser2="I(Risser = 2)", risser3="I(Risser = 3)", risser4="I(Risser = 4)", flexibilidaderigido="I(flexibilidade = rígido)", escoliometro_maior_10_graustoracica="I(escoliômetro = torácica)", escoliometro_maior_10_grauslombar="I(escoliômetro = lombar)", escoliometro_maior_10_graustoracica_lombar="I(escoliômetro = torácica+lombar)")
-term_label <- function(x) unname(labels[x])
-equation <- function(tab, lhs, logistic=FALSE) { b <- tab$coefficient_shrunk; t <- tab$term; s <- sprintf("%.10f", b[t == "(Intercept)"]); for (i in which(t != "(Intercept)")) s <- paste0(s, ifelse(b[i]>=0," + "," - "), sprintf("%.10f", abs(b[i])), " × ", term_label(t[i])); if (logistic) paste0("eta = ", s, "; p(melhora) = plogis(eta).") else paste0(lhs," = ",s," graus.") }
-linear_equation <- equation(coef_linear_shrunk, "delta previsto")
-logistic_equation <- equation(coef_logistic_shrunk, "eta", TRUE)
-coef_linear_display <- data.frame(Termo=term_label(coef_linear$term), Aparente=coef_linear$estimate, `IC95% inferior`=coef_linear$conf_low, `IC95% superior`=coef_linear$conf_high, Corrigido=coef_linear_shrunk$coefficient_shrunk, check.names=FALSE)
-coef_logistic_display <- data.frame(Termo=term_label(coef_logistic$term), Aparente=coef_logistic$estimate, `OR aparente`=exp(coef_logistic$estimate), Corrigido=coef_logistic_shrunk$coefficient_shrunk, `OR corrigida`=coef_logistic_shrunk$odds_ratio_shrunk, check.names=FALSE)
-stability_display <- do.call(rbind, lapply(split(stability, stability$model), function(z) data.frame(Modelo=unique(z$model), `n bootstrap por participante`=unique(z$n_valid)[1], `mediana da amplitude 95%`=median(z$instability_index_95), `P95 da amplitude`=quantile(z$instability_index_95,.95), `limiar do décimo`=unique(z$instability_threshold_90)[1], `n no décimo`=sum(z$unstable_top10), check.names=FALSE)))
+required_frozen <- c("cart_external_metric_distribution.csv", "frozen_prediction_stability_summary.csv")
+required_fig <- c(
+  "linear_delta_distribution.png", "linear_observed_predicted.png", "linear_diagnostics.png",
+  "linear_coefficients_hc3.png", "logistic_roc_calibration.png", "logistic_coefficients_shrunk.png",
+  "stability_repeated_predictions.png", "cart_illustrative_tree.png", "cart_stability.png",
+  "sensitivity_comparisons.png", "flexible_clinical_relations.png", "flexible_selection_stability.png"
+)
+paths <- c(file.path(rev_agg, required_rev), file.path(frozen_agg, required_frozen), file.path(rev_fig, required_fig))
+bad <- paths[!file.exists(paths) | file.info(paths)$size <= 0]
+if (length(bad)) stop("Artefatos obrigatórios ausentes/vazios: ", paste(bad, collapse = ", "))
+
+manifest <- read.csv(file.path(rev_logs, "manifesto_inicial.csv"), stringsAsFactors = FALSE)
+src <- manifest[manifest$artefato == "data/dataset_escoliose_01.xlsx", ]
+if (nrow(src) != 1L || !requireNamespace("digest", quietly = TRUE)) stop("Fonte/sha256 não verificável.")
+source_sha <- digest::digest(file = file.path(root, src$artefato), algo = "sha256")
+if (!identical(source_sha, src$sha256)) stop("Hash da fonte diverge do manifesto.")
+
+cohort <- read_rev("cohort_descriptive.csv")
+missing <- read_rev("missing_before_after.csv")
+dictionary <- read_rev("dicionario_preditores.csv")
+sample_size <- read_rev("sample_size_display.csv")
+perf <- read_rev("validation_performance_ci.csv")
+shrink <- read_rev("validation_final_shrinkage_summary.csv")
+coef_shrunk <- read_rev("validation_final_shrinkage_coefficients.csv")
+shrink_cv <- read_rev("validation_shrinkage_metrics_summary.csv")
+conformal <- read_rev("prediction_intervals_coverage_by_repeat.csv")
+assumptions <- read_rev("diagnostics_assumption_evidence.csv")
+cart_leaves <- read_rev("cart_leaves.csv")
+cart_cuts <- read_rev("cart_cutpoint_summary.csv")
+cart_validity <- read_rev("cart_calibration_validity_summary.csv")
+cart_metrics <- read_frozen("cart_external_metric_distribution.csv")
+boot_stability <- read_frozen("frozen_prediction_stability_summary.csv")
+sens_metrics <- read_rev("sensitivity_resampling_metrics_summary.csv")
+comparators <- read_rev("baseline_comparisons.csv")
+sens_conclusions <- read_rev("sensitivity_scenario_conclusions.csv")
+flex_compare <- read_rev("flexible_frozen_comparison_summary.csv")
+flex_fail <- read_rev("flexible_failure_audit.csv")
+tripod <- read_rev("tripod_ai_checklist.csv")
+probast <- read_rev("probast_ai_assessment.csv")
+
+pr <- function(model, metric) perf[perf$model == model & perf$metric == metric, , drop = FALSE]
+cv <- function(model, metric) shrink_cv[shrink_cv$model == model & shrink_cv$metric == metric, , drop = FALSE]
+cf <- function(model, term) coef_shrunk[coef_shrunk$model == model & coef_shrunk$term == term, , drop = FALSE]
+sr <- function(scenario, model, metric) sens_metrics[sens_metrics$scenario == scenario & sens_metrics$model == model & sens_metrics$metric == metric, , drop = FALSE]
+
+n_raw <- missing$n_bruto[missing$componente == "fluxo" & missing$variavel == "registros brutos"]
+n_dedup <- missing$n_deduplicados[missing$componente == "fluxo" & missing$variavel == "após deduplicação"]
+n_final <- missing$n_analitico[missing$componente == "fluxo" & missing$variavel == "coorte analítica"]
+events <- 317L; non_events <- n_final - events; prevalence <- events / n_final
+delta <- cohort[cohort$variavel == "delta" & cohort$tipo == "numerica", ]
+linear_10pp <- 10 * cf("linear", "correcao_colete")$coefficient_shrunk
+or_10pp <- exp(10 * cf("logistic", "correcao_colete")$coefficient_shrunk)
+coverage <- weighted.mean(conformal$observed_coverage, conformal$denominator_predictions)
+width <- weighted.mean(conformal$mean_width_degrees, conformal$denominator_predictions)
+root_cut <- cart_cuts[cart_cuts$scope == "root" & cart_cuts$variable == "correcao_colete", ]
+
+latex_symbol <- c(
+  idade="\\mathrm{idade}", imc="\\mathrm{IMC}",
+  cifose_toracica="\\mathrm{cifose}", lordose_lombar="\\mathrm{lordose}",
+  correcao_colete="\\mathrm{correcao\\ do\\ colete}",
+  sexomasculino="I(\\mathrm{sexo=masculino})",
+  lenke2="I(\\mathrm{Lenke}=2)", lenke3="I(\\mathrm{Lenke}=3)",
+  lenke4="I(\\mathrm{Lenke}=4)", lenke5="I(\\mathrm{Lenke}=5)",
+  lenke6="I(\\mathrm{Lenke}=6)", risser1="I(\\mathrm{Risser}=1)",
+  risser2="I(\\mathrm{Risser}=2)", risser3="I(\\mathrm{Risser}=3)",
+  risser4="I(\\mathrm{Risser}=4)",
+  flexibilidaderigido="I(\\mathrm{flexibilidade=rigido})",
+  escoliometro_maior_10_graustoracica="I(\\mathrm{escoliometro=toracica})",
+  escoliometro_maior_10_grauslombar="I(\\mathrm{escoliometro=lombar})",
+  escoliometro_maior_10_graustoracica_lombar="I(\\mathrm{escoliometro=toracica+lombar})"
+)
+latex_number <- function(x) formatC(abs(x), digits=12, format="fg", flag="#")
+latex_rhs <- function(model) {
+  z <- coef_shrunk[coef_shrunk$model == model, ]
+  intercept <- formatC(z$coefficient_shrunk[z$term == "(Intercept)"], digits=12, format="fg", flag="#")
+  z <- z[z$term != "(Intercept)", ]
+  pieces <- paste0(ifelse(z$coefficient_shrunk >= 0, "+", "-"), " ",
+                   vapply(z$coefficient_shrunk, latex_number, character(1)), "\\,", latex_symbol[z$term])
+  groups <- split(pieces, ceiling(seq_along(pieces)/5))
+  lines <- c(paste0(intercept, " ", paste(groups[[1]], collapse=" ")),
+             vapply(groups[-1], paste, character(1), collapse=" "))
+  paste(lines, collapse=" \\\\\n&\\quad ")
+}
 ```
 
 # Sumário executivo
 
-Este relatório documenta o desenvolvimento e a avaliação interna de um modelo linear para a mudança do ângulo de Cobb e de um modelo logístico secundário para melhora radiográfica, definida por redução de pelo menos `r threshold_degrees` graus no horizonte de `r horizon_months` meses. O modelo linear é principal por manter o desfecho em graus; o logístico é complementar porque AUC não substitui calibração. Não há limiar de decisão clínica, indicação terapêutica ou validação externa nesta etapa.
+Este relatório documenta desenvolvimento e **avaliação interna**, não validação externa, de modelos prognósticos para adolescentes com escoliose idiopática submetidos a manejo conservador com colete e exercícios S4D. Entre `r n_final` participantes, `r events` (`r fmt_pct(prevalence)`) apresentaram melhora radiográfica de pelo menos 5° em seis meses. A mudança média da maior magnitude de Cobb foi `r fmt(delta$media)`° (DP `r fmt(delta$dp)`°); valores negativos indicam redução.
 
-# Pergunta clínica, população e estimando
+- Modelo linear principal: R² corrigido por otimismo `r fmt(pr("linear", "r2")$estimate, 3)` (IC95% `r fmt(pr("linear", "r2")$ci_lower, 3)`–`r fmt(pr("linear", "r2")$ci_upper, 3)`) e RMSE `r fmt(pr("linear", "rmse")$estimate)`° (IC95% `r fmt(pr("linear", "rmse")$ci_lower)`–`r fmt(pr("linear", "rmse")$ci_upper)`°).
+- Modelo logístico secundário: AUC corrigida `r fmt(pr("logistic", "auc")$estimate, 3)` (IC95% `r fmt(pr("logistic", "auc")$ci_lower, 3)`–`r fmt(pr("logistic", "auc")$ci_upper, 3)`) e Brier `r fmt(pr("logistic", "brier_score")$estimate, 3)`. AUC mede discriminação, não acurácia.
+- Na CV interna do procedimento pós-*shrinkage*, o RMSE linear médio foi `r fmt(cv("linear", "rmse")$mean_across_repeats)`° e a inclinação logística `r fmt(cv("logistic", "calibration_slope")$mean_across_repeats, 3)`.
+- Dez pontos percentuais adicionais de correção transversal pelo colete corresponderam a `r fmt(linear_10pp)`° em `delta` e OR `r fmt(or_10pp, 2)` para melhora, mantidos os demais preditores. OR não é risco relativo e associação prognóstica não é efeito causal.
+- O cenário com Cobb basal reduziu o RMSE interno em `r fmt(sr("primary", "linear", "rmse")$mean_across_repeats - sr("cobb_baseline_augmented", "linear", "rmse")$mean_across_repeats, 3)`°. A coorte e a especificação principal foram preservadas.
 
-O momento zero é a avaliação radiográfica basal, anterior ao acompanhamento. O desfecho contínuo é `delta = Cobb no horizonte − Cobb basal máximo`, em graus; valores negativos representam redução. A variável binária corresponde à redução de `r threshold_degrees` graus. A população é a coorte analítica com medidas basais, covariáveis clínicas e avaliação radiográfica no horizonte disponível.
+O RMSE é erro agregado, não margem individual. A avaliação conformal obteve cobertura interna de `r fmt_pct(coverage, 2)` e largura média de `r fmt(width)`°; isso evidencia incerteza individual substancial, sem constituir intervalo final validado externamente.
 
-O uso pretendido é apoiar a interpretação prognóstica e a redação do manuscrito. Os resultados não estimam efeito causal, não substituem avaliação clínica e não devem ser usados para indicar tratamento. É necessária validação externa independente, com avaliação de calibração e utilidade clínica, antes de qualquer aplicação assistencial.
+## Guia de leitura
 
-### Sugestão para o manuscrito — Objetivos
+O relatório responde a três perguntas diferentes, que não devem ser confundidas:
 
-> Desenvolver e realizar avaliação interna de um modelo linear para estimar a mudança do ângulo de Cobb no horizonte de `r horizon_months` meses e de um modelo logístico secundário para a probabilidade de melhora radiográfica, definida como redução de pelo menos `r threshold_degrees` graus, mantendo análises de árvore e flexíveis como exploratórias.
+1. **O que se quer prever?** Uma mudança contínua em graus (`delta`) e, secundariamente, a probabilidade de essa mudança ser de pelo menos −5°.
+2. **Como os preditores são combinados?** Regressões linear e logística atribuem um peso a cada preditor; CART forma grupos por divisões sucessivas; a análise flexível permite curvas e interações sob penalização.
+3. **Quanto confiar no resultado?** Desempenho aparente descreve os mesmos dados usados no ajuste. Bootstrap e validação cruzada interna estimam o otimismo e a sensibilidade à amostra. Somente dados independentes poderão testar transportabilidade.
 
-# Formação da coorte
+Ao longo do texto, **desenvolvimento** significa construir a equação; **avaliação interna** significa testar o processo por reamostragem da mesma fonte; **avaliação externa** exigiria outra amostra. Calibração pergunta se previsões e observações concordam em nível e escala; discriminação pergunta se o modelo ordena pessoas com resultados diferentes; erro em graus pergunta quão distante a previsão contínua fica do observado.
 
-```{r flow}
-knitr::kable(flow[,c("etapa","n_antes","n_excluidos","n_restante","motivo")], col.names=c("Etapa","Antes","Excluídos","Restante","Motivo"), caption="Fluxo agregado; identificadores não são publicados.")
+# Pergunta, cenário e cronologia
+
+A pergunta é: **com informações da avaliação basal, qual mudança na maior magnitude do Cobb e qual probabilidade de melhora radiográfica de pelo menos 5° são esperadas aos seis meses?** O linear em graus é principal; o logístico é secundário; CART e modelagem flexível são exploratórias. Não há limiar de decisão, análise de utilidade ou indicação terapêutica. O relato segue TRIPOD+AI [@collins2024_tripod_ai].
+
+| Momento | Informação |
+|---|---|
+| Avaliação basal/anamnese | Dez preditores, inclusive correção transversal pelo colete. |
+| Momento da previsão | Todos são tratados como disponíveis; a especificação histórica foi explorada antes do congelamento e não é chamada de “a priori”. |
+| Seguimento | Manejo conservador com colete e exercícios S4D; adesão e concomitantes não documentados. |
+| Horizonte nominal | Maior Cobb aos seis meses; marco exato e intervalo real não documentados. |
+
+`correcao_colete` compara momentaneamente a curvatura sem e com colete rígido na anamnese. É possível marcador de maleabilidade/corrigibilidade imediata ou componente redutível. Estudos com outros protocolos apoiam o racional, mas não validam fórmula, coeficiente ou manutenção local [@ohrt_nissen2016_brace_flexibility]. Não implica ausência de estrutura, efeito causal nem garantia de correção sustentada.
+
+> **Texto para o manuscrito — objetivo.** Desenvolver e avaliar internamente um modelo linear para mudança do maior Cobb aos seis meses e um modelo logístico secundário para melhora radiográfica de pelo menos 5°, mantendo CART e formas flexíveis como explorações.
+
+# Coorte
+
+O fluxo foi de `r n_raw` registros para `r n_dedup` participantes após três duplicatas confirmadas e `r n_final` casos completos após excluir três participantes (`r fmt(3/n_dedup*100, 3)`%) com Lenke ausente. A baixa fração não prova ausência de viés. Não há IDs ou linhas individuais neste documento.
+
+```{r}
+knitr::kable(data.frame(Etapa=c("Registros lidos","Após deduplicação","Caso completo"), n=c(n_raw,n_dedup,n_final), Exclusão=c("—","3 duplicatas","3 com Lenke ausente")), caption="Fluxo agregado da coorte.", row.names=FALSE)
 ```
 
-```{r flow_figure, fig.cap="Fluxo agregado da coorte analítica."}
-knitr::include_graphics(file.path(RESULTS_DIRS[["figures"]], "cohort_flow.png"))
+```{r}
+x <- cohort[cohort$tipo == "numerica", c("rotulo","n","media","dp","mediana","q1","q3","minimo","maximo")]
+names(x) <- c("Variável","n","Média","DP","Mediana","Q1","Q3","Mínimo","Máximo")
+tab(x, "Descrição das variáveis numéricas.", 2)
 ```
 
-A coorte final contém `r cohort_summary$n_final` participantes; `r cohort_summary$eventos_melhora` apresentaram melhora e `r cohort_summary$nao_eventos` não apresentaram. Foram excluídas `r flow$n_excluidos[2]` duplicatas confirmadas e `r flow$n_excluidos[3]` casos incompletos por Lenke ausente. Nenhuma lista de IDs ou registro individual é incorporada ao HTML.
-
-```{r population}
-pop <- data.frame(Variável=c("Idade (anos)","IMC (kg/m²)","Cobb basal máximo (graus)","Delta (graus)","Correção pelo colete (%)"), `Média (DP)`=c(paste0(fmt(mean(cohort$idade))," (",fmt(sd(cohort$idade)),")"),paste0(fmt(mean(cohort$imc))," (",fmt(sd(cohort$imc)),")"),paste0(fmt(mean(cohort$cobb_inicial_maior))," (",fmt(sd(cohort$cobb_inicial_maior)),")"),paste0(fmt(mean(cohort$delta))," (",fmt(sd(cohort$delta)),")"),paste0(fmt(mean(cohort$correcao_colete))," (",fmt(sd(cohort$correcao_colete)),")")), stringsAsFactors=FALSE); knitr::kable(pop, caption="Descrição agregada da coorte analítica.")
+```{r}
+x <- cohort[cohort$tipo == "categorica", c("rotulo","nivel","contagem","proporcao")]; x$proporcao <- 100*x$proporcao
+names(x) <- c("Variável","Nível","n","%")
+tab(x, "Preditores categóricos e desfecho binário.", 1)
 ```
 
-```{r factors}
-f <- factors; names(f) <- c("Variável","Nível","Referência","n"); knitr::kable(f, caption="Níveis e referências das variáveis categóricas.")
+![Distribuição de delta (graus; n=615). As linhas em −5°, 0° e +5° são referências descritivas; −5° define melhora radiográfica. Não é análise de progressão e o máximo final não confirma a mesma região.](results/prognostico/revisao/figures/linear_delta_distribution.png){fig-alt="Histograma de delta com marcas em menos cinco, zero e mais cinco graus." width="100%"}
+
+Permanecem ausentes recrutamento, elegibilidade, perdas antes da planilha, centro(s), período, protocolo radiográfico, avaliadores, confiabilidade, adesão, detalhes do colete e intervalo real.
+
+# Desfechos e preditores
+
+$$\Delta = \max(\mathrm{Cobb}_{6\ meses}) - \max(\mathrm{Cobb}_{basal}).$$
+
+O máximo basal usa três regiões e preserva dez empates; o dado final contém só a maior magnitude, sem identificar a região. O evento secundário é `delta <= -5°`. É **melhora radiográfica**, não necessariamente clínica; 5° está na ordem da variabilidade de mensuração manual discutida pela SOSORT, sem estabelecer benefício funcional [@negrini2018_sosort].
+
+```{r}
+x <- dictionary[,c("rotulo","definicao_operacional","unidade","codificacao_forma","referencia","graus_liberdade","aquisicao_momento")]
+names(x) <- c("Preditor","Definição","Unidade","Forma","Referência","gl","Momento")
+knitr::kable(x, caption="Dicionário dos dez preditores.", row.names=FALSE)
 ```
 
-```{r missing}
-m <- subset(missing, etapa == "coorte analítica por caso completo" & n_ausentes > 0); if (nrow(m)==0) cat("Não há dados ausentes nas variáveis necessárias após a formação da coorte.\n") else { names(m) <- c("Etapa","Variável","n","Ausentes","% ausentes"); knitr::kable(m, caption="Dados ausentes remanescentes.") }
+Correção pelo colete e `flexibilidade` categórica não são sinônimos. O teste/limiar que produz flexível/rígido não está documentado; não se afirma independência conceitual ou valor incremental.
+
+# Métodos
+
+## Especificação e tamanho amostral
+
+### Como as decisões foram tomadas
+
+A sequência decisória foi deliberadamente conservadora:
+
+1. A análise histórica já continha dez preditores. Depois da revisão do objetivo, essa lista foi **congelada** para evitar escolher variáveis novamente com base nos resultados que seriam relatados.
+2. `delta` foi mantido como desfecho principal porque preserva a quantidade de mudança em graus. A dicotomização em melhora de pelo menos 5° perde informação e, por isso, ficou secundária.
+3. O linear e o logístico usam os mesmos cinco preditores numéricos e cinco categóricos: 19 parâmetros preditores mais intercepto. Categorias como Lenke e Risser viram indicadores, sem presumir distância constante entre níveis.
+4. Cobb basal não entrou no principal por preservação procedimental da fórmula histórica; sua plausibilidade clínica motivou uma sensibilidade pré-definida. O ganho observado não foi usado para rebatizar a alternativa como principal.
+5. CART e formas flexíveis respondem se relações não lineares, interações ou regras de grupo poderiam acrescentar informação. Como são mais adaptáveis e mais propensas a ajustar ruído, permaneceram exploratórias e foram avaliadas com tuning aninhado.
+
+A especificação, portanto, foi congelada **após** exploração histórica e não é chamada de “a priori”. Não foram reintroduzidos progressão, seleção por p-valor ou divisão treino–teste simples.
+
+### Como as regressões produzem uma previsão
+
+No modelo linear, cada coeficiente é a mudança esperada em `delta` para uma unidade adicional do preditor, mantendo os demais constantes. Os termos são somados ao intercepto. Para uma categoria, o coeficiente compara aquele nível com a referência. Um coeficiente negativo é favorável neste estudo porque `delta` mais negativo significa maior redução radiográfica.
+
+No modelo logístico, a mesma soma é feita na escala de *log-odds*. A transformação $p=1/(1+e^{-\\eta})$ converte o resultado em probabilidade entre 0 e 1. Exponenciar um coeficiente produz uma *odds ratio*; ela compara chances, não riscos, e pode parecer numericamente maior que o risco relativo quando o evento é frequente.
+
+```{r}
+x <- sample_size[,c("modelo","classe","cenario","valor_desempenho","parametros","n_minimo","participantes_disponiveis","margem_n","suficiente")]
+names(x) <- c("Modelo","Classe","Cenário","Premissa","Parâmetros","n mínimo","Disponíveis","Margem","Suficiente")
+tab(x, "Tamanho amostral, condicional às premissas.", 3)
 ```
 
-### Sugestão para o manuscrito — Formação da coorte
+Os cenários usam *shrinkage* desejado 0,90 [@riley2019_continuous_sample_size; @riley2019_binary_sample_size; @riley2020_sample_size_framework]. R² esperado 0,20 exigiria 676; 60% do Cox–Snell aparente, 654. Portanto, n=615 não é declarado universalmente suficiente nem justifica o flexível.
 
-> Após leitura de `r flow$n_antes[1]` registros, foram removidas `r flow$n_excluidos[2]` duplicatas confirmadas por comparação de variáveis clínicas, radiográficas e do desfecho. A análise por caso completo resultou em `r cohort_summary$n_final` participantes. O fluxo foi reportado com contagens agregadas, sem identificadores.
+O cálculo de tamanho amostral não é um teste aprovado/reprovado. Ele pergunta quantas pessoas seriam necessárias sob determinada força de sinal esperada para limitar sobreajuste, manter pequeno o otimismo e estimar o nível médio do desfecho com precisão. Como a força de sinal verdadeira era incerta, foram mostrados cenários; alguns cabem em 615 e outros não.
 
-# Métodos estatísticos
+## Pressupostos e inferência
 
-Os modelos usam `r param_n` parâmetros candidatos e as mesmas covariáveis: idade, IMC, cifose torácica, lordose lombar, correção pelo colete, sexo, Lenke, Risser, flexibilidade e classe do escoliômetro. Referências: feminino, Lenke 1, Risser 0, flexível e escoliômetro normal. A fonte é `r basename(DATA_FILE)`, aba `r DATA_SHEET`; seu hash foi verificado contra o objeto congelado na renderização.
-
-O bootstrap usa `r boot_n` réplicas e registrou `r boot_fail` falhas nas métricas consolidadas. O otimismo é calculado dentro de cada réplica e corrigido na direção da métrica. O fator de shrinkage é a inclinação de calibração corrigida, limitada a 0–1, com intercepto recalibrado para preservar a média contínua ou a prevalência observada.
-
-## Tamanho amostral
-
-```{r sample}
-s <- sample_size[,c("modelo","classe","cenario","n_minimo","participantes_disponiveis","margem_n","suficiente")]; names(s) <- c("Modelo","Classe","Cenário","n mínimo","Disponíveis","Margem","Suficiente"); knitr::kable(s, caption="Cenários de tamanho amostral para a especificação congelada.")
+```{r}
+x <- assumptions[,c("assumption","evidence","interpretation","action","limitation")]
+names(x) <- c("Pressuposto","Evidência","Interpretação","Ação","Limite")
+knitr::kable(x, caption="Diagnósticos e consequências práticas.", row.names=FALSE)
 ```
 
-### Sugestão para o manuscrito — Métodos
+Breusch–Pagan=36,004 (19 gl; p=0,0105), R² auxiliar=0,0585 e razão de DP por quintil=1,265 indicam heteroscedasticidade. IC lineares HC3 usam t com 595 gl [@white1980_robust_covariance; @mackinnon1985_hc3]; corrigem incerteza de coeficientes, não forma/calibração/previsão individual. Posto 20/20, GVIF ajustado 1,047–1,381 e índice de condição máximo 5,723 não aprovam globalmente a especificação. Programação quadrática não detectou separação logística completa/quase-completa [@albert1984_logistic_separation].
 
-> Foram especificados a priori um modelo linear para `delta` e um modelo logístico para melhora radiográfica. O desempenho foi descrito por erro, discriminação e calibração, com avaliação interna por bootstrap e shrinkage. Unidades, referências, equações e coeficientes completos são fornecidos para reprodução.
+Heteroscedasticidade significa que a dispersão dos erros não é igual em toda a faixa prevista. Isso pode tornar erros-padrão clássicos inadequados, razão para usar HC3 como sensibilidade. Colinearidade significa que preditores carregam informação sobreposta e pode deixar coeficientes instáveis; posto, GVIF e índices de condição não mostraram sinal numérico forte, mas também não provam validade clínica. Separação ocorre quando uma combinação de preditores distingue perfeitamente o evento e pode fazer coeficientes logísticos divergir; ela não foi detectada aqui.
 
-### Sugestão para o manuscrito — Tamanho amostral
+![Diagnósticos aparentes do linear (n=615). HC3 é sensibilidade inferencial, não correção de previsão.](results/prognostico/revisao/figures/linear_diagnostics.png){fig-alt="Resíduos, Q-Q, influência e dispersão residual." width="100%"}
 
-> O tamanho amostral foi avaliado para `r param_n` parâmetros candidatos e `r cohort_summary$n_final` participantes sob cenários explícitos de desempenho esperado. A suficiência é condicional às premissas do cálculo e não justifica a complexidade exploratória.
+## Avaliação interna, *shrinkage* e incerteza
 
-# Modelo linear principal
+### Bootstrap passo a passo
 
-```{r performance}
-knitr::kable(fmt_table(performance), caption="Desempenho aparente, otimismo médio e desempenho corrigido.")
+Cada uma das 2.000 réplicas bootstrap sorteou 615 participantes **com reposição**. Algumas pessoas aparecem mais de uma vez e outras ficam de fora daquela réplica. Em cada repetição: (1) o modelo foi reajustado na amostra bootstrap; (2) seu desempenho foi medido nessa mesma amostra; (3) o mesmo modelo foi aplicado à coorte original; e (4) a diferença estimou quanto o ajuste parecia melhor nos dados que o construíram. A média dessas diferenças é o otimismo [@steyerberg2001_bootstrap].
+
+Para R²/AUC, maior é melhor e a correção reduz o valor aparente; para RMSE/MAE/Brier/*log loss*, menor é melhor e a correção aumenta o erro aparente. Houve 2.000 réplicas válidas e zero falhas por modelo. Os IC principais usam percentis deslocados pela correção de otimismo [@noma2021_optimism_ci]; IC de calibração ficaram indisponíveis porque a estatística aparente é fixa por construção e produziria intervalo artificialmente degenerado.
+
+### *Shrinkage*, calibração e validação cruzada
+
+*Shrinkage* reduz todos os coeficientes não interceptais na direção de zero quando há sinal de sobreajuste. Aqui, o multiplicador foi a inclinação de calibração corrigida: `r fmt(shrink$shrinkage_factor[shrink$model=="linear"],4)` no linear e `r fmt(shrink$shrinkage_factor[shrink$model=="logistic"],4)` no logístico. Depois, o intercepto foi recalibrado para preservar a média de `delta` ou a prevalência. A operação tende a moderar previsões extremas; não cria informação nova e não substitui teste externo.
+
+A validação cruzada estratificada dividiu a coorte em dez partes: nove treinaram e uma avaliou. Isso se repetiu até cada parte servir como teste e todo o ciclo foi repetido cinco vezes. Para avaliar honestamente o procedimento pós-*shrinkage*, o fator e o intercepto foram estimados apenas dentro do treinamento. As amplitudes entre cinco repetições mostram dependência da partição, não IC.
+
+Calibração perfeita teria intercepto 0 e inclinação 1. Intercepto diferente de 0 indica previsões globalmente altas/baixas; inclinação abaixo de 1 costuma indicar previsões extremas demais, e acima de 1, pouco extremas. Intervalos conformais separados foram calibrados sem o teste externo e avaliados somente nele [@lei2018_conformal_regression]; sua cobertura continua interna.
+
+# Modelo contínuo principal
+
+```{r}
+x <- perf[perf$model=="linear" & perf$metric %in% c("r2","rmse","mae"),c("metric","apparent","estimate","ci_lower","ci_upper","unit")]
+x$metric <- c(r2="R²",rmse="RMSE",mae="MAE")[x$metric]; names(x) <- c("Métrica","Aparente","Corrigida","IC95% inf.","IC95% sup.","Unidade")
+tab(x, "Desempenho linear da especificação fixa.", 3)
 ```
 
-O R² aparente foi `r fmt(frozen_results$metrics_linear$r2,3)` e o corrigido foi `r fmt(subset(bootstrap, model=="linear" & metric=="r2")$corrected,3)`. O RMSE aparente foi `r fmt(frozen_results$metrics_linear$rmse)` graus e o corrigido foi `r fmt(subset(bootstrap, model=="linear" & metric=="rmse")$corrected)` graus. O MAE aparente foi `r fmt(frozen_results$metrics_linear$mae)` graus e o corrigido foi `r fmt(subset(bootstrap, model=="linear" & metric=="mae")$corrected)` graus.
+Na CV do procedimento pós-*shrinkage*, o intercepto de calibração médio foi `r fmt(cv("linear","calibration_intercept")$mean_across_repeats,3)`° e a inclinação `r fmt(cv("linear","calibration_slope")$mean_across_repeats,3)`. O RMSE corrigido de `r fmt(pr("linear","rmse")$estimate)`° é agregado e não classifica previsões individuais.
 
-```{r linear_figures, fig.cap="Diagnósticos do modelo linear principal."}
-knitr::include_graphics(c(file.path(RESULTS_DIRS[["figures"]],"frozen_linear_observed_vs_predicted.png"),file.path(RESULTS_DIRS[["figures"]],"frozen_linear_residuals.png")))
-```
+![Delta observado versus previsto pelo linear aparente (n=615); identidade e calibração no mesmo ajuste, sem validação externa.](results/prognostico/revisao/figures/linear_observed_predicted.png){fig-alt="Delta observado versus previsto." width="100%"}
 
-```{r cal-linear}
-knitr::kable(fmt_table(cal_corr[cal_corr$Modelo=="linear",]), caption="Calibração linear aparente e corrigida.")
-```
+![Coeficientes lineares aparentes com IC95% HC3-t (595 gl), não coeficientes pós-shrinkage.](results/prognostico/revisao/figures/linear_coefficients_hc3.png){fig-alt="Coeficientes lineares e intervalos robustos." width="100%"}
 
-O erro linear deve ser lido em graus. O RMSE corrigido é comparado descritivamente ao limiar de `r threshold_degrees` graus, mas não gera classificação individual nem regra clínica. Intervalo de confiança da média e intervalo de predição individual não são equivalentes; o segundo é mais amplo por incorporar variabilidade de uma nova observação.
-
-### Sugestão para o manuscrito — Resultados linear
-
-> Na coorte de `r cohort_summary$n_final` participantes, o modelo linear apresentou R² aparente de `r fmt(frozen_results$metrics_linear$r2,3)` e RMSE de `r fmt(frozen_results$metrics_linear$rmse)` graus. Após correção interna, o R² foi `r fmt(subset(bootstrap,model=="linear" & metric=="r2")$corrected,3)` e o RMSE foi `r fmt(subset(bootstrap,model=="linear" & metric=="rmse")$corrected)` graus. A interpretação foi feita na escala de graus e em relação ao limiar radiográfico, sem convertê-la em decisão clínica.
+Dez pontos percentuais adicionais de correção pelo colete correspondem a `r fmt(linear_10pp)`° em `delta`, mantidos os demais preditores. O sinal favorável não prova que aumentar a correção cause melhor desfecho nem garante manutenção.
 
 # Modelo logístico secundário
 
-A prevalência observada foi `r fmt_pct(frozen_results$metrics_logistic$prevalence)`. A AUC aparente foi `r fmt(frozen_results$metrics_logistic$auc,3)` (IC95% `r fmt(frozen_results$metrics_logistic$auc_ci_lower,3)`–`r fmt(frozen_results$metrics_logistic$auc_ci_upper,3)`) e a corrigida foi `r fmt(subset(bootstrap,model=="logistic" & metric=="auc")$corrected,3)`. Brier e log loss complementam a AUC porque discriminação não substitui calibração.
-
-```{r logistic_figures, fig.cap="Discriminação e calibração do modelo logístico."}
-knitr::include_graphics(c(file.path(RESULTS_DIRS[["figures"]],"frozen_logistic_roc.png"),file.path(RESULTS_DIRS[["figures"]],"frozen_logistic_calibration.png")))
+```{r}
+x <- perf[perf$model=="logistic" & perf$metric %in% c("auc","brier_score","log_loss"),c("metric","apparent","estimate","ci_lower","ci_upper","unit")]
+x$metric <- c(auc="AUC",brier_score="Brier",log_loss="Log loss")[x$metric]; names(x) <- c("Métrica","Aparente","Corrigida","IC95% inf.","IC95% sup.","Unidade")
+tab(x, "Desempenho logístico da especificação fixa.", 3)
 ```
 
-```{r cal-logistic}
-knitr::kable(fmt_table(cal_corr[cal_corr$Modelo=="logistic",]), caption="Calibração logística aparente e corrigida."); l <- cal_logistic; names(l) <- c("Grupo","n","Média prevista","Média observada"); knitr::kable(fmt_table(l,3), caption="Calibração logística por grupos aparentes.")
-```
+AUC é ordenação/discriminação, não acurácia. Brier, *log loss* e calibração são lidos conjuntamente [@vancalster2019_calibration]. Na CV pós-*shrinkage*, calibração no grande média=`r fmt(cv("logistic","calibration_in_the_large")$mean_across_repeats,3)` log-odds e inclinação=`r fmt(cv("logistic","calibration_slope")$mean_across_repeats,3)`. Dez pontos percentuais de correção correspondem a OR `r fmt(or_10pp,2)`; OR não é risco relativo.
 
-A calibração aparente com intercepto zero e inclinação um é esperada por construção quando ajuste e avaliação usam os mesmos dados. Não foi definido limiar de decisão clínica; portanto, nenhuma probabilidade deve ser convertida em conduta.
+![ROC e calibração aparente do logístico (n=615; 317 eventos). Sem bandas não validadas.](results/prognostico/revisao/figures/logistic_roc_calibration.png){fig-alt="ROC e calibração aparente." width="100%"}
 
-### Sugestão para o manuscrito — Resultados logístico
+![OR da equação logística pós-shrinkage; contrastes contínuos de +10 unidades. Sem IC pós-shrinkage não validados.](results/prognostico/revisao/figures/logistic_coefficients_shrunk.png){fig-alt="Odds ratios pós-shrinkage." width="100%"}
 
-> Para a melhora radiográfica, observada em `r cohort_summary$eventos_melhora` de `r cohort_summary$n_final` participantes, a AUC aparente foi `r fmt(frozen_results$metrics_logistic$auc,3)` e a corrigida por bootstrap foi `r fmt(subset(bootstrap,model=="logistic" & metric=="auc")$corrected,3)`. Brier, log loss e calibração foram relatados conjuntamente, sem limiar clínico de decisão.
+A amplitude bootstrap mediana foi `r fmt(median(boot_stability$instability_index_95[boot_stability$model=="linear"]))`° no linear e `r fmt_pct(median(boot_stability$instability_index_95[boot_stability$model=="logistic"]),1)` na probabilidade. É instabilidade entre modelos reamostrados, não intervalo de predição.
 
-# Estabilidade, shrinkage e equações
-
-```{r stability}
-knitr::kable(fmt_table(stability_display,3), caption="Estabilidade agregada das previsões bootstrap; registros individuais não são exibidos.")
-```
-
-```{r stability_figure, fig.cap="Estabilidade das previsões do modelo linear."}
-knitr::include_graphics(file.path(RESULTS_DIRS[["figures"]],"frozen_stability_index.png"))
-```
-
-**Equação linear corrigida:** `r linear_equation`
-
-**Equação logística corrigida:** `r logistic_equation`
-
-O fator de shrinkage foi `r fmt(unique(coef_linear_shrunk$shrinkage_factor[!is.na(coef_linear_shrunk$shrinkage_factor)]),4)` no modelo linear e `r fmt(unique(coef_logistic_shrunk$shrinkage_factor[!is.na(coef_logistic_shrunk$shrinkage_factor)]),4)` no logístico. Indicadores de referência valem zero; no modelo logístico, aplica-se `plogis(eta)`.
-
-```{r coefficients-linear}
-knitr::kable(fmt_table(coef_linear_display,8), caption="Coeficientes lineares aparentes e corrigidos.")
-```
-
-```{r coefficients-logistic}
-knitr::kable(fmt_table(coef_logistic_display,8), caption="Coeficientes, odds ratios e shrinkage logístico.")
-```
-
-### Sugestão para o manuscrito — Bootstrap e shrinkage
-
-> A avaliação interna utilizou `r boot_n` réplicas bootstrap, sem falhas métricas consolidadas. O otimismo foi estimado dentro de cada réplica e corrigido na direção de cada métrica. As inclinações corrigidas foram usadas como fatores de shrinkage; esse procedimento reduz otimismo esperado, mas não substitui validação externa.
-
-## Diagnósticos
-
-```{r diagnostics}
-d <- data.frame(Diagnóstico=c("Posto da matriz de desenho","Convergência logística","Coeficientes finitos","Células problemáticas","Breusch–Pagan"), Resultado=c(paste0(frozen_results$rank$rank[1],"/",frozen_results$rank$number_columns[1],"; condição ",fmt(frozen_results$rank$condition_number[1],1)), ifelse(separation$result[separation$diagnostic=="glm_converged"]==1,"sim","não"), ifelse(separation$result[separation$diagnostic=="all_logistic_coefficients_finite"]==1,"sim","não"), separation$result[separation$diagnostic=="problematic_factor_cells"], paste0("p = ",fmt_p(hetero$p_value[1])))); knitr::kable(d, caption="Diagnósticos agregados.")
-```
+![Amplitude das cinco previsões internas por participante do flexível; cinco previsões por pessoa não são independentes.](results/prognostico/revisao/figures/stability_repeated_predictions.png){fig-alt="Estabilidade de previsões lineares e logísticas." width="100%"}
 
 # CART exploratória
 
-A CART é exploratória e geradora de hipóteses, não modelo principal. O objeto consolidado contém `r nrow(read_red("cart_nested_internal.rds")$selected)` ajustes selecionados em reamostragem aninhada; métricas e figuras agregadas não divulgam IDs.
+Uma CART constrói uma sequência de perguntas do tipo “o valor é menor que este corte?”. A cada nó, procura a divisão que mais separa participantes com e sem melhora; as folhas finais contêm grupos com probabilidades aparentes distintas. Essa legibilidade tem custo: pequenas mudanças na amostra podem mudar variável, corte e caminho, por isso desempenho e estabilidade precisam ser avaliados por reamostragem [@breiman1984_cart].
 
-```{r cart}
-c <- subset(cart_dist, metric %in% c("auc","brier_score","log_loss","calibration_slope")); c$metric <- c("AUC","Brier","Log loss","Inclinação de calibração")[match(c$metric,c("auc","brier_score","log_loss","calibration_slope"))]; names(c) <- c("Métrica","n","Média","DP","Mediana","P2,5","P97,5"); knitr::kable(fmt_table(c,3), caption="Distribuição externa das métricas da CART."); cc <- cart_cal; names(cc) <- c("Grupo","n","Média prevista","Média observada"); knitr::kable(fmt_table(cc,3), caption="Calibração externa agrupada da CART.")
+A grade combinou `cp` 0,001/0,005/0,01/0,02, profundidade 1–5 e `minsplit` 10/20/40 (60 configurações). `cp` controla quanto uma nova divisão precisa melhorar a árvore; profundidade limita quantas perguntas podem ocorrer ao longo de um caminho; `minsplit` é o menor nó elegível para tentar uma divisão, não o tamanho mínimo obrigatório de cada folha.
+
+O tuning em cinco folds internos escolheu a maior AUC média e depois aplicou a regra one-SE: entre configurações cujo desempenho era compatível com o melhor dentro de um erro-padrão, preferiu menor profundidade, maior `minsplit` e maior `cp`. Essa regra favorece uma árvore mais simples quando a evidência de ganho é pequena. Os 5 × 10 folds externos pertencem à **CV interna aninhada**: a camada interna escolhe hiperparâmetros; a externa estima desempenho sem reutilizar o fold de teste para escolher a árvore [@cawley2010_nested_cv].
+
+```{r}
+x <- cart_metrics[,c("metric","n","mean","sd","median","q025","q975")]
+x$metric <- c(auc="AUC",brier_score="Brier",log_loss="Log loss",calibration_intercept="Intercepto",calibration_slope="Inclinação")[x$metric]
+names(x) <- c("Métrica","Folds válidos","Média","DP","Mediana","P2,5","P97,5")
+tab(x, "CART nos folds externos da avaliação interna aninhada; folds não são independentes.", 3)
 ```
 
-```{r cart_figure, fig.cap="Calibração externa da CART exploratória."}
-knitr::include_graphics(file.path(RESULTS_DIRS[["figures"]],"cart_external_calibration.png"))
+O intercepto de calibração teve 49/50 folds válidos; um ajuste numericamente inválido foi excluído somente dessa métrica. Cada repetição contém 615 previsões; 3.075 linhas combinadas são cinco previsões por pessoa, não 3.075 pessoas.
+
+![Árvore CART ilustrativa ajustada na coorte completa (n=615). Probabilidades/contagens são aparentes; asterisco marca n<30. Não é regra clínica.](results/prognostico/revisao/figures/cart_illustrative_tree.png){fig-alt="Árvore CART com sete folhas." width="100%"}
+
+```{r}
+x <- cart_leaves[,c("folha","caminho_completo","n","eventos_melhora","proporcao_aparente_melhora","grupo_pequeno_n_menor_30")]; x$proporcao_aparente_melhora <- 100*x$proporcao_aparente_melhora
+names(x) <- c("Folha","Regra completa","n","Eventos","% aparente","n<30")
+tab(x, "Folhas ilustrativas; proporções aparentes.", 1)
 ```
 
-As árvores, pontos de corte e variáveis de raiz são descritos como sinais de instabilidade e geração de hipóteses. Nenhum desempenho de árvore ajustada em toda a coorte é apresentado como avaliação externa.
+Correção pelo colete foi raiz em 50/50 árvores. O corte mediano foi `r fmt(root_cut$median,2)`%, com amplitude `r fmt(root_cut$min,2)`–`r fmt(root_cut$max,2)`%. Estabilidade da variável não valida um corte fixo, causalidade ou manutenção.
 
-# Apêndice — modelagem flexível
+![Estabilidade estrutural nas 50 árvores dos treinamentos externos, usando apenas cortes primários.](results/prognostico/revisao/figures/cart_stability.png){fig-alt="Frequências de variáveis e cortes da raiz." width="100%"}
 
-A modelagem flexível foi separada da conclusão principal. O pré-processamento, as splines, as interações e o tuning foram aprendidos dentro de cada split externo; a hierarquia das interações foi auditada. A seleção de componentes e as previsões são exploratórias.
+# Sensibilidades e comparadores
 
-```{r flexible}
-fex <- subset(flex_dist, metric %in% c("r2","rmse","mae","auc","brier_score","log_loss")); fex$metric <- c("R²","RMSE","MAE","AUC","Brier","Log loss")[match(fex$metric,c("r2","rmse","mae","auc","brier_score","log_loss"))]; names(fex) <- c("Família","Métrica","n","Média","DP","Mediana","P2,5","P97,5"); knitr::kable(fmt_table(fex,3), caption="Desempenho externo da modelagem flexível."); fs <- flex_stab; names(fs) <- c("Família","Participantes","DP média","DP mediana","DP P2,5","DP P97,5","Amplitude média","Amplitude mediana","Amplitude P97,5"); knitr::kable(fmt_table(fs,3), caption="Estabilidade das previsões flexíveis.")
+Uma análise de sensibilidade pergunta se a conclusão depende de uma escolha discutível. Ela não serve para escolher retrospectivamente o cenário com melhor resultado. Aqui, cada alternativa foi reajustada no treinamento e avaliada nos mesmos folds completos do principal, tornando as diferenças diretamente comparáveis.
+
+```{r}
+x <- data.frame(
+  Cenário=c("Principal","Exclusão de influentes apenas no treino","Exclusão de hipercorreções apenas no treino","Acrescido de Cobb basal","Média de delta do treino","Prevalência do treino"),
+  Motivação=c("Referência congelada","Investigar sinais de Cook, alavancagem e resíduos","Examinar temporariamente três hipercorreções confirmadas","Condicionar delta ao Cobb basal","Referência contínua simples","Referência binária simples"),
+  `n de ajuste`=c("553–555 por partição","linear: 499–509; logístico: 457–479 por partição","550–553 por partição","553–555 por partição","553–555 por partição","553–555 por partição"),
+  Avaliação=rep("Mesmas partições de teste completas; 615 previsões por repetição",6),
+  Resultado=c(
+    paste0("RMSE ",fmt(sr("primary","linear","rmse")$mean_across_repeats,4),"°; Brier ",fmt(sr("primary","logistic","brier_score")$mean_across_repeats,5)),
+    paste0("ΔRMSE +",fmt(sr("influence_excluded_train_only","linear","rmse")$mean_across_repeats-sr("primary","linear","rmse")$mean_across_repeats,4),"°; ΔBrier +",fmt(sr("influence_excluded_train_only","logistic","brier_score")$mean_across_repeats-sr("primary","logistic","brier_score")$mean_across_repeats,5)),
+    paste0("ΔRMSE +",fmt(sr("hypercorrection_excluded_train_only","linear","rmse")$mean_across_repeats-sr("primary","linear","rmse")$mean_across_repeats,4),"°; mudança de Brier <0,000001"),
+    paste0("RMSE ",fmt(sr("cobb_baseline_augmented","linear","rmse")$mean_across_repeats,4),"°; Δ −",fmt(sr("primary","linear","rmse")$mean_across_repeats-sr("cobb_baseline_augmented","linear","rmse")$mean_across_repeats,4),"°"),
+    paste0("RMSE ",fmt(sr("training_mean_delta","linear","rmse")$mean_across_repeats,4),"°"),
+    paste0("Brier ",fmt(sr("training_prevalence","logistic","brier_score")$mean_across_repeats,5))
+  ),
+  Conclusão=c("Referência pareada interna","A exclusão diagnóstica piorou a generalização aos testes completos","As três hipercorreções permanecem na coorte principal","Pequeno ganho interno; não redefine o modelo principal","O principal reduziu o erro em graus","O principal reduziu o erro de probabilidade"),
+  check.names=FALSE
+)
+knitr::kable(x, caption="Sensibilidades pareadas nos mesmos testes completos.", row.names=FALSE)
 ```
 
-```{r flexible_figure, fig.cap="Estabilidade das previsões flexíveis."}
-knitr::include_graphics(file.path(RESULTS_DIRS[["figures"]],"flexible_prediction_stability.png"))
+![RMSE e Brier em sensibilidades/referências. Barras são amplitudes entre cinco repetições, não IC.](results/prognostico/revisao/figures/sensitivity_comparisons.png){fig-alt="Comparação interna de sensibilidades." width="100%"}
+
+O principal reduziu RMSE em `r fmt(comparators$improvement_error_reduction[comparators$model=="linear" & comparators$model_scenario=="primary"])`° contra a média do treino e Brier em `r fmt(comparators$improvement_error_reduction[comparators$model=="logistic"],3)` contra a prevalência do treino. Excluir sinais influentes piorou desempenho nos testes completos. Retirar temporariamente três hipercorreções verdadeiras mudou RMSE em +0,0019° e Brier em menos de 0,000001; elas permanecem na coorte.
+
+`delta ~ Cobb basal + X` e `Cobb final ~ Cobb basal + X`, reconvertido a `delta`, foram equivalentes (diferenças <1,6e-13). O ganho interno de 0,069° não redefine a especificação e deve ser discutido com acoplamento matemático, regressão à média e erro de mensuração.
+
+# Discussão e conclusão
+
+O sinal mais consistente foi maior correção transversal pelo colete associada a evolução radiográfica mais favorável, compatível com componente redutível, sem inferência causal. A árvore repete essa variável na raiz, mas nenhum corte é uma regra clínica. O desempenho supera referências simples, enquanto RMSE próximo de 4,3° e largura conformal média de 17,4° mostram incerteza individual relevante.
+
+Limitações centrais: fonte única e representatividade desconhecida; informações clínicas/protocolos ausentes; caso completo; erro radiográfico; possível troca da região máxima; especificação posterior à exploração; IC de coeficientes pós-*shrinkage* indisponíveis; equidade e utilidade não avaliadas; nenhuma avaliação externa. A ausência de avaliação externa limita transportabilidade, mas não é por si um julgamento automático do risco de viés da avaliação interna.
+
+Antes de uso, é necessário congelar equação/código, documentar o protocolo, avaliar dados independentes, calibração e equidade, definir manejo de entradas ausentes/fora do domínio e estudar utilidade sob limiares clínicos. PROBAST+AI deve ser aplicado com pergunta explícita e revisão independente [@moons2025_probast_ai].
+
+> **Texto para o manuscrito — conclusão.** Em 615 adolescentes, o RMSE linear corrigido foi `r fmt(pr("linear","rmse")$estimate)`° e a AUC logística corrigida `r fmt(pr("logistic","auc")$estimate,3)`. Maior correção transversal pelo colete associou-se a maior redução radiográfica, sem causalidade ou garantia de manutenção. Incerteza individual e ausência de avaliação externa impedem uso clínico; CART e flexível permanecem exploratórios.
+
+# Apêndices
+
+## Equações pós-*shrinkage*
+
+As equações usam os coeficientes finais do artefato pós-*shrinkage* e são geradas programaticamente. Para uma pessoa, substituem-se as variáveis numéricas por seus valores e cada indicadora $I(\cdot)$ por 1 quando a categoria é verdadeira e 0 caso contrário. Referências: feminino, Lenke 1, Risser 0, flexível e escoliômetro normal.
+
+```{r}
+#| results: asis
+cat("$$\\begin{aligned}\n\\widehat{\\Delta} ={}& ", latex_rhs("linear"), "\n\\end{aligned}$$\n\n", sep="")
+cat("$$\\begin{aligned}\n\\eta ={}& ", latex_rhs("logistic"), "\\\\\n+p(\\mathrm{melhora}) ={}& \\frac{1}{1+e^{-\\eta}}\n\\end{aligned}$$\n", sep="")
 ```
 
-### Sugestão para o manuscrito — CART e análise flexível
+Na equação linear, a saída é `delta` previsto em graus. Na logística, $\eta$ é o preditor linear em *log-odds* e a segunda linha o converte na probabilidade de melhora radiográfica. Os fatores de *shrinkage* foram `r fmt(shrink$shrinkage_factor[shrink$model=="linear"],6)` e `r fmt(shrink$shrinkage_factor[shrink$model=="logistic"],6)`, respectivamente.
 
-> A CART e a modelagem flexível foram mantidas como análises exploratórias. A CART usou tuning dentro de cada treinamento externo; a análise flexível preservou a hierarquia das interações e refez o pré-processamento em cada split. Nenhuma delas substitui o modelo linear principal ou sustenta conclusão clínica isolada.
+## Modelagem flexível corrigida
 
-# Limitações, discussão e conclusão
+A análise flexível permite que variáveis numéricas tenham curvas, em vez de obrigá-las a seguir uma reta, e acrescenta interações, nas quais a associação de um preditor pode variar conforme outro. Essa liberdade aumenta capacidade de ajuste, mas também risco de aprender flutuações da amostra.
 
-As limitações incluem fonte única, caso completo, erro de mensuração radiográfica, regressão à média, possível mudança da região anatômica da maior curva, horizonte fixo e ausência de validação externa. Os modelos são prognósticos, não causais, e não fornecem indicação terapêutica.
+A candidata teve 48 colunas (6 lineares, 18 bases spline, 14 indicadoras e 10 interações), incluindo Cobb basal. Splines são segmentos polinomiais unidos suavemente que representam curvatura sem impor uma única forma quadrática. A penalização reduz coeficientes para controlar complexidade: `alpha=0` corresponde a ridge, que reduz todos sem zerá-los; `alpha=1` corresponde a lasso, que pode zerar componentes; valores intermediários formam elastic net [@friedman2010_glmnet; @zou2005_elastic_net].
 
-## Autoavaliação orientada pelo PROBAST
+Pré-processamento e tuning ficaram no treino. A regra one-SE minimizou RMSE/*log loss*. Todos os 100 ajustes externos selecionaram ridge. Houve 160/5.000 falhas KKT internas contínuas, tornadas inelegíveis, e nenhuma nos ajustes externos escolhidos. As condições KKT verificam numericamente se a solução satisfaz as condições do ótimo penalizado. Efeitos principais estavam candidatos para todas as interações; a hierarquia forte foi observada nas soluções ridge, não imposta.
 
-Esta é uma autoavaliação orientada pelo PROBAST para organizar riscos de viés e aplicabilidade; não é revisão independente nem classificação formal externa.
-
-```{r probast}
-p <- data.frame(Domínio=c("Participantes","Preditores","Desfecho","Análise"), `Risco de viés — síntese`=c("Algumas preocupações: fonte única e caso completo.","Baixo a algumas preocupações: medidas radiográficas podem variar.","Algumas preocupações: qualidade da medida e limiar radiográfico.","Algumas preocupações: otimismo, parâmetros e ausência de validação externa."), `Aplicabilidade — síntese`=c("Condicionada à semelhança populacional.","Condicionada às mesmas medidas e unidades.","Condicionada à mesma definição e horizonte.","Não estabelecida para decisão clínica."), check.names=FALSE); knitr::kable(p, caption="Autoavaliação orientada pelo PROBAST.")
+```{r}
+x <- flex_compare[flex_compare$n_repeats>0 & flex_compare$metric %in% c("rmse","auc","brier_score","log_loss"),c("family","metric","mean_flexible","mean_reference","mean_difference_flexible_minus_reference","min_difference","max_difference")]
+names(x) <- c("Família","Métrica","Flexível","Principal","Diferença","Mínimo","Máximo")
+tab(x, "Comparação pareada do flexível corrigido; amplitudes não são IC.", 4)
 ```
 
-### Sugestão para o manuscrito — Limitações, discussão e conclusão
+Pontos médios favoreceram modestamente o flexível, sem demonstração formal de superioridade; o ganho não isola splines de Cobb basal, interações e penalização. Somente o solver corrigido é consumido.
 
-> Este estudo representa desenvolvimento e avaliação interna em uma fonte única. O desempenho aparente foi distinguido do corrigido por bootstrap e o shrinkage reduziu o otimismo esperado. Persistem limitações de mensuração, caso completo, transportabilidade e ausência de validação externa. Os modelos não fornecem indicação terapêutica nem limiar de decisão clínica; estudos independentes devem avaliar desempenho, calibração, utilidade e recalibração.
+![Relações flexíveis globais ilustrativas após a CV; sem causalidade, IC ou desempenho externo.](results/prognostico/revisao/figures/flexible_clinical_relations.png){fig-alt="Curvas exploratórias de relações clínicas." width="100%"}
 
-## Conclusão
+![Seleção de componentes nos 50 ajustes externos internos; estabilidade de seleção, não efeito clínico.](results/prognostico/revisao/figures/flexible_selection_stability.png){fig-alt="Frequência de componentes flexíveis." width="100%"}
 
-A conclusão é restrita ao desenvolvimento e à avaliação interna: o modelo linear é principal, o logístico é secundário e CART/modelagem flexível são exploratórias. Validação externa continua necessária antes de qualquer uso clínico.
+## Cobertura conformal interna
 
-# Conferência de relato baseada no TRIPOD+AI
-
-```{r tripod}
-t <- data.frame(Item=c("Título/resumo","Objetivos","Fonte e elegibilidade","Desfecho e horizonte","Preditores","Tamanho amostral","Dados faltantes","Desenvolvimento","Desempenho/calibração","Validação interna","Análises exploratórias","Limitações/aplicabilidade","Reprodutibilidade"), Situação=c("Resumo do manuscrito pendente","Atendido","Atendido com fluxo agregado","Atendido","Atendido com referências e unidades","Atendido com cenários","Atendido para caso completo","Atendido","Atendido com aparente e corrigido","Atendido por bootstrap","Atendido em apêndice","Atendido com autoavaliação orientada","Atendido com hash, sementes e sessão"), Observação=c("Adaptar à revista","Modelo linear principal","Sem identificadores","Basal e horizonte definido","Equações completas","Condicional às premissas","Descrever impacto","Especificação congelada","AUC não substitui calibração","Não é validação externa","Não sustenta conclusão principal","Não é revisão independente","Objetos agregados preservados"), check.names=FALSE); knitr::kable(t, caption="Conferência de relato orientada pelo TRIPOD+AI.")
+```{r}
+x <- conformal; names(x) <- c("Repetição","Folds","Previsões","Nominal","Observada","Largura média (°)","Método","Avaliação")
+tab(x, "Cobertura interna; 615 previsões por repetição.", 3)
 ```
 
-# Sessão e referências
+## Checklist TRIPOD+AI
 
-```{r session}
+Rascunho dos itens oficiais, com localização/evidência/pendência. É checklist de relato, não avaliação de qualidade [@collins2024_tripod_ai].
+
+```{r}
+x <- tripod[,c("item","section","topic","scope","status","location_qmd","evidence_or_pending")]
+names(x) <- c("Item","Seção","Tópico","Escopo","Status","Localização","Evidência/pendência")
+knitr::kable(x, caption="TRIPOD+AI, versão 7-Feb-2024.", row.names=FALSE)
+```
+
+## Rascunho PROBAST+AI
+
+Separa qualidade do desenvolvimento, risco de viés da avaliação interna e aplicabilidade. Não é avaliação independente nem julgamento formal definitivo [@moons2025_probast_ai].
+
+```{r}
+x <- probast[,c("component","domain","assessment_target","draft_judgement","location_qmd","evidence","pending_or_limitation")]
+names(x) <- c("Componente","Domínio","Alvo","Preliminar","Localização","Evidência","Pendência/limite")
+knitr::kable(x, caption="Rascunho PROBAST+AI 2025.", row.names=FALSE)
+```
+
+## Rastreabilidade e sessão
+
+- Fonte congelada `data/dataset_escoliose_01.xlsx`; SHA-256 verificado: `r source_sha`.
+- Coorte, diagnósticos, validação adicional, CART estrutural, flexível, sensibilidades e figuras: somente `results/prognostico/revisao/`.
+- Baseline explicitamente preservado: desempenho CART e estabilidade bootstrap, ainda válidos em `results/prognostico/aggregated/`.
+- Ausência de artefato obrigatório encerra a execução; não há fallback silencioso.
+
+```{r}
 cat(paste(capture.output(sessionInfo()), collapse="\n"))
 ```
 
-Sementes documentadas: `r paste(c(GLOBAL_SEED, PARALLEL_SEEDS), collapse=", ")`. Os objetos usados na renderização permanecem em `results/prognostico`; a base histórica e o relatório histórico ficam fora do fluxo de escrita.
-
-1. Collins GS, Reitsma JB, Altman DG, Moons KGM. TRIPOD statement. *Ann Intern Med*. 2015;162:55–63. doi:10.7326/M14-0697.
-2. Collins GS et al. TRIPOD+AI statement. *BMJ*. 2024;385:e078378. doi:10.1136/bmj-2023-078378.
-3. Wolff RF et al. PROBAST. *Ann Intern Med*. 2019;170:51–58. doi:10.7326/M18-1376.
-4. Riley RD et al. Minimum sample size for prediction models, continuous outcomes. *Stat Med*. 2019;38:1262–1275. doi:10.1002/sim.7991.
-5. Riley RD et al. Minimum sample size for prediction models, binary outcomes. *Stat Med*. 2019;38:1276–1296. doi:10.1002/sim.7992.
+# Referências

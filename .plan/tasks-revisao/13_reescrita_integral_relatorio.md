@@ -4,7 +4,7 @@
 - **Complexidade:** Alta.
 - **Justificativa do modelo:** Integra métodos, evidências, narrativa clínica e estrutura Quarto sem distorcer achados ou limitações.
 - **Dependências:** [Task 02](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/02_definicoes_clinicas_e_racional.md), [Task 03](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/03_bibliografia_e_fontes.md), [Task 05](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/05_reexecucao_flexivel_e_hierarquia.md), [Task 06](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/06_auditoria_estrutural_cart.md), [Task 07](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/07_arvore_cart_e_folhas.md), [Task 08](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/08_pressupostos_e_inferencia_robusta.md), [Task 09](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/09_validacao_incerteza_e_shrinkage.md), [Task 10](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/10_sensibilidades_e_comparadores.md), [Task 11](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/11_coorte_descricao_e_tamanho_amostral.md), [Task 12](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/12_figuras_diagnosticas_e_resultados.md)
-- **Status:** Pendente.
+- **Status:** Concluída em 2026-09-08.
 
 ## Contexto e regras
 
@@ -63,4 +63,3 @@ Registre comandos, arquivos produzidos/alterados, verificações e limitações 
 ## Encerramento e passagem
 
 Atualize o status deste arquivo somente após verificar os critérios. Informe o que mudou, como foi verificado, quais saídas devem ser consumidas e se há dependências afetadas. Registre pendências sem inventar informação ou tratar uma limitação não resolvida como aprovação. Não execute automaticamente a próxima task.
-
