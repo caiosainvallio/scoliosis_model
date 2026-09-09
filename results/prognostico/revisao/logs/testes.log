@@ -1,0 +1,25 @@
+Tarefa 05: todos os testes passaram.
+Tarefa 07: todos os testes passaram.
+Warning messages:
+1: Intervalo legado não validado: usa sigma/informação do ajuste aparente, assume homoscedasticidade e omite a incerteza do fator de shrinkage. 
+2: Intervalo legado não validado: usa sigma/informação do ajuste aparente, assume homoscedasticidade e omite a incerteza do fator de shrinkage. 
+Tarefa 08: todos os testes passaram.
+Tarefa 09: todos os testes passaram.
+Warning messages:
+1: glm.fit: algorithm did not converge 
+2: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+3: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+4: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+5: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+6: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+7: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+8: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+9: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+10: glm.fit: fitted probabilities numerically 0 or 1 occurred 
+Task 04: objetivo, gradiente/KKT, intercepto, previsões e falhas verificados.
+Task 05: reexecução, folds, solver, hierarquia e comparações verificados.
+Revisão CART: todos os testes estruturais passaram.
+Revisao 08: testes de inferencia e diagnosticos passaram.
+Revisão da Task 09: todos os testes passaram.
+Reparametrização Cobb e comparador treino-only: testes aprovados.
+Tarefa 10: todos os testes passaram.

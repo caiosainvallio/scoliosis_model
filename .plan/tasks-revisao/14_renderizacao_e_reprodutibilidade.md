@@ -4,7 +4,7 @@
 - **Complexidade:** Moderada a alta.
 - **Justificativa do modelo:** Execução técnica e inspeção sistemática de um relatório com critérios de qualidade já especificados.
 - **Dependências:** [Task 13](/Users/caiosainvallio/consultoria/scoliosis_model/.plan/tasks-revisao/13_reescrita_integral_relatorio.md)
-- **Status:** Pendente.
+- **Status:** Concluída.
 
 ## Contexto e regras
 
@@ -59,4 +59,3 @@ Registre comandos, arquivos produzidos/alterados, verificações e limitações 
 ## Encerramento e passagem
 
 Atualize o status deste arquivo somente após verificar os critérios. Informe o que mudou, como foi verificado, quais saídas devem ser consumidas e se há dependências afetadas. Registre pendências sem inventar informação ou tratar uma limitação não resolvida como aprovação. Não execute automaticamente a próxima task.
-
