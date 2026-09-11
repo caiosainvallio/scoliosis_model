@@ -1,0 +1,12 @@
+{
+  "coverage": 0.9486178861788621,
+  "mean_total_width_degrees": 17.43686780704862,
+  "prediction_evaluations": 3075,
+  "participants": 615,
+  "internal_links": 72,
+  "missing_targets": 0,
+  "embedded_images_with_alt": 10,
+  "obsolete_chronology_removed": true,
+  "a_priori_confirmed_by_user": "2026-09-09",
+  "html_sha256": "45fa58101794d0402393144914e719fbdf10fb6df398848975dea34227010d92"
+}

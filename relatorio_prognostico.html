@@ -3280,7 +3280,13 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#equações-pós-shrinkage" id="toc-equações-pós-shrinkage" class="nav-link" data-scroll-target="#equações-pós-shrinkage"><span class="header-section-number">12.1</span> Equações pós-<em>shrinkage</em></a></li>
   <li><a href="#coeficientes-finais-e-interpretações-por-termo" id="toc-coeficientes-finais-e-interpretações-por-termo" class="nav-link" data-scroll-target="#coeficientes-finais-e-interpretações-por-termo"><span class="header-section-number">12.2</span> Coeficientes finais e interpretações por termo</a></li>
-  <li><a href="#cobertura-conformal-interna" id="toc-cobertura-conformal-interna" class="nav-link" data-scroll-target="#cobertura-conformal-interna"><span class="header-section-number">12.3</span> Cobertura conformal interna</a></li>
+  <li><a href="#cobertura-conformal-interna" id="toc-cobertura-conformal-interna" class="nav-link" data-scroll-target="#cobertura-conformal-interna"><span class="header-section-number">12.3</span> Cobertura conformal interna</a>
+  <ul class="collapse">
+  <li><a href="#qual-pergunta-essa-análise-responde" id="toc-qual-pergunta-essa-análise-responde" class="nav-link" data-scroll-target="#qual-pergunta-essa-análise-responde"><span class="header-section-number">12.3.1</span> Qual pergunta essa análise responde?</a></li>
+  <li><a href="#como-foi-realizado-neste-estudo" id="toc-como-foi-realizado-neste-estudo" class="nav-link" data-scroll-target="#como-foi-realizado-neste-estudo"><span class="header-section-number">12.3.2</span> Como foi realizado neste estudo?</a></li>
+  <li><a href="#resultados-e-como-lê-los" id="toc-resultados-e-como-lê-los" class="nav-link" data-scroll-target="#resultados-e-como-lê-los"><span class="header-section-number">12.3.3</span> Resultados e como lê-los</a></li>
+  <li><a href="#o-que-a-cobertura-não-demonstra" id="toc-o-que-a-cobertura-não-demonstra" class="nav-link" data-scroll-target="#o-que-a-cobertura-não-demonstra"><span class="header-section-number">12.3.4</span> O que a cobertura não demonstra?</a></li>
+  </ul></li>
   <li><a href="#checklist-tripodai" id="toc-checklist-tripodai" class="nav-link" data-scroll-target="#checklist-tripodai"><span class="header-section-number">12.4</span> Checklist TRIPOD+AI</a></li>
   <li><a href="#auditoria-local-probastai" id="toc-auditoria-local-probastai" class="nav-link" data-scroll-target="#auditoria-local-probastai"><span class="header-section-number">12.5</span> Auditoria local PROBAST+AI</a></li>
   <li><a href="#rastreabilidade-e-sessão" id="toc-rastreabilidade-e-sessão" class="nav-link" data-scroll-target="#rastreabilidade-e-sessão"><span class="header-section-number">12.6</span> Rastreabilidade e sessão</a></li>
@@ -3339,10 +3345,10 @@ window.Quarto = {
 </section>
 <section id="como-usar-este-documento-na-escrita-do-artigo" class="level2" data-number="1.2">
 <h2 data-number="1.2" class="anchored" data-anchor-id="como-usar-este-documento-na-escrita-do-artigo"><span class="header-section-number">1.2</span> Como usar este documento na escrita do artigo</h2>
-<p>Este é o relato completo da análise prognóstica: apresenta população, definições, especificação, coeficientes, avaliação interna e sensibilidades sem exigir leitura de <code>analisys.qmd</code>. As decisões tomadas antes do congelamento são descritas aqui porque fazem parte da história metodológica e limitam a interpretação; não são um pré-requisito de leitura.</p>
+<p>Este relatório apresenta integralmente população, definições, especificação dos modelos, coeficientes, avaliação interna e sensibilidades. Os desfechos e os dez preditores principais foram discutidos e definidos a priori com a equipe de pesquisadores e clínicos, antes de examinar os resultados desta coorte.</p>
 <p>Para escrever <strong>Métodos</strong>, use as seções de coorte, desfechos/preditores e especificação, seguidas dos procedimentos de avaliação interna. Para <strong>Resultados</strong>, use as tabelas completas de coeficientes e desempenho dos dois modelos e depois as sensibilidades. Para <strong>Discussão</strong>, diferencie associação, capacidade preditiva e incerteza individual. A modelagem flexível tem seção própria e permanece exploratória. Os apêndices reúnem equações finais, interpretações por termo e auditoria.</p>
 <p>Há dois produtos distintos: as tabelas de <strong>beta e IC95% do ajuste sem shrinkage</strong> documentam as associações condicionais estimadas; as <strong>equações pós-shrinkage</strong> documentam a versão final para futuras avaliações preditivas. O IC do primeiro produto não pertence ao segundo. Nenhum deles constitui autorização de uso clínico.</p>
-<p>O HTML incorpora figuras e tabelas e pode ser lido isoladamente. Reproduzir os cálculos requer a planilha, os scripts e o pacote de resultados identificado no apêndice; não requer executar ou ler o documento histórico. As lacunas de coleta e ética ainda precisam ser preenchidas pelos investigadores, mesmo em um relato autônomo.</p>
+<p>O HTML incorpora figuras e tabelas e pode ser lido isoladamente. Reproduzir os cálculos requer a planilha, os scripts e o pacote de resultados identificado no apêndice. As lacunas de coleta e ética ainda precisam ser preenchidas pelos investigadores, mesmo em um relato autônomo.</p>
 </section>
 </section>
 <section id="pergunta-cenário-e-cronologia" class="level1" data-number="2">
@@ -3366,7 +3372,7 @@ window.Quarto = {
 </tr>
 <tr class="even">
 <td>Momento da previsão</td>
-<td>Todos são tratados como disponíveis; a especificação histórica foi explorada antes do congelamento e não é chamada de “a priori”.</td>
+<td>Os dez preditores estão disponíveis na avaliação basal; sua inclusão e os desfechos foram definidos a priori com pesquisadores e clínicos.</td>
 </tr>
 <tr class="odd">
 <td>Seguimento</td>
@@ -3825,13 +3831,13 @@ window.Quarto = {
 <h3 data-number="5.1.1" class="anchored" data-anchor-id="como-as-decisões-foram-tomadas"><span class="header-section-number">5.1.1</span> Como as decisões foram tomadas</h3>
 <p>A sequência decisória foi deliberadamente conservadora:</p>
 <ol type="1">
-<li>A análise histórica já continha dez preditores. Depois da revisão do objetivo, essa lista foi <strong>congelada</strong> para evitar escolher variáveis novamente com base nos resultados que seriam relatados.</li>
+<li>Os desfechos e a lista de dez preditores foram <strong>discutidos e definidos a priori com a equipe de pesquisadores e clínicos</strong>, antes de examinar os resultados desta coorte. Essa especificação foi mantida na análise principal.</li>
 <li><code>delta</code> foi mantido como desfecho principal porque preserva a quantidade de mudança em graus. A dicotomização em melhora de pelo menos 5° perde informação e, por isso, ficou secundária.</li>
 <li>O linear e o logístico usam os mesmos cinco preditores numéricos e cinco categóricos: 19 parâmetros preditores mais intercepto. Categorias como Lenke e Risser viram indicadores, sem presumir distância constante entre níveis.</li>
-<li>Cobb basal não entrou no principal por preservação procedimental da fórmula histórica; sua plausibilidade clínica motivou uma sensibilidade pré-definida. O ganho observado não foi usado para rebatizar a alternativa como principal.</li>
+<li>Cobb basal não integrou a especificação principal acordada com a equipe; sua plausibilidade clínica motivou a análise de sensibilidade. O ganho observado não foi usado para rebatizar a alternativa como principal.</li>
 <li>CART e formas flexíveis respondem se relações não lineares, interações ou regras de grupo poderiam acrescentar informação. Como são mais adaptáveis e mais propensas a ajustar ruído, permaneceram exploratórias e foram avaliadas com tuning aninhado.</li>
 </ol>
-<p>A especificação, portanto, foi congelada <strong>após</strong> exploração histórica e não é chamada de “a priori”. Não foram reintroduzidos progressão, seleção por p-valor ou divisão treino–teste simples.</p>
+<p>A especificação principal foi mantida conforme a discussão a priori com a equipe. Não houve seleção dos dez preditores por p-valor. O estudo avalia mudança radiográfica e melhora em seis meses, utilizando reamostragem para avaliação interna.</p>
 </section>
 <section id="especificação-completa-dos-modelos" class="level3" data-number="5.1.2">
 <h3 data-number="5.1.2" class="anchored" data-anchor-id="especificação-completa-dos-modelos"><span class="header-section-number">5.1.2</span> Especificação completa dos modelos</h3>
@@ -3874,7 +3880,7 @@ window.Quarto = {
 </tbody>
 </table>
 <p>Nos modelos principais, cada preditor numérico tem associação linear <strong>na escala do respectivo modelo</strong>: graus no linear e log-odds no logístico. Portanto, o logístico já produz uma curva de probabilidade mesmo sem splines; “linear no logit” não significa probabilidade linear. Não há interações nem splines nas especificações principais. O erro do linear representa a diferença entre o delta observado e sua média condicional; não se exige normalidade das variáveis preditoras.</p>
-<p>A escolha de dez preditores não é justificada por um resultado prévio que o leitor precise consultar: corresponde à lista histórica aqui explicitada, congelada após exploração para esta avaliação. Não existe justificativa prospectiva documentada capaz de transformar esse processo em escolha a priori. Cobb basal foi preservado fora do principal por essa decisão procedimental e estudado explicitamente como sensibilidade.</p>
+<p>A lista de dez preditores e os desfechos foram definidos a priori em discussão com pesquisadores e clínicos. Cobb basal foi estudado como sensibilidade, sem alterar a especificação principal acordada.</p>
 </section>
 <section id="como-as-regressões-produzem-uma-previsão" class="level3" data-number="5.1.3">
 <h3 data-number="5.1.3" class="anchored" data-anchor-id="como-as-regressões-produzem-uma-previsão"><span class="header-section-number">5.1.3</span> Como as regressões produzem uma previsão</h3>
@@ -4201,14 +4207,14 @@ window.Quarto = {
 <h3 data-number="5.4.1" class="anchored" data-anchor-id="bootstrap-passo-a-passo"><span class="header-section-number">5.4.1</span> Bootstrap passo a passo</h3>
 <p>Cada uma das 2.000 réplicas bootstrap sorteou 615 participantes <strong>com reposição</strong>. Algumas pessoas aparecem mais de uma vez e outras ficam de fora daquela réplica. Em cada repetição: (1) o modelo foi reajustado na amostra bootstrap; (2) seu desempenho foi medido nessa mesma amostra; (3) o mesmo modelo foi aplicado à coorte original; e (4) a diferença estimou quanto o ajuste parecia melhor nos dados que o construíram. A média dessas diferenças é o otimismo <span class="citation" data-cites="steyerberg2001_bootstrap">(<a href="#ref-steyerberg2001_bootstrap" role="doc-biblioref">Steyerberg et al. 2001</a>)</span>.</p>
 <p>Para R²/AUC, maior é melhor e a correção reduz o valor aparente; para RMSE/MAE/Brier/<em>log loss</em>, menor é melhor e a correção aumenta o erro aparente. Houve 2.000 réplicas válidas e zero falhas por modelo. Os IC principais usam percentis deslocados pela correção de otimismo <span class="citation" data-cites="noma2021_optimism_ci">(<a href="#ref-noma2021_optimism_ci" role="doc-biblioref">Noma et al. 2021</a>)</span>; IC de calibração ficaram indisponíveis porque a estatística aparente é fixa por construção e produziria intervalo artificialmente degenerado.</p>
-<p>Esses IC são aproximações para o desempenho da especificação fixa reajustada na população representada, condicionais às decisões já congeladas. O deslocamento não reestima toda a variabilidade do otimismo em uma segunda camada bootstrap e sua cobertura nesta coorte não foi demonstrada por simulação. A exploração histórica que precedeu o congelamento não foi repetida: a correção não cobre o otimismo de toda a estratégia histórica de escolha de desfechos e preditores. Os IC não se referem à equação pós-<em>shrinkage</em> nem a previsões individuais.</p>
+<p>Esses IC são aproximações para o desempenho da especificação fixa reajustada na população representada, condicionais às decisões já congeladas. O deslocamento não reestima toda a variabilidade do otimismo em uma segunda camada bootstrap e sua cobertura nesta coorte não foi demonstrada por simulação. Os desfechos e preditores principais foram fixados a priori; a reamostragem avalia o reajuste dessa especificação. Os IC não se referem à equação pós-<em>shrinkage</em> nem a previsões individuais.</p>
 </section>
 <section id="por-que-usar-shrinkage-e-como-interpretá-lo" class="level3" data-number="5.4.2">
 <h3 data-number="5.4.2" class="anchored" data-anchor-id="por-que-usar-shrinkage-e-como-interpretá-lo"><span class="header-section-number">5.4.2</span> Por que usar <em>shrinkage</em> e como interpretá-lo</h3>
 <p><em>Shrinkage</em> significa redução dos coeficientes em direção a zero. O motivo é o <strong>sobreajuste</strong>: o modelo pode atribuir pesos excessivos a padrões particulares da amostra e produzir previsões mais extremas do que se sustentam em outras pessoas. Ajustar bem os dados disponíveis não basta para demonstrar que esses pesos se repetirão. A redução busca moderar esse problema e pode introduzir algum viés nos coeficientes para reduzir a variabilidade das previsões; não garante desempenho melhor em toda amostra futura <span class="citation" data-cites="riley2020_sample_size_framework">(<a href="#ref-riley2020_sample_size_framework" role="doc-biblioref">Riley et al. 2020</a>)</span>.</p>
 <p>Nesta análise foi usado <strong>shrinkage uniforme após o ajuste</strong>: um mesmo fator <span class="math inline">\(s\)</span> multiplica cada coeficiente que não é intercepto, <span class="math inline">\(\beta_j^*=s\beta_j\)</span>. O fator foi estimado pela inclinação de calibração corrigida por otimismo, obtida no bootstrap. Se <span class="math inline">\(s=1\)</span>, nada é reduzido; se <span class="math inline">\(s=0,90\)</span>, cada peso retém 90% da magnitude. O intercepto é então recalibrado separadamente para manter o nível médio das previsões; ele não deve ser simplesmente multiplicado pelo fator.</p>
 <p>Os fatores encontrados retêm 95,81% da magnitude dos pesos lineares e 88,35% dos pesos logísticos. Isso é redução de 4,19% e 11,65% <strong>dos coeficientes</strong>, não da dor, do Cobb observado, do risco de cada participante ou da proporção de erros. No logístico, a OR pós-shrinkage é <span class="math inline">\(\exp(s\gamma)\)</span>: a multiplicação ocorre no log-odds, não diretamente na OR.</p>
-<p>O sinal e a interpretação por unidade permanecem: beta linear negativo aponta menor delta; OR abaixo de 1 aponta menores chances do evento, mantidos os demais preditores. Os contrastes são atenuados. O procedimento não remove preditores, não prova causalidade e não corrige erros de coleta, seleção histórica ou falta de representatividade. Também não produz automaticamente novos IC95%; por isso as tabelas inferenciais e as equações finais são separadas.</p>
+<p>O sinal e a interpretação por unidade permanecem: beta linear negativo aponta menor delta; OR abaixo de 1 aponta menores chances do evento, mantidos os demais preditores. Os contrastes são atenuados. O procedimento não remove preditores, não prova causalidade e não corrige erros de coleta ou falta de representatividade. Também não produz automaticamente novos IC95%; por isso as tabelas inferenciais e as equações finais são separadas.</p>
 </section>
 <section id="shrinkage-calibração-e-validação-cruzada" class="level3" data-number="5.4.3">
 <h3 data-number="5.4.3" class="anchored" data-anchor-id="shrinkage-calibração-e-validação-cruzada"><span class="header-section-number">5.4.3</span> <em>Shrinkage</em>, calibração e validação cruzada</h3>
@@ -4224,7 +4230,7 @@ window.Quarto = {
 <h1 data-number="6"><span class="header-section-number">6</span> Modelo contínuo principal</h1>
 <section id="coeficientes-ajustados-e-ic95-para-o-artigo" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="coeficientes-ajustados-e-ic95-para-o-artigo"><span class="header-section-number">6.1</span> Coeficientes ajustados e IC95% para o artigo</h2>
-<p>A tabela apresenta todos os termos do ajuste por mínimos quadrados nos 615 participantes, antes do shrinkage. Os IC95% usam covariância HC3 e distribuição t com 595 graus de liberdade, em resposta à heteroscedasticidade diagnosticada. São associações ajustadas simultaneamente por todos os outros preditores, condicionais à especificação congelada; não incorporam a escolha histórica dos preditores.</p>
+<p>A tabela apresenta todos os termos do ajuste por mínimos quadrados nos 615 participantes, antes do shrinkage. Os IC95% usam covariância HC3 e distribuição t com 595 graus de liberdade, em resposta à heteroscedasticidade diagnosticada. São associações ajustadas simultaneamente por todos os outros preditores, condicionais à especificação congelada.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -4440,7 +4446,7 @@ window.Quarto = {
 <h1 data-number="7"><span class="header-section-number">7</span> Modelo logístico secundário</h1>
 <section id="coeficientes-ajustados-or-e-ic95-para-o-artigo" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="coeficientes-ajustados-or-e-ic95-para-o-artigo"><span class="header-section-number">7.1</span> Coeficientes ajustados, OR e IC95% para o artigo</h2>
-<p>A tabela apresenta o ajuste binomial por máxima verossimilhança nos mesmos 615 participantes, antes do shrinkage. Beta está na escala de log-odds; OR é sua exponencial. Os IC95% são Wald normais, obtidos de beta ± 1,96 erro-padrão e depois exponenciados para OR. Não são IC HC3, não são intervalos pós-shrinkage e não incorporam a seleção histórica. Os coeficientes, erros-padrão e limites foram reproduzidos diretamente a partir da especificação completa.</p>
+<p>A tabela apresenta o ajuste binomial por máxima verossimilhança nos mesmos 615 participantes, antes do shrinkage. Beta está na escala de log-odds; OR é sua exponencial. Os IC95% são Wald normais, obtidos de beta ± 1,96 erro-padrão e depois exponenciados para OR. Não são IC HC3, não são intervalos pós-shrinkage. Os coeficientes, erros-padrão e limites foram reproduzidos diretamente a partir da especificação completa.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -5167,7 +5173,7 @@ window.Quarto = {
 <h1 data-number="11"><span class="header-section-number">11</span> Discussão e conclusão</h1>
 <p>O sinal mais consistente foi maior correção transversal pelo colete associada a evolução radiográfica mais favorável, compatível com componente redutível, sem inferência causal. A árvore repete essa variável na raiz, mas nenhum corte é uma regra clínica. O desempenho supera referências simples, enquanto RMSE próximo de 4,3° e largura conformal média de 17,4° mostram incerteza individual relevante.</p>
 <p>O estudo transversal de Ohrt-Nissen et al. relaciona flexibilidade radiográfica à correção inicial no colete Providence <span class="citation" data-cites="ohrt_nissen2016_brace_flexibility">(<a href="#ref-ohrt_nissen2016_brace_flexibility" role="doc-biblioref">Ohrt-Nissen et al. 2016</a>)</span>. Já Xu et al. avaliaram retrospectivamente 488 pacientes com pelo menos dois anos de seguimento, usando como sucesso aumento da curva de no máximo 5°, desfecho diferente de redução de pelo menos 5° aos seis meses <span class="citation" data-cites="xu2017_initial_correction">(<a href="#ref-xu2017_initial_correction" role="doc-biblioref">Xu et al. 2017</a>)</span>. Essas fontes contextualizam corrigibilidade imediata e possível associação longitudinal; não validam os limiares, coeficientes ou a manutenção nesta coorte. Os resultados locais não são extrapolados além de seis meses.</p>
-<p>Limitações centrais: fonte única e representatividade desconhecida; informações clínicas/protocolos ausentes; caso completo; erro radiográfico; possível troca da região máxima; especificação posterior à exploração; IC de coeficientes pós-<em>shrinkage</em> indisponíveis; equidade e utilidade não avaliadas; nenhuma avaliação externa. A ausência de avaliação externa limita transportabilidade, mas não é por si um julgamento automático do risco de viés da avaliação interna.</p>
+<p>Limitações centrais: fonte única e representatividade desconhecida; informações clínicas/protocolos ausentes; caso completo; erro radiográfico; possível troca da região máxima; IC de coeficientes pós-<em>shrinkage</em> indisponíveis; equidade e utilidade não avaliadas; nenhuma avaliação externa. A ausência de avaliação externa limita transportabilidade, mas não é por si um julgamento automático do risco de viés da avaliação interna.</p>
 <p>Antes de uso, é necessário congelar equação/código, documentar o protocolo, avaliar dados independentes, calibração e equidade, definir manejo de entradas ausentes/fora do domínio e estudar utilidade sob limiares clínicos. PROBAST+AI deve ser aplicado com pergunta explícita e revisão independente <span class="citation" data-cites="moons2025_probast_ai">(<a href="#ref-moons2025_probast_ai" role="doc-biblioref">Moons et al. 2025</a>)</span>.</p>
 <section id="pendências-para-submissão" class="level2" data-number="11.1">
 <h2 data-number="11.1" class="anchored" data-anchor-id="pendências-para-submissão"><span class="header-section-number">11.1</span> Pendências para submissão</h2>
@@ -5502,87 +5508,103 @@ p(\mathrm{melhora}) ={}&amp; \frac{1}{1+e^{-\eta}}
 </section>
 <section id="cobertura-conformal-interna" class="level2" data-number="12.3">
 <h2 data-number="12.3" class="anchored" data-anchor-id="cobertura-conformal-interna"><span class="header-section-number">12.3</span> Cobertura conformal interna</h2>
+<section id="qual-pergunta-essa-análise-responde" class="level3" data-number="12.3.1">
+<h3 data-number="12.3.1" class="anchored" data-anchor-id="qual-pergunta-essa-análise-responde"><span class="header-section-number">12.3.1</span> Qual pergunta essa análise responde?</h3>
+<p>Uma previsão pontual de delta, por exemplo −5°, não descreve toda a incerteza da evolução de uma pessoa. A análise conformal pergunta: <strong>é possível construir uma faixa ao redor da previsão que contenha o delta observado com frequência próxima de 95%, quando avaliada em pessoas que não participaram do ajuste nem da calibração dessa faixa?</strong> O alvo aqui é o delta individual em graus, no procedimento linear pós-shrinkage; não são os betas nem a probabilidade logística de melhora.</p>
+<p>“Cobertura” é a proporção de observações que ficam entre o limite inferior e o superior do intervalo. “Nominal de 95%” é a meta escolhida; “observada” é a proporção efetivamente obtida nos testes. A abordagem split conformal usa erros de um conjunto separado para calibrar a largura dos intervalos <span class="citation" data-cites="lei2018_conformal_regression">(<a href="#ref-lei2018_conformal_regression" role="doc-biblioref">Lei et al. 2018</a>)</span>.</p>
+</section>
+<section id="como-foi-realizado-neste-estudo" class="level3" data-number="12.3.2">
+<h3 data-number="12.3.2" class="anchored" data-anchor-id="como-foi-realizado-neste-estudo"><span class="header-section-number">12.3.2</span> Como foi realizado neste estudo?</h3>
+<p>Em cada uma das 50 partições externas da validação cruzada interna, as pessoas tiveram três funções distintas:</p>
+<ol type="1">
+<li><strong>Ajuste:</strong> aproximadamente 80% do treinamento externo estimou a regressão, seu fator de shrinkage, o intercepto e uma função da dispersão dos erros.</li>
+<li><strong>Calibração dos intervalos:</strong> os cerca de 20% restantes do treinamento externo forneceram erros que não foram usados para ajustar a regressão. O erro absoluto de cada pessoa foi dividido pela escala de dispersão prevista para ela. Um quantil superior desses erros normalizados definiu o multiplicador da largura.</li>
+<li><strong>Teste:</strong> o fold externo reservado recebeu a previsão e o intervalo, e só então seu delta observado foi comparado aos limites. Esse conjunto não participou do ajuste, do shrinkage ou da calibração do intervalo.</li>
+</ol>
+<p>A faixa é construída como <strong>delta previsto ± multiplicador calibrado × escala de erro prevista</strong>. A escala foi estimada no conjunto de ajuste a partir do logaritmo dos resíduos absolutos, em função da previsão e de seu quadrado, com piso positivo para evitar divisão por zero. O quantil usa a posição arredondada para cima de (n de calibração + 1) × 0,95 entre os escores ordenados. Assim, a largura pode variar entre pessoas; não é simplesmente aplicar o RMSE a todos.</p>
+<p>As partições foram estratificadas pelo evento de melhora. “Externo” designa apenas o fold reservado na camada externa da validação cruzada: todas as pessoas continuam pertencendo à mesma coorte. Por isso a cobertura é <strong>interna</strong>. Cada repetição gera 615 avaliações; as cinco repetições reutilizam as mesmas pessoas, sem formar uma amostra de 3.075 participantes independentes.</p>
+</section>
+<section id="resultados-e-como-lê-los" class="level3" data-number="12.3.3">
+<h3 data-number="12.3.3" class="anchored" data-anchor-id="resultados-e-como-lê-los"><span class="header-section-number">12.3.3</span> Resultados e como lê-los</h3>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>Cobertura interna; 615 previsões por repetição.</caption>
+<caption>Cobertura dos intervalos de delta nos testes internos reservados; 615 previsões por repetição.</caption>
 <colgroup>
+<col style="width: 10%">
 <col style="width: 6%">
-<col style="width: 4%">
-<col style="width: 6%">
-<col style="width: 5%">
-<col style="width: 6%">
-<col style="width: 12%">
-<col style="width: 34%">
 <col style="width: 21%">
+<col style="width: 19%">
+<col style="width: 21%">
+<col style="width: 19%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Repetição</th>
 <th style="text-align: left;">Folds</th>
-<th style="text-align: left;">Previsões</th>
-<th style="text-align: left;">Nominal</th>
-<th style="text-align: left;">Observada</th>
+<th style="text-align: left;">Previsões avaliadas</th>
+<th style="text-align: left;">Cobertura nominal</th>
+<th style="text-align: left;">Cobertura observada</th>
 <th style="text-align: left;">Largura média (°)</th>
-<th style="text-align: left;">Método</th>
-<th style="text-align: left;">Avaliação</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">1,000</td>
-<td style="text-align: left;">10,000</td>
-<td style="text-align: left;">615,000</td>
-<td style="text-align: left;">0,950</td>
-<td style="text-align: left;">0,946</td>
-<td style="text-align: left;">17,396</td>
-<td style="text-align: left;">normalized_split_conformal_heteroscedastic_scale</td>
-<td style="text-align: left;">internal_coverage_not_external</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">615</td>
+<td style="text-align: left;">95,00%</td>
+<td style="text-align: left;">94,63%</td>
+<td style="text-align: left;">17,40</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">2,000</td>
-<td style="text-align: left;">10,000</td>
-<td style="text-align: left;">615,000</td>
-<td style="text-align: left;">0,950</td>
-<td style="text-align: left;">0,945</td>
-<td style="text-align: left;">17,244</td>
-<td style="text-align: left;">normalized_split_conformal_heteroscedastic_scale</td>
-<td style="text-align: left;">internal_coverage_not_external</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">615</td>
+<td style="text-align: left;">95,00%</td>
+<td style="text-align: left;">94,47%</td>
+<td style="text-align: left;">17,24</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">3,000</td>
-<td style="text-align: left;">10,000</td>
-<td style="text-align: left;">615,000</td>
-<td style="text-align: left;">0,950</td>
-<td style="text-align: left;">0,953</td>
-<td style="text-align: left;">17,651</td>
-<td style="text-align: left;">normalized_split_conformal_heteroscedastic_scale</td>
-<td style="text-align: left;">internal_coverage_not_external</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">615</td>
+<td style="text-align: left;">95,00%</td>
+<td style="text-align: left;">95,28%</td>
+<td style="text-align: left;">17,65</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">4,000</td>
-<td style="text-align: left;">10,000</td>
-<td style="text-align: left;">615,000</td>
-<td style="text-align: left;">0,950</td>
-<td style="text-align: left;">0,956</td>
-<td style="text-align: left;">17,748</td>
-<td style="text-align: left;">normalized_split_conformal_heteroscedastic_scale</td>
-<td style="text-align: left;">internal_coverage_not_external</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">615</td>
+<td style="text-align: left;">95,00%</td>
+<td style="text-align: left;">95,61%</td>
+<td style="text-align: left;">17,75</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">5,000</td>
-<td style="text-align: left;">10,000</td>
-<td style="text-align: left;">615,000</td>
-<td style="text-align: left;">0,950</td>
-<td style="text-align: left;">0,943</td>
-<td style="text-align: left;">17,145</td>
-<td style="text-align: left;">normalized_split_conformal_heteroscedastic_scale</td>
-<td style="text-align: left;">internal_coverage_not_external</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: left;">615</td>
+<td style="text-align: left;">95,00%</td>
+<td style="text-align: left;">94,31%</td>
+<td style="text-align: left;">17,15</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
+<p>A cobertura média foi <strong>94,86%</strong>, próxima da meta de 95%, variando de 94,31% a 95,61% entre as cinco repetições. Isso significa que aproximadamente 95 em cada 100 deltas avaliados ficaram dentro de suas respectivas faixas neste procedimento interno. Não significa que 95% das pessoas melhoraram nem que 95% das previsões pontuais estavam corretas.</p>
+<p>A <strong>largura total média foi 17,44°</strong>. Cobertura e largura precisam ser lidas juntas: uma faixa muito ampla pode conter muitas observações e ainda ter pouca precisão para uma decisão individual. Essa largura é uma média dos intervalos efetivamente calculados, não uma margem fixa a aplicar à equação final.</p>
+<p>Como exemplo exclusivamente didático, uma previsão de −5° com intervalo de −14° a +4° teria largura de 18°. Um delta observado de −7° estaria coberto; um de +6° ficaria fora. A faixa do exemplo comporta tanto redução quanto aumento da magnitude radiográfica e, portanto, não assegura melhora para aquela pessoa. Esses valores ilustrativos não correspondem a um participante da coorte.</p>
+</section>
+<section id="o-que-a-cobertura-não-demonstra" class="level3" data-number="12.3.4">
+<h3 data-number="12.3.4" class="anchored" data-anchor-id="o-que-a-cobertura-não-demonstra"><span class="header-section-number">12.3.4</span> O que a cobertura não demonstra?</h3>
+<p>A cobertura é uma propriedade da frequência de acertos dos intervalos no conjunto avaliado. Ela não é um IC95% do beta ou da média condicional, nem demonstra cobertura de 95% para cada perfil clínico, categoria de Lenke ou faixa de Cobb. A garantia usual do método requer condições de comparabilidade das observações; nesta implementação estratificada, relata-se a cobertura empírica obtida, sem afirmar uma garantia exata para esse desenho ou para outra população.</p>
+<p>O resultado também não valida um intervalo individual da equação final ajustada nos 615 participantes: essa equação já utilizou toda a coorte, e não resta nela um conjunto independente para calibrar honestamente seus intervalos. O procedimento avaliado ajusta modelos em conjuntos menores. Sua cobertura próxima de 95%, acompanhada de largura média de cerca de 17,4°, documenta incerteza individual relevante e orienta uma avaliação futura em dados independentes; não autoriza usar uma faixa fixa de ±8,7° em atendimento.</p>
+<blockquote class="blockquote">
+<p><strong>Texto para o manuscrito — incerteza preditiva.</strong> Intervalos de delta foram avaliados por split conformal normalizado, com ajuste e calibração separados dentro de cada treinamento da validação cruzada interna e avaliação exclusiva no fold reservado. A cobertura nominal foi 95%, a cobertura média observada foi 94,86% e a largura total média foi 17,44°. Os resultados descrevem cobertura empírica interna do procedimento, sem validar intervalos da equação final ou garantir cobertura por subgrupo ou em população externa.</p>
+</blockquote>
+</section>
 </section>
 <section id="checklist-tripodai" class="level2" data-number="12.4">
 <h2 data-number="12.4" class="anchored" data-anchor-id="checklist-tripodai"><span class="header-section-number">12.4</span> Checklist TRIPOD+AI</h2>
@@ -5752,9 +5774,9 @@ p(\mathrm{melhora}) ={}&amp; \frac{1}{1+e^{-\eta}}
 <td style="text-align: left;">Métodos</td>
 <td style="text-align: left;">Escolha</td>
 <td style="text-align: left;">D</td>
-<td style="text-align: left;">parcial</td>
+<td style="text-align: left;">reportado</td>
 <td style="text-align: left;">Como as decisões foram tomadas</td>
-<td style="text-align: left;">Congelamento após exploração declarado; conjunto e processo de seleção histórica não integralmente reconstruídos.</td>
+<td style="text-align: left;">Desfechos e dez preditores definidos a priori com pesquisadores e clínicos; lista e codificação completas, sem seleção por p-valor.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">9b</td>
@@ -5815,9 +5837,9 @@ p(\mathrm{melhora}) ={}&amp; \frac{1}{1+e^{-\eta}}
 <td style="text-align: left;">Métodos</td>
 <td style="text-align: left;">Construção</td>
 <td style="text-align: left;">D</td>
-<td style="text-align: left;">parcial</td>
+<td style="text-align: left;">reportado</td>
 <td style="text-align: left;">Métodos; CART exploratória; Modelagem flexível corrigida</td>
-<td style="text-align: left;">Procedimentos atuais, grades, regra one-SE e falhas explícitos; exploração histórica permanece incompletamente reconstruída.</td>
+<td style="text-align: left;">Procedimentos, grades, regra one-SE e falhas explícitos; principais fixados a priori e tuning exploratório executado no treino.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">12d</td>
@@ -5925,7 +5947,7 @@ p(\mathrm{melhora}) ={}&amp; \frac{1}{1+e^{-\eta}}
 <td style="text-align: left;">D;E</td>
 <td style="text-align: left;">parcial</td>
 <td style="text-align: left;">Como as decisões foram tomadas; Pendências para submissão</td>
-<td style="text-align: left;">Plano local posterior à exploração disponível; protocolo original e acesso público desconhecidos.</td>
+<td style="text-align: left;">Definição a priori com pesquisadores e clínicos informada; documento do protocolo e seu acesso público ainda não fornecidos.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">18d</td>
@@ -6051,7 +6073,7 @@ p(\mathrm{melhora}) ={}&amp; \frac{1}{1+e^{-\eta}}
 <td style="text-align: left;">D;E</td>
 <td style="text-align: left;">reportado</td>
 <td style="text-align: left;">Discussão e conclusão; Avaliação interna</td>
-<td style="text-align: left;">Mensuração, seleção histórica, amostra, dependência das repetições, IC e transportabilidade explicitados.</td>
+<td style="text-align: left;">Mensuração, amostra, dependência das repetições, IC e transportabilidade explicitados.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">27a</td>
@@ -6087,19 +6109,19 @@ p(\mathrm{melhora}) ={}&amp; \frac{1}{1+e^{-\eta}}
 </section>
 <section id="auditoria-local-probastai" class="level2" data-number="12.5">
 <h2 data-number="12.5" class="anchored" data-anchor-id="auditoria-local-probastai"><span class="header-section-number">12.5</span> Auditoria local PROBAST+AI</h2>
-<p>Pergunta da auditoria: o estudo sustenta desenvolver e avaliar internamente previsões de mudança radiográfica nominal em seis meses, em adolescentes tratados com colete e S4D, para pesquisa? A avaliação separa qualidade do desenvolvimento, risco de viés do desempenho e aplicabilidade. As justificativas e respostas de sinalização são locais e não constituem revisão externa independente <span class="citation" data-cites="moons2025_probast_ai">(<a href="#ref-moons2025_probast_ai" role="doc-biblioref">Moons et al. 2025</a>)</span>. O risco ligado à exploração histórica não repetida na reamostragem permanece; a ausência de validação externa, isoladamente, não determina alto risco interno.</p>
+<p>Pergunta da auditoria: o estudo sustenta desenvolver e avaliar internamente previsões de mudança radiográfica nominal em seis meses, em adolescentes tratados com colete e S4D, para pesquisa? A avaliação separa qualidade do desenvolvimento, risco de viés do desempenho e aplicabilidade. As justificativas e respostas de sinalização são locais e não constituem revisão externa independente <span class="citation" data-cites="moons2025_probast_ai">(<a href="#ref-moons2025_probast_ai" role="doc-biblioref">Moons et al. 2025</a>)</span>. A especificação principal foi definida a priori com pesquisadores e clínicos. As limitações de documentação, mensuração e precisão permanecem; a ausência de validação externa, isoladamente, não determina alto risco interno.</p>
 <div class="cell">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Rascunho PROBAST+AI 2025.</caption>
 <colgroup>
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 8%">
-<col style="width: 11%">
-<col style="width: 8%">
-<col style="width: 28%">
-<col style="width: 32%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 2%">
+<col style="width: 9%">
+<col style="width: 29%">
+<col style="width: 36%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -6147,7 +6169,7 @@ p(\mathrm{melhora}) ={}&amp; \frac{1}{1+e^{-\eta}}
 <td style="text-align: left;">incerto</td>
 <td style="text-align: left;">Métodos; Sensibilidades; Apêndices</td>
 <td style="text-align: left;">19 parâmetros, diagnósticos, shrinkage, comparadores e tuning interno documentados.</td>
-<td style="text-align: left;">Amostra condicional e exploração histórica limitam a qualidade; shrinkage/penalização reduzem sobreajuste, mas não demonstram adequação universal.</td>
+<td style="text-align: left;">Amostra e precisão condicionais; shrinkage/penalização reduzem sobreajuste, mas não demonstram adequação universal.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Avaliação interna</td>
@@ -6180,10 +6202,10 @@ p(\mathrm{melhora}) ={}&amp; \frac{1}{1+e^{-\eta}}
 <td style="text-align: left;">Avaliação interna</td>
 <td style="text-align: left;">Análise</td>
 <td style="text-align: left;">Risco de viés do desempenho</td>
-<td style="text-align: left;">alto para estratégia histórica; incerto condicional à fórmula fixa</td>
+<td style="text-align: left;">incerto</td>
 <td style="text-align: left;">Bootstrap passo a passo; Discussão e conclusão</td>
-<td style="text-align: left;">Decisões históricas não repetidas constituem fonte concreta de otimismo não quantificado. Testes sustentam a execução do procedimento atual e da especificação fixa.</td>
-<td style="text-align: left;">Resolução de escopo: não atribuir a correção a toda a história de modelagem. Amostra/precisão condicional e IC aproximados; falta de avaliação externa não determina o julgamento.</td>
+<td style="text-align: left;">Desfechos e dez preditores definidos a priori com pesquisadores e clínicos. Testes sustentam a especificação fixa e o tuning executado no treinamento.</td>
+<td style="text-align: left;">Precisão/amostra condicionais e IC aproximados; documentação clínica insuficiente para concluir baixo risco global. Ausência de avaliação externa não determina este julgamento.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Aplicabilidade do desenvolvimento</td>
@@ -6249,7 +6271,7 @@ p(\mathrm{melhora}) ={}&amp; \frac{1}{1+e^{-\eta}}
 <ul>
 <li>Fonte congelada <code>data/dataset_escoliose_01.xlsx</code>; SHA-256 verificado: f601adb42c299c2b0572f3e50ff26550b63a2f24dd7173f244a442b498965b71.</li>
 <li>Coorte, diagnósticos, validação adicional, CART estrutural, flexível, sensibilidades e figuras: somente <code>results/prognostico/revisao/</code>.</li>
-<li>Desempenho CART e estabilidade bootstrap foram empacotados em <code>results/prognostico/revisao/aggregated/</code> como cópias fiéis dos agregados auditados, com origem e SHA-256 em <code>standalone_inputs_manifest.csv</code>. O QMD não lê <code>analisys.qmd</code> nem agrega resultados a partir dele.</li>
+<li>Desempenho CART e estabilidade bootstrap foram empacotados em <code>results/prognostico/revisao/aggregated/</code> como cópias fiéis dos agregados auditados, com origem e SHA-256 em <code>standalone_inputs_manifest.csv</code>.</li>
 <li>As tabelas para artigo são produzidas por <code>scripts/prepare_standalone_report.R</code>; os scripts R documentam a reprodução analítica. O HTML não depende de abrir arquivos externos para ler figuras, tabelas ou referências.</li>
 <li>Ausência de artefato obrigatório encerra a execução; não há fallback silencioso.</li>
 </ul>

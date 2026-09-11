@@ -177,13 +177,13 @@ Ao longo do texto, **desenvolvimento** significa construir a equação; **avalia
 
 ## Como usar este documento na escrita do artigo
 
-Este é o relato completo da análise prognóstica: apresenta população, definições, especificação, coeficientes, avaliação interna e sensibilidades sem exigir leitura de `analisys.qmd`. As decisões tomadas antes do congelamento são descritas aqui porque fazem parte da história metodológica e limitam a interpretação; não são um pré-requisito de leitura.
+Este relatório apresenta integralmente população, definições, especificação dos modelos, coeficientes, avaliação interna e sensibilidades. Os desfechos e os dez preditores principais foram discutidos e definidos a priori com a equipe de pesquisadores e clínicos, antes de examinar os resultados desta coorte.
 
 Para escrever **Métodos**, use as seções de coorte, desfechos/preditores e especificação, seguidas dos procedimentos de avaliação interna. Para **Resultados**, use as tabelas completas de coeficientes e desempenho dos dois modelos e depois as sensibilidades. Para **Discussão**, diferencie associação, capacidade preditiva e incerteza individual. A modelagem flexível tem seção própria e permanece exploratória. Os apêndices reúnem equações finais, interpretações por termo e auditoria.
 
 Há dois produtos distintos: as tabelas de **beta e IC95% do ajuste sem shrinkage** documentam as associações condicionais estimadas; as **equações pós-shrinkage** documentam a versão final para futuras avaliações preditivas. O IC do primeiro produto não pertence ao segundo. Nenhum deles constitui autorização de uso clínico.
 
-O HTML incorpora figuras e tabelas e pode ser lido isoladamente. Reproduzir os cálculos requer a planilha, os scripts e o pacote de resultados identificado no apêndice; não requer executar ou ler o documento histórico. As lacunas de coleta e ética ainda precisam ser preenchidas pelos investigadores, mesmo em um relato autônomo.
+O HTML incorpora figuras e tabelas e pode ser lido isoladamente. Reproduzir os cálculos requer a planilha, os scripts e o pacote de resultados identificado no apêndice. As lacunas de coleta e ética ainda precisam ser preenchidas pelos investigadores, mesmo em um relato autônomo.
 
 # Pergunta, cenário e cronologia
 
@@ -192,7 +192,7 @@ A pergunta é: **com informações da avaliação basal, qual mudança na maior 
 | Momento | Informação |
 |---|---|
 | Avaliação basal/anamnese | Dez preditores, inclusive correção transversal pelo colete. |
-| Momento da previsão | Todos são tratados como disponíveis; a especificação histórica foi explorada antes do congelamento e não é chamada de “a priori”. |
+| Momento da previsão | Os dez preditores estão disponíveis na avaliação basal; sua inclusão e os desfechos foram definidos a priori com pesquisadores e clínicos. |
 | Seguimento | Manejo conservador com colete e exercícios S4D; adesão e concomitantes não documentados. |
 | Horizonte nominal | Maior Cobb aos seis meses; marco exato e intervalo real não documentados. |
 
@@ -252,13 +252,13 @@ Correção pelo colete e `flexibilidade` categórica não são sinônimos. O tes
 
 A sequência decisória foi deliberadamente conservadora:
 
-1. A análise histórica já continha dez preditores. Depois da revisão do objetivo, essa lista foi **congelada** para evitar escolher variáveis novamente com base nos resultados que seriam relatados.
+1. Os desfechos e a lista de dez preditores foram **discutidos e definidos a priori com a equipe de pesquisadores e clínicos**, antes de examinar os resultados desta coorte. Essa especificação foi mantida na análise principal.
 2. `delta` foi mantido como desfecho principal porque preserva a quantidade de mudança em graus. A dicotomização em melhora de pelo menos 5° perde informação e, por isso, ficou secundária.
 3. O linear e o logístico usam os mesmos cinco preditores numéricos e cinco categóricos: 19 parâmetros preditores mais intercepto. Categorias como Lenke e Risser viram indicadores, sem presumir distância constante entre níveis.
-4. Cobb basal não entrou no principal por preservação procedimental da fórmula histórica; sua plausibilidade clínica motivou uma sensibilidade pré-definida. O ganho observado não foi usado para rebatizar a alternativa como principal.
+4. Cobb basal não integrou a especificação principal acordada com a equipe; sua plausibilidade clínica motivou a análise de sensibilidade. O ganho observado não foi usado para rebatizar a alternativa como principal.
 5. CART e formas flexíveis respondem se relações não lineares, interações ou regras de grupo poderiam acrescentar informação. Como são mais adaptáveis e mais propensas a ajustar ruído, permaneceram exploratórias e foram avaliadas com tuning aninhado.
 
-A especificação, portanto, foi congelada **após** exploração histórica e não é chamada de “a priori”. Não foram reintroduzidos progressão, seleção por p-valor ou divisão treino–teste simples.
+A especificação principal foi mantida conforme a discussão a priori com a equipe. Não houve seleção dos dez preditores por p-valor. O estudo avalia mudança radiográfica e melhora em seis meses, utilizando reamostragem para avaliação interna.
 
 ### Especificação completa dos modelos
 
@@ -275,7 +275,7 @@ Seja $X$ esse vetor, codificado em 19 colunas: cinco valores numéricos e 14 ind
 
 Nos modelos principais, cada preditor numérico tem associação linear **na escala do respectivo modelo**: graus no linear e log-odds no logístico. Portanto, o logístico já produz uma curva de probabilidade mesmo sem splines; “linear no logit” não significa probabilidade linear. Não há interações nem splines nas especificações principais. O erro do linear representa a diferença entre o delta observado e sua média condicional; não se exige normalidade das variáveis preditoras.
 
-A escolha de dez preditores não é justificada por um resultado prévio que o leitor precise consultar: corresponde à lista histórica aqui explicitada, congelada após exploração para esta avaliação. Não existe justificativa prospectiva documentada capaz de transformar esse processo em escolha a priori. Cobb basal foi preservado fora do principal por essa decisão procedimental e estudado explicitamente como sensibilidade.
+A lista de dez preditores e os desfechos foram definidos a priori em discussão com pesquisadores e clínicos. Cobb basal foi estudado como sensibilidade, sem alterar a especificação principal acordada.
 
 ### Como as regressões produzem uma previsão
 
@@ -339,7 +339,7 @@ Cada uma das 2.000 réplicas bootstrap sorteou 615 participantes **com reposiç�
 
 Para R²/AUC, maior é melhor e a correção reduz o valor aparente; para RMSE/MAE/Brier/*log loss*, menor é melhor e a correção aumenta o erro aparente. Houve 2.000 réplicas válidas e zero falhas por modelo. Os IC principais usam percentis deslocados pela correção de otimismo [@noma2021_optimism_ci]; IC de calibração ficaram indisponíveis porque a estatística aparente é fixa por construção e produziria intervalo artificialmente degenerado.
 
-Esses IC são aproximações para o desempenho da especificação fixa reajustada na população representada, condicionais às decisões já congeladas. O deslocamento não reestima toda a variabilidade do otimismo em uma segunda camada bootstrap e sua cobertura nesta coorte não foi demonstrada por simulação. A exploração histórica que precedeu o congelamento não foi repetida: a correção não cobre o otimismo de toda a estratégia histórica de escolha de desfechos e preditores. Os IC não se referem à equação pós-*shrinkage* nem a previsões individuais.
+Esses IC são aproximações para o desempenho da especificação fixa reajustada na população representada, condicionais às decisões já congeladas. O deslocamento não reestima toda a variabilidade do otimismo em uma segunda camada bootstrap e sua cobertura nesta coorte não foi demonstrada por simulação. Os desfechos e preditores principais foram fixados a priori; a reamostragem avalia o reajuste dessa especificação. Os IC não se referem à equação pós-*shrinkage* nem a previsões individuais.
 
 ### Por que usar *shrinkage* e como interpretá-lo
 
@@ -349,7 +349,7 @@ Nesta análise foi usado **shrinkage uniforme após o ajuste**: um mesmo fator $
 
 Os fatores encontrados retêm `r fmt(100*shrink$shrinkage_factor[shrink$model=="linear"],2)`% da magnitude dos pesos lineares e `r fmt(100*shrink$shrinkage_factor[shrink$model=="logistic"],2)`% dos pesos logísticos. Isso é redução de `r fmt(100*(1-shrink$shrinkage_factor[shrink$model=="linear"]),2)`% e `r fmt(100*(1-shrink$shrinkage_factor[shrink$model=="logistic"]),2)`% **dos coeficientes**, não da dor, do Cobb observado, do risco de cada participante ou da proporção de erros. No logístico, a OR pós-shrinkage é $\exp(s\gamma)$: a multiplicação ocorre no log-odds, não diretamente na OR.
 
-O sinal e a interpretação por unidade permanecem: beta linear negativo aponta menor delta; OR abaixo de 1 aponta menores chances do evento, mantidos os demais preditores. Os contrastes são atenuados. O procedimento não remove preditores, não prova causalidade e não corrige erros de coleta, seleção histórica ou falta de representatividade. Também não produz automaticamente novos IC95%; por isso as tabelas inferenciais e as equações finais são separadas.
+O sinal e a interpretação por unidade permanecem: beta linear negativo aponta menor delta; OR abaixo de 1 aponta menores chances do evento, mantidos os demais preditores. Os contrastes são atenuados. O procedimento não remove preditores, não prova causalidade e não corrige erros de coleta ou falta de representatividade. Também não produz automaticamente novos IC95%; por isso as tabelas inferenciais e as equações finais são separadas.
 
 ### *Shrinkage*, calibração e validação cruzada
 
@@ -367,7 +367,7 @@ No procedimento conformal, 80% do treinamento externo estimou modelo, fator e es
 
 ## Coeficientes ajustados e IC95% para o artigo
 
-A tabela apresenta todos os termos do ajuste por mínimos quadrados nos 615 participantes, antes do shrinkage. Os IC95% usam covariância HC3 e distribuição t com 595 graus de liberdade, em resposta à heteroscedasticidade diagnosticada. São associações ajustadas simultaneamente por todos os outros preditores, condicionais à especificação congelada; não incorporam a escolha histórica dos preditores.
+A tabela apresenta todos os termos do ajuste por mínimos quadrados nos 615 participantes, antes do shrinkage. Os IC95% usam covariância HC3 e distribuição t com 595 graus de liberdade, em resposta à heteroscedasticidade diagnosticada. São associações ajustadas simultaneamente por todos os outros preditores, condicionais à especificação congelada.
 
 ```{r article-linear}
 x <- article_linear
@@ -409,7 +409,7 @@ Na equação pós-*shrinkage*, dez pontos percentuais adicionais de correção p
 
 ## Coeficientes ajustados, OR e IC95% para o artigo
 
-A tabela apresenta o ajuste binomial por máxima verossimilhança nos mesmos 615 participantes, antes do shrinkage. Beta está na escala de log-odds; OR é sua exponencial. Os IC95% são Wald normais, obtidos de beta ± 1,96 erro-padrão e depois exponenciados para OR. Não são IC HC3, não são intervalos pós-shrinkage e não incorporam a seleção histórica. Os coeficientes, erros-padrão e limites foram reproduzidos diretamente a partir da especificação completa.
+A tabela apresenta o ajuste binomial por máxima verossimilhança nos mesmos 615 participantes, antes do shrinkage. Beta está na escala de log-odds; OR é sua exponencial. Os IC95% são Wald normais, obtidos de beta ± 1,96 erro-padrão e depois exponenciados para OR. Não são IC HC3, não são intervalos pós-shrinkage. Os coeficientes, erros-padrão e limites foram reproduzidos diretamente a partir da especificação completa.
 
 ```{r article-logistic}
 x <- article_logistic
@@ -615,7 +615,7 @@ O sinal mais consistente foi maior correção transversal pelo colete associada 
 
 O estudo transversal de Ohrt-Nissen et al. relaciona flexibilidade radiográfica à correção inicial no colete Providence [@ohrt_nissen2016_brace_flexibility]. Já Xu et al. avaliaram retrospectivamente 488 pacientes com pelo menos dois anos de seguimento, usando como sucesso aumento da curva de no máximo 5°, desfecho diferente de redução de pelo menos 5° aos seis meses [@xu2017_initial_correction]. Essas fontes contextualizam corrigibilidade imediata e possível associação longitudinal; não validam os limiares, coeficientes ou a manutenção nesta coorte. Os resultados locais não são extrapolados além de seis meses.
 
-Limitações centrais: fonte única e representatividade desconhecida; informações clínicas/protocolos ausentes; caso completo; erro radiográfico; possível troca da região máxima; especificação posterior à exploração; IC de coeficientes pós-*shrinkage* indisponíveis; equidade e utilidade não avaliadas; nenhuma avaliação externa. A ausência de avaliação externa limita transportabilidade, mas não é por si um julgamento automático do risco de viés da avaliação interna.
+Limitações centrais: fonte única e representatividade desconhecida; informações clínicas/protocolos ausentes; caso completo; erro radiográfico; possível troca da região máxima; IC de coeficientes pós-*shrinkage* indisponíveis; equidade e utilidade não avaliadas; nenhuma avaliação externa. A ausência de avaliação externa limita transportabilidade, mas não é por si um julgamento automático do risco de viés da avaliação interna.
 
 Antes de uso, é necessário congelar equação/código, documentar o protocolo, avaliar dados independentes, calibração e equidade, definir manejo de entradas ausentes/fora do domínio e estudar utilidade sob limiares clínicos. PROBAST+AI deve ser aplicado com pergunta explícita e revisão independente [@moons2025_probast_ai].
 
@@ -661,10 +661,49 @@ knitr::kable(x,caption="Guia de interpretação de todos os coeficientes ajustad
 
 ## Cobertura conformal interna
 
-```{r}
-x <- conformal; names(x) <- c("Repetição","Folds","Previsões","Nominal","Observada","Largura média (°)","Método","Avaliação")
-tab(x, "Cobertura interna; 615 previsões por repetição.", 3)
+### Qual pergunta essa análise responde?
+
+Uma previsão pontual de delta, por exemplo −5°, não descreve toda a incerteza da evolução de uma pessoa. A análise conformal pergunta: **é possível construir uma faixa ao redor da previsão que contenha o delta observado com frequência próxima de 95%, quando avaliada em pessoas que não participaram do ajuste nem da calibração dessa faixa?** O alvo aqui é o delta individual em graus, no procedimento linear pós-shrinkage; não são os betas nem a probabilidade logística de melhora.
+
+“Cobertura” é a proporção de observações que ficam entre o limite inferior e o superior do intervalo. “Nominal de 95%” é a meta escolhida; “observada” é a proporção efetivamente obtida nos testes. A abordagem split conformal usa erros de um conjunto separado para calibrar a largura dos intervalos [@lei2018_conformal_regression].
+
+### Como foi realizado neste estudo?
+
+Em cada uma das 50 partições externas da validação cruzada interna, as pessoas tiveram três funções distintas:
+
+1. **Ajuste:** aproximadamente 80% do treinamento externo estimou a regressão, seu fator de shrinkage, o intercepto e uma função da dispersão dos erros.
+2. **Calibração dos intervalos:** os cerca de 20% restantes do treinamento externo forneceram erros que não foram usados para ajustar a regressão. O erro absoluto de cada pessoa foi dividido pela escala de dispersão prevista para ela. Um quantil superior desses erros normalizados definiu o multiplicador da largura.
+3. **Teste:** o fold externo reservado recebeu a previsão e o intervalo, e só então seu delta observado foi comparado aos limites. Esse conjunto não participou do ajuste, do shrinkage ou da calibração do intervalo.
+
+A faixa é construída como **delta previsto ± multiplicador calibrado × escala de erro prevista**. A escala foi estimada no conjunto de ajuste a partir do logaritmo dos resíduos absolutos, em função da previsão e de seu quadrado, com piso positivo para evitar divisão por zero. O quantil usa a posição arredondada para cima de (n de calibração + 1) × 0,95 entre os escores ordenados. Assim, a largura pode variar entre pessoas; não é simplesmente aplicar o RMSE a todos.
+
+As partições foram estratificadas pelo evento de melhora. “Externo” designa apenas o fold reservado na camada externa da validação cruzada: todas as pessoas continuam pertencendo à mesma coorte. Por isso a cobertura é **interna**. Cada repetição gera 615 avaliações; as cinco repetições reutilizam as mesmas pessoas, sem formar uma amostra de 3.075 participantes independentes.
+
+### Resultados e como lê-los
+
+```{r conformal-coverage-table}
+x <- data.frame(Repetição=as.character(conformal$repeat_id),
+                Folds=as.character(conformal$folds),
+                `Previsões avaliadas`=as.character(conformal$denominator_predictions),
+                `Cobertura nominal`=fmt_pct(conformal$nominal_coverage,2),
+                `Cobertura observada`=fmt_pct(conformal$observed_coverage,2),
+                `Largura média (°)`=fmt(conformal$mean_width_degrees,2),check.names=FALSE)
+knitr::kable(x,caption="Cobertura dos intervalos de delta nos testes internos reservados; 615 previsões por repetição.",row.names=FALSE)
 ```
+
+A cobertura média foi **`r fmt_pct(coverage,2)`**, próxima da meta de 95%, variando de `r fmt_pct(min(conformal$observed_coverage),2)` a `r fmt_pct(max(conformal$observed_coverage),2)` entre as cinco repetições. Isso significa que aproximadamente 95 em cada 100 deltas avaliados ficaram dentro de suas respectivas faixas neste procedimento interno. Não significa que 95% das pessoas melhoraram nem que 95% das previsões pontuais estavam corretas.
+
+A **largura total média foi `r fmt(width,2)`°**. Cobertura e largura precisam ser lidas juntas: uma faixa muito ampla pode conter muitas observações e ainda ter pouca precisão para uma decisão individual. Essa largura é uma média dos intervalos efetivamente calculados, não uma margem fixa a aplicar à equação final.
+
+Como exemplo exclusivamente didático, uma previsão de −5° com intervalo de −14° a +4° teria largura de 18°. Um delta observado de −7° estaria coberto; um de +6° ficaria fora. A faixa do exemplo comporta tanto redução quanto aumento da magnitude radiográfica e, portanto, não assegura melhora para aquela pessoa. Esses valores ilustrativos não correspondem a um participante da coorte.
+
+### O que a cobertura não demonstra?
+
+A cobertura é uma propriedade da frequência de acertos dos intervalos no conjunto avaliado. Ela não é um IC95% do beta ou da média condicional, nem demonstra cobertura de 95% para cada perfil clínico, categoria de Lenke ou faixa de Cobb. A garantia usual do método requer condições de comparabilidade das observações; nesta implementação estratificada, relata-se a cobertura empírica obtida, sem afirmar uma garantia exata para esse desenho ou para outra população.
+
+O resultado também não valida um intervalo individual da equação final ajustada nos 615 participantes: essa equação já utilizou toda a coorte, e não resta nela um conjunto independente para calibrar honestamente seus intervalos. O procedimento avaliado ajusta modelos em conjuntos menores. Sua cobertura próxima de 95%, acompanhada de largura média de cerca de 17,4°, documenta incerteza individual relevante e orienta uma avaliação futura em dados independentes; não autoriza usar uma faixa fixa de ±8,7° em atendimento.
+
+> **Texto para o manuscrito — incerteza preditiva.** Intervalos de delta foram avaliados por split conformal normalizado, com ajuste e calibração separados dentro de cada treinamento da validação cruzada interna e avaliação exclusiva no fold reservado. A cobertura nominal foi 95%, a cobertura média observada foi `r fmt_pct(coverage,2)` e a largura total média foi `r fmt(width,2)`°. Os resultados descrevem cobertura empírica interna do procedimento, sem validar intervalos da equação final ou garantir cobertura por subgrupo ou em população externa.
 
 ## Checklist TRIPOD+AI
 
@@ -678,7 +717,7 @@ knitr::kable(x, caption="TRIPOD+AI, versão 7-Feb-2024.", row.names=FALSE)
 
 ## Auditoria local PROBAST+AI
 
-Pergunta da auditoria: o estudo sustenta desenvolver e avaliar internamente previsões de mudança radiográfica nominal em seis meses, em adolescentes tratados com colete e S4D, para pesquisa? A avaliação separa qualidade do desenvolvimento, risco de viés do desempenho e aplicabilidade. As justificativas e respostas de sinalização são locais e não constituem revisão externa independente [@moons2025_probast_ai]. O risco ligado à exploração histórica não repetida na reamostragem permanece; a ausência de validação externa, isoladamente, não determina alto risco interno.
+Pergunta da auditoria: o estudo sustenta desenvolver e avaliar internamente previsões de mudança radiográfica nominal em seis meses, em adolescentes tratados com colete e S4D, para pesquisa? A avaliação separa qualidade do desenvolvimento, risco de viés do desempenho e aplicabilidade. As justificativas e respostas de sinalização são locais e não constituem revisão externa independente [@moons2025_probast_ai]. A especificação principal foi definida a priori com pesquisadores e clínicos. As limitações de documentação, mensuração e precisão permanecem; a ausência de validação externa, isoladamente, não determina alto risco interno.
 
 ```{r}
 x <- probast[,c("component","domain","assessment_target","draft_judgement","location_qmd","evidence","pending_or_limitation")]
@@ -690,7 +729,7 @@ knitr::kable(x, caption="Rascunho PROBAST+AI 2025.", row.names=FALSE)
 
 - Fonte congelada `data/dataset_escoliose_01.xlsx`; SHA-256 verificado: `r source_sha`.
 - Coorte, diagnósticos, validação adicional, CART estrutural, flexível, sensibilidades e figuras: somente `results/prognostico/revisao/`.
-- Desempenho CART e estabilidade bootstrap foram empacotados em `results/prognostico/revisao/aggregated/` como cópias fiéis dos agregados auditados, com origem e SHA-256 em `standalone_inputs_manifest.csv`. O QMD não lê `analisys.qmd` nem agrega resultados a partir dele.
+- Desempenho CART e estabilidade bootstrap foram empacotados em `results/prognostico/revisao/aggregated/` como cópias fiéis dos agregados auditados, com origem e SHA-256 em `standalone_inputs_manifest.csv`.
 - As tabelas para artigo são produzidas por `scripts/prepare_standalone_report.R`; os scripts R documentam a reprodução analítica. O HTML não depende de abrir arquivos externos para ler figuras, tabelas ou referências.
 - Ausência de artefato obrigatório encerra a execução; não há fallback silencioso.
 
