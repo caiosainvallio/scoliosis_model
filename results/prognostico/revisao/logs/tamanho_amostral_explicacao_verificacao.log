@@ -1,0 +1,11 @@
+linear_r2_adjusted 312 OK
+linear_r2_035 350 OK
+linear_r2_030 422 OK
+linear_r2_025 524 OK
+linear_r2_020 676 OK
+logistic_cs_100 392 OK
+logistic_cs_080 464 OK
+logistic_cs_070 545 OK
+logistic_cs_060 654 OK
+logistic_cs_050 805 OK
+10/10 cenários reproduzidos; pmsampsize 1.1.3 

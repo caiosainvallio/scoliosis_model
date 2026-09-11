@@ -246,7 +246,7 @@ Correção pelo colete e `flexibilidade` categórica não são sinônimos. O tes
 
 # Métodos
 
-## Especificação e tamanho amostral
+## Especificação dos modelos
 
 ### Como as decisões foram tomadas
 
@@ -283,15 +283,75 @@ No modelo linear, cada coeficiente é a mudança esperada em `delta` para uma un
 
 No modelo logístico, a mesma soma é feita na escala de *log-odds*. A transformação $p=1/(1+e^{-\eta})$ converte o resultado em probabilidade entre 0 e 1. Exponenciar um coeficiente produz uma *odds ratio*; ela compara chances, não riscos, e pode parecer numericamente maior que o risco relativo quando o evento é frequente.
 
-```{r}
-x <- sample_size[,c("modelo","classe","cenario","valor_desempenho","parametros","n_minimo","participantes_disponiveis","margem_n","suficiente")]
-names(x) <- c("Modelo","Classe","Cenário","Premissa","Parâmetros","n mínimo","Disponíveis","Margem","Suficiente")
-tab(x, "Tamanho amostral, condicional às premissas.", 3)
+## Avaliação do tamanho amostral
+
+### Por que foi feito esse cálculo?
+
+A pergunta é: **os 615 participantes disponíveis constituem uma amostra compatível com o desenvolvimento dos modelos principais, considerando sua complexidade e diferentes hipóteses de desempenho?** O objetivo é avaliar risco de sobreajuste e precisão, não calcular o poder para obter um p-valor significativo para cada preditor.
+
+Foi realizada uma **avaliação da adequação da amostra disponível**, com cenários. Esse cálculo não determinou previamente quantas pessoas seriam recrutadas: suas entradas incluem características e medidas de desempenho estimadas na própria coorte. Isso é diferente da definição a priori dos desfechos e dos dez preditores, discutida com pesquisadores e clínicos. A definição dos modelos pode preceder a análise, enquanto a avaliação amostral aqui apresentada utiliza os dados disponíveis.
+
+O método segue Riley e colaboradores, implementado em **pmsampsize 1.1.3**, para desenvolvimento de modelos de predição contínuos e binários [@riley2019_continuous_sample_size; @riley2019_binary_sample_size; @riley2020_sample_size_framework]. Não foi utilizada apenas a regra de “dez eventos por variável”.
+
+### Quais informações entraram no cálculo?
+
+| Entrada | Valor utilizado | Por que importa |
+|---|---|---|
+| Participantes disponíveis | 615 casos completos | Número comparado com a exigência de cada cenário; não foi resultado do cálculo |
+| Complexidade de cada regressão principal | 19 parâmetros preditores, além do intercepto | Dez variáveis geram cinco termos numéricos e 14 indicadores de categoria; contar apenas dez subestimaria a complexidade |
+| Evento logístico | 317 melhoras e 298 não melhoras; prevalência de `r fmt_pct(prevalence,2)` | A informação para desenvolver o modelo binário depende das duas classes |
+| Delta contínuo | Média `r fmt(delta$media,3)`° e DP `r fmt(delta$dp,3)`° | Caracterizam o nível e a dispersão do desfecho contínuo; a média não é o intercepto da equação clínica com todos os preditores iguais a zero |
+| Shrinkage desejado | 0,90 | Meta de limitar a redução necessária da magnitude dos coeficientes a aproximadamente 10%, sob as premissas do cálculo |
+| Força preditiva esperada | Cenários de R² linear e R² de Cox–Snell logístico | Quanto mais fraco o sinal esperado, maior tende a ser a amostra necessária para estimar 19 pesos com estabilidade |
+
+O **0,90 é uma premissa do cálculo amostral**, não o fator estimado no bootstrap e aplicado às equações finais. Os fatores finais encontrados foram aproximadamente 0,958 no linear e 0,884 no logístico. O cálculo sob uma meta não garante que o fator observado será exatamente igual ou superior a ela.
+
+### Como o método transforma essas entradas em um número de participantes?
+
+O software avalia requisitos complementares e retorna o maior tamanho necessário entre os critérios implementados, em vez de somar os tamanhos. Os critérios limitam sobreajuste e otimismo no desempenho; no contínuo, também consideram a precisão da dispersão residual e apresentam a precisão do nível médio; no binário, consideram a precisão da proporção global de eventos.
+
+| Requisito | Aplicação nesta avaliação |
+|---|---|
+| Sobreajuste pequeno | Fator de shrinkage esperado de pelo menos 0,90 |
+| Otimismo pequeno | Diferença absoluta de até 0,05 entre R² aparente e ajustado; no binário, o critério usa a escala reescalonada de Nagelkerke |
+| Dispersão residual do contínuo | Critério de precisão do desvio-padrão dos erros; com 19 parâmetros, o componente implementado exige 234 + 19 = 253 participantes |
+| Nível médio do contínuo | O programa utiliza média e DP informados e apresenta o IC95% para o nível médio no tamanho calculado |
+| Proporção global no binário | Margem absoluta de aproximadamente ±5 pontos percentuais, com confiança de 95%; não é precisão da probabilidade de cada pessoa |
+
+**Exemplo do cenário logístico mais conservador intermediário:** adotar 60% do Cox–Snell aparente equivale a esperar R² de Cox–Snell próximo de 0,227. Com 19 parâmetros e meta de shrinkage 0,90, o critério de sobreajuste exige 654 participantes; os demais critérios não aumentam esse valor. Como existem 615, a diferença é 615 − 654 = −39. Isso é uma insuficiência sob essa hipótese, não prova de que todas as análises com 615 sejam inválidas.
+
+### Por que foram usados vários cenários?
+
+No **linear**, foi usado R² ajustado de aproximadamente 0,383 como referência, junto a valores esperados de 0,35, 0,30, 0,25 e 0,20. R² expressa a parcela de variação de delta explicada pelo modelo. A referência de 0,383 foi estimada nos mesmos dados, mesmo após o ajuste pelo número de parâmetros, e não representa desempenho esperado confirmado em outra população.
+
+No **logístico**, foi usado R² de Cox–Snell aparente de aproximadamente 0,379 como referência otimista e depois 80%, 70%, 60% e 50% desse valor. Cox–Snell é uma medida de desempenho baseada na melhora da verossimilhança em relação a um modelo sem preditores. Não é a prevalência de melhora, não é AUC e não deve ser interpretado como a porcentagem de participantes classificados corretamente. “60% do Cox–Snell” reduz a hipótese sobre a força preditiva; **não reduz o número de pessoas ou de eventos**.
+
+Esses cenários mais fracos examinam o que acontece se o modelo tiver menos sinal do que sugere o ajuste aparente. São premissas de sensibilidade, não valores verdadeiros conhecidos nem limites de um IC. Não se escolheu apenas o cenário que faria a amostra parecer suficiente.
+
+### Resultados: como ler a tabela?
+
+“N mínimo” é a exigência sob a hipótese da linha. “Margem” é 615 menos esse número; valores negativos indicam déficit nesse cenário. “Atende ao cenário?” é apenas essa comparação aritmética, não um certificado de validade do modelo. Todos os cenários abaixo usam 19 parâmetros preditores e meta de shrinkage de 0,90.
+
+```{r sample-size-explained}
+x <- data.frame(Modelo=ifelse(sample_size$modelo=="linear","Linear","Logístico"),
+                Cenário=sample_size$cenario,
+                `R² assumido`=fmt(sample_size$valor_desempenho,3),
+                `n mínimo`=as.character(sample_size$n_minimo),
+                `n disponível`=as.character(sample_size$participantes_disponiveis),
+                `Margem (n)`=as.character(sample_size$margem_n),
+                `Atende ao cenário?`=ifelse(sample_size$suficiente,"Sim","Não"),check.names=FALSE)
+knitr::kable(x,caption="Adequação dos 615 participantes sob diferentes premissas de desempenho; R² linear ou Cox–Snell conforme a família.",row.names=FALSE)
 ```
 
-Os cenários usam *shrinkage* desejado 0,90 [@riley2019_continuous_sample_size; @riley2019_binary_sample_size; @riley2020_sample_size_framework]. R² esperado 0,20 exigiria 676; 60% do Cox–Snell aparente, 654. Portanto, n=615 não é declarado universalmente suficiente nem justifica o flexível.
+No linear, os cenários de referência até R²=0,25 exigiram de 312 a 524 participantes, abaixo dos 615 disponíveis. Se o R² esperado fosse 0,20, seriam necessários 676: déficit de 61. No logístico, a referência aparente e as hipóteses de 80% e 70% do Cox–Snell exigiram 392, 464 e 545 participantes; as de 60% e 50% exigiram 654 e 805, déficits de 39 e 190.
 
-O cálculo de tamanho amostral não é um teste aprovado/reprovado. Ele pergunta quantas pessoas seriam necessárias sob determinada força de sinal esperada para limitar sobreajuste, manter pequeno o otimismo e estimar o nível médio do desfecho com precisão. Como a força de sinal verdadeira era incerta, foram mostrados cenários; alguns cabem em 615 e outros não.
+Como descrição complementar, houve `r fmt(events/19,2)` eventos e `r fmt(non_events/19,2)` não eventos por parâmetro. Esses números não substituem os critérios acima. Também não se aplica automaticamente a exigência de 19 parâmetros à modelagem flexível, que utiliza uma matriz candidata de 48 colunas, penalização e tuning, nem à CART.
+
+### Qual conclusão levar para o artigo?
+
+**A amostra atende a vários cenários plausíveis, mas sua suficiência é condicional à força preditiva esperada.** Não há um único “n ideal” demonstrado por estes dados. O cálculo não comprova precisão por subgrupo, utilidade clínica, cobertura individual ou validade externa; essas perguntas exigem avaliações próprias.
+
+> **Texto para o manuscrito.** A adequação da amostra disponível foi avaliada com pmsampsize, segundo os critérios de Riley et al., considerando 19 parâmetros preditores em cada modelo principal, shrinkage desejado de 0,90 e características do desfecho observadas na coorte. Foram examinados cenários de R² esperado no contínuo e de R² de Cox–Snell no binário, incluindo hipóteses inferiores às estimativas aparentes. Os 615 participantes atenderam a parte dos cenários, mas não aos de menor força preditiva, nos quais foram estimados requisitos de até 676 participantes para o contínuo e 805 para o binário. A suficiência amostral foi, portanto, interpretada como condicional às premissas, sem extrapolação à modelagem flexível ou à validação externa.
 
 ## Vocabulário para ler os resultados
 
