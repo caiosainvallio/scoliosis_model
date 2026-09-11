@@ -2,6 +2,7 @@
 title: "Desenvolvimento e avaliação interna de modelos de mudança radiográfica em seis meses na escoliose idiopática do adolescente"
 author: "Caio Vallio"
 lang: pt-BR
+date: last-modified
 bibliography: references_prognostico.bib
 format:
   html:
